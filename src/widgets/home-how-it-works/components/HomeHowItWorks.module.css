@@ -1,0 +1,278 @@
+.section {
+  position: relative;
+  scroll-margin-top: 118px;
+  padding: 18px 0 58px;
+  background: transparent;
+}
+
+.panel {
+  width: min(1472px, calc(100vw - 64px));
+  margin: 0 auto;
+  overflow: hidden;
+  padding: 34px 36px 38px;
+}
+
+.header {
+  text-align: center;
+}
+
+.title {
+  margin: 0;
+  color: var(--sd-ink-900);
+  font-size: clamp(40px, 4.8vw, 58px);
+  font-weight: 800;
+  line-height: 1.12;
+  letter-spacing: 0;
+}
+
+.title span {
+  color: var(--sd-coral-600);
+}
+
+.subtitle {
+  max-width: 520px;
+  margin: 12px auto 0;
+  color: var(--sd-ink-600);
+  font-size: 19px;
+  font-weight: 500;
+  line-height: 1.35;
+}
+
+.stage {
+  position: relative;
+  width: min(100%, 1280px);
+  aspect-ratio: 1672 / 1024;
+  margin: 18px auto 0;
+}
+
+.visualFrame {
+  position: absolute;
+  inset: 0;
+  overflow: visible;
+}
+
+.flowImage {
+  display: block;
+  width: 100%;
+  height: auto;
+  filter: drop-shadow(0 26px 42px rgba(170, 91, 79, 0.055));
+  user-select: none;
+  pointer-events: none;
+}
+
+.steps {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+}
+
+.stepCard {
+  position: absolute;
+  min-width: 0;
+  border: 1px solid rgba(255, 113, 97, 0.14);
+  border-radius: var(--sd-radius-md);
+  background: rgba(255, 255, 255, 0.82);
+  box-shadow: 0 18px 44px rgba(170, 91, 79, 0.075);
+  padding: 18px;
+  backdrop-filter: blur(18px);
+  pointer-events: auto;
+  transform: translateX(-50%);
+}
+
+.stepTitleRow {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.stepNumber {
+  display: inline-flex;
+  width: 30px;
+  height: 30px;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background: var(--sd-coral-500);
+  color: var(--sd-white);
+  font-size: 16px;
+  font-weight: 800;
+  line-height: 1;
+  box-shadow: 0 12px 24px rgba(252, 66, 56, 0.16);
+}
+
+.stepCard h3 {
+  margin: 0;
+  color: var(--sd-ink-900);
+  font-size: 17px;
+  font-weight: 800;
+  line-height: 1.28;
+}
+
+.stepCard p {
+  margin: 12px 0 0;
+  color: var(--sd-ink-600);
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.48;
+}
+
+.stepOne {
+  top: 44%;
+  left: 6%;
+  width: 220px;
+}
+
+.stepTwo {
+  top: 79%;
+  left: 26%;
+  width: 236px;
+}
+
+.stepThree {
+  top: 64%;
+  left: 48%;
+  width: 224px;
+}
+
+.stepFour {
+  top: 83%;
+  left: 71%;
+  width: 212px;
+}
+
+.stepFive {
+  top: 51%;
+  left: 97%;
+  width: 224px;
+}
+
+@media (max-width: 1180px) {
+  .panel {
+    width: min(100%, calc(100vw - 40px));
+    border-radius: 36px;
+    padding: 30px 24px 34px;
+  }
+
+  .stage {
+    width: 100%;
+  }
+
+  .stepCard {
+    padding: 15px;
+  }
+
+  .stepCard h3 {
+    font-size: 15px;
+  }
+
+  .stepCard p {
+    font-size: 13px;
+  }
+
+  .stepOne {
+    width: 204px;
+  }
+
+  .stepTwo,
+  .stepThree,
+  .stepFive {
+    width: 218px;
+  }
+
+  .stepFour {
+    width: 194px;
+  }
+}
+
+@media (max-width: 760px) {
+  .section {
+    scroll-margin-top: 96px;
+    padding: 22px 0 40px;
+  }
+
+  .panel {
+    width: calc(100vw - 24px);
+    border-radius: 28px;
+    padding: 26px 0 18px;
+  }
+
+  .title {
+    font-size: 36px;
+  }
+
+  .subtitle {
+    font-size: 17px;
+  }
+
+  .stage {
+    display: flex;
+    width: 100%;
+    aspect-ratio: auto;
+    flex-direction: column;
+    margin-top: 20px;
+  }
+
+  .visualFrame {
+    position: relative;
+    inset: auto;
+    width: 100%;
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding: 0 18px 8px;
+    scrollbar-width: none;
+  }
+
+  .visualFrame::-webkit-scrollbar {
+    display: none;
+  }
+
+  .flowImage {
+    width: 720px;
+    max-width: none;
+  }
+
+  .steps {
+    position: relative;
+    inset: auto;
+    display: grid;
+    grid-auto-columns: minmax(274px, 82vw);
+    grid-auto-flow: column;
+    gap: 12px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding: 2px 18px 14px;
+    scroll-padding-left: 18px;
+    scroll-snap-type: x mandatory;
+    scrollbar-width: none;
+  }
+
+  .steps::-webkit-scrollbar {
+    display: none;
+  }
+
+  .stepCard,
+  .stepOne,
+  .stepTwo,
+  .stepThree,
+  .stepFour,
+  .stepFive {
+    position: relative;
+    top: auto;
+    right: auto;
+    left: auto;
+    width: auto;
+    padding: 16px;
+    scroll-snap-align: start;
+    transform: none;
+  }
+
+  .stepCard h3 {
+    font-size: 15px;
+  }
+
+  .stepCard p {
+    font-size: 13px;
+  }
+}

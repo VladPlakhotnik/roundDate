@@ -1,0 +1,444 @@
+.page {
+  display: grid;
+  min-height: 100vh;
+  align-items: center;
+  justify-items: center;
+  background:
+    radial-gradient(circle at 18% 18%, rgba(255, 232, 228, 0.76), transparent 32%),
+    radial-gradient(circle at 86% 12%, rgba(255, 229, 225, 0.62), transparent 30%),
+    linear-gradient(180deg, #fff8f6 0%, #ffffff 100%);
+  color: var(--sd-ink-900);
+  padding: 56px 24px;
+}
+
+.card {
+  display: flex;
+  width: min(100%, 720px);
+  min-height: 640px;
+  flex-direction: column;
+  border: 1px solid rgba(255, 113, 97, 0.16);
+  border-radius: 30px;
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 28px 82px rgba(101, 51, 44, 0.12);
+  padding: 38px 42px 30px;
+}
+
+.header {
+  display: grid;
+  gap: 12px;
+}
+
+.logo {
+  width: fit-content;
+  color: var(--sd-coral-600);
+  font-size: 15px;
+  font-weight: 900;
+}
+
+.progressTrack {
+  height: 7px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--sd-coral-100);
+}
+
+.progressBar {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(135deg, var(--sd-coral-500), var(--sd-coral-600));
+  transition: width 220ms ease;
+}
+
+.title {
+  margin: 8px 0 0;
+  color: var(--sd-ink-900);
+  font-size: 31px;
+  font-weight: 900;
+  line-height: 1.05;
+}
+
+.subtitle {
+  max-width: 520px;
+  margin: 0;
+  color: var(--sd-ink-600);
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.48;
+}
+
+.body {
+  min-height: 360px;
+  padding-top: 24px;
+}
+
+.profileStep,
+.preferencesStep {
+  display: grid;
+  gap: 18px;
+}
+
+.providerCard {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  border: 1px solid rgba(255, 113, 97, 0.16);
+  border-radius: 20px;
+  background: linear-gradient(135deg, rgba(255, 244, 242, 0.86), rgba(255, 255, 255, 0.9));
+  padding: 14px;
+}
+
+.avatarWrap {
+  position: relative;
+  flex: 0 0 auto;
+}
+
+.avatarImage,
+.avatarFallback {
+  display: inline-flex;
+  width: 58px;
+  height: 58px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background-color: var(--sd-coral-100);
+  background-position: center;
+  background-size: cover;
+  color: var(--sd-coral-600);
+  font-size: 22px;
+  font-weight: 900;
+}
+
+.providerIcon {
+  position: absolute;
+  right: -4px;
+  bottom: -4px;
+  display: inline-flex;
+  width: 25px;
+  height: 25px;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid var(--sd-white);
+  border-radius: 999px;
+  background: var(--sd-white);
+  color: var(--sd-coral-600);
+  box-shadow: 0 8px 16px rgba(170, 91, 79, 0.12);
+}
+
+.providerMark {
+  width: 18px;
+  height: 18px;
+}
+
+.providerTitle,
+.providerText {
+  margin: 0;
+}
+
+.providerTitle {
+  color: var(--sd-ink-900);
+  font-size: 15px;
+  font-weight: 900;
+}
+
+.providerText {
+  margin-top: 4px;
+  color: var(--sd-ink-600);
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.formGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.sourceList {
+  display: grid;
+  gap: 10px;
+}
+
+.sourceOption {
+  display: flex;
+  min-height: 48px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  border: 1px solid rgba(95, 105, 115, 0.16);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.82);
+  color: var(--sd-ink-900);
+  cursor: pointer;
+  font: inherit;
+  font-size: 15px;
+  font-weight: 800;
+  padding: 0 14px 0 16px;
+  text-align: left;
+  transition:
+    border-color 160ms ease,
+    background 160ms ease,
+    transform 160ms ease;
+}
+
+.sourceOption:hover,
+.sourceOptionActive {
+  border-color: rgba(255, 90, 82, 0.28);
+  background: var(--sd-coral-050);
+}
+
+.sourceOption:active {
+  transform: scale(0.99);
+}
+
+.radio {
+  display: inline-flex;
+  width: 24px;
+  height: 24px;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(255, 90, 82, 0.28);
+  border-radius: 999px;
+  background: var(--sd-white);
+  color: var(--sd-coral-600);
+}
+
+.choiceGroup {
+  display: grid;
+  gap: 10px;
+}
+
+.groupLabel {
+  margin: 0;
+  color: var(--sd-ink-900);
+  font-size: 14px;
+  font-weight: 900;
+}
+
+.chipGrid {
+  display: grid;
+  grid-template-columns: repeat(7, 72px);
+  gap: 12px;
+}
+
+.dayChip,
+.timeChip {
+  border: 1px solid rgba(95, 105, 115, 0.15);
+  background: rgba(255, 255, 255, 0.86);
+  color: var(--sd-ink-700);
+  cursor: pointer;
+  font: inherit;
+  font-weight: 900;
+  transition:
+    border-color 160ms ease,
+    background 160ms ease,
+    color 160ms ease,
+    transform 160ms ease;
+}
+
+.dayChip {
+  min-height: 52px;
+  border-radius: 999px;
+  font-size: 14px;
+  padding: 0 18px;
+}
+
+.timeGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.timeChip {
+  min-height: 46px;
+  border-radius: 999px;
+  font-size: 14px;
+  padding: 0 14px;
+}
+
+.dayChip:hover,
+.timeChip:hover,
+.dayChipActive,
+.timeChipActive {
+  border-color: rgba(255, 90, 82, 0.32);
+  background: linear-gradient(135deg, var(--sd-coral-500), var(--sd-coral-600));
+  color: var(--sd-white);
+  box-shadow: 0 10px 20px rgba(252, 66, 56, 0.16);
+}
+
+.dayChip:active,
+.timeChip:active {
+  transform: scale(0.98);
+}
+
+.settingsBox {
+  display: grid;
+  gap: 12px;
+  border: 1px solid rgba(255, 113, 97, 0.16);
+  border-radius: 20px;
+  background: rgba(255, 248, 246, 0.7);
+  padding: 15px;
+}
+
+.switchRow,
+.checkboxRow {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: var(--sd-ink-900);
+  cursor: pointer;
+}
+
+.switchRow {
+  justify-content: space-between;
+}
+
+.switchRow strong,
+.switchRow small {
+  display: block;
+}
+
+.switchRow strong {
+  font-size: 14px;
+  font-weight: 900;
+}
+
+.switchRow small {
+  margin-top: 3px;
+  color: var(--sd-ink-600);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+.switchRow input,
+.checkboxRow input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+}
+
+.switchControl {
+  position: relative;
+  width: 50px;
+  height: 28px;
+  flex: 0 0 auto;
+  border-radius: 999px;
+  background: rgba(95, 105, 115, 0.18);
+  transition: background 160ms ease;
+}
+
+.switchControl::after {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 22px;
+  height: 22px;
+  border-radius: 999px;
+  background: var(--sd-white);
+  box-shadow: 0 3px 10px rgba(8, 12, 15, 0.14);
+  content: "";
+  transition: transform 160ms ease;
+}
+
+.switchRow input:checked + .switchControl {
+  background: var(--sd-coral-600);
+}
+
+.switchRow input:checked + .switchControl::after {
+  transform: translateX(22px);
+}
+
+.checkboxControl {
+  display: inline-flex;
+  width: 22px;
+  height: 22px;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(255, 90, 82, 0.32);
+  border-radius: 7px;
+  background: var(--sd-white);
+}
+
+.checkboxRow {
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.checkboxRow input:checked + .checkboxControl {
+  background: var(--sd-coral-600);
+}
+
+.checkboxRow input:checked + .checkboxControl::after {
+  width: 10px;
+  height: 6px;
+  border-bottom: 2px solid var(--sd-white);
+  border-left: 2px solid var(--sd-white);
+  content: "";
+  transform: rotate(-45deg) translate(1px, -1px);
+}
+
+.error {
+  margin: 0 0 12px;
+  color: #cf3028;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-top: auto;
+  padding-top: 18px;
+}
+
+.textButton {
+  color: var(--sd-ink-600);
+}
+
+@media (max-width: 760px) {
+  .page {
+    padding: 22px 12px;
+  }
+
+  .card {
+    min-height: min(640px, calc(100vh - 44px));
+    border-radius: 24px;
+    padding: 26px 22px 22px;
+  }
+
+  .body {
+    min-height: auto;
+  }
+}
+
+@media (max-width: 620px) {
+  .title {
+    font-size: 26px;
+  }
+
+  .formGrid,
+  .timeGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .chipGrid {
+    grid-template-columns: repeat(4, 64px);
+  }
+
+  .footer {
+    align-items: stretch;
+    flex-direction: column-reverse;
+  }
+
+  .footer > * {
+    width: 100%;
+  }
+}

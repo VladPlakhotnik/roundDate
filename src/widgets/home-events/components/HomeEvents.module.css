@@ -1,0 +1,424 @@
+.section {
+  position: relative;
+  scroll-margin-top: 24px;
+  overflow: hidden;
+  background: transparent;
+  padding: 92px 0 86px;
+}
+
+.inner {
+  position: relative;
+  z-index: 2;
+  width: min(1344px, calc(100vw - 96px));
+  margin: 0 auto;
+}
+
+.header {
+  max-width: 920px;
+  margin: 0 auto 44px;
+  text-align: center;
+}
+
+.title {
+  margin: 0;
+  color: var(--sd-ink-900);
+  font-size: 58px;
+  font-weight: 800;
+  letter-spacing: 0;
+  line-height: 1.08;
+}
+
+.subtitle {
+  margin: 20px 0 0;
+  color: var(--sd-ink-600);
+  font-size: 22px;
+  font-weight: 500;
+  line-height: 1.38;
+}
+
+.titleDecor {
+  position: absolute;
+  z-index: 1;
+  display: block;
+  height: auto;
+  object-fit: contain;
+  opacity: 0.92;
+  pointer-events: none;
+  user-select: none;
+}
+
+.titleHeartDecor {
+  top: 38px;
+  left: max(24px, calc((100vw - 1344px) / 2 - 150px));
+  width: min(430px, 30vw);
+  transform: rotate(-2deg);
+}
+
+.titleChessDecor {
+  top: 22px;
+  right: max(0px, calc((100vw - 1344px) / 2 - 196px));
+  width: min(480px, 33vw);
+  transform: rotate(1.5deg);
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 30px;
+}
+
+.card {
+  position: relative;
+  display: flex;
+  min-height: 586px;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid rgba(255, 113, 97, 0.14);
+  border-radius: var(--sd-radius-lg);
+  background: rgba(255, 248, 246, 0.7);
+  box-shadow: 0 22px 68px rgba(170, 91, 79, 0.065);
+  padding: 24px 24px 26px;
+  backdrop-filter: blur(16px);
+}
+
+.cardTop {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  min-height: 32px;
+  justify-content: flex-end;
+}
+
+.dateBadge {
+  position: absolute;
+  top: 20px;
+  left: 24px;
+  z-index: 4;
+  display: inline-flex;
+  width: 86px;
+  height: 92px;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(255, 113, 97, 0.15);
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.9);
+  color: var(--sd-coral-600);
+  box-shadow: 0 14px 36px rgba(170, 91, 79, 0.055);
+}
+
+.dateBadge span {
+  font-size: 42px;
+  font-weight: 800;
+  letter-spacing: 0;
+  line-height: 0.92;
+}
+
+.dateBadge small {
+  margin-top: 7px;
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1;
+  text-transform: lowercase;
+}
+
+.statusPill {
+  border: 1px solid rgba(255, 113, 97, 0.14);
+  box-shadow: 0 10px 22px rgba(170, 91, 79, 0.055);
+}
+
+.statusDot {
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+  background: currentColor;
+}
+
+.imageWrap {
+  display: flex;
+  height: 266px;
+  align-items: center;
+  justify-content: center;
+  margin: -2px -28px 0;
+}
+
+.eventImage {
+  display: block;
+  width: min(452px, calc(100% + 78px));
+  max-height: 266px;
+  height: auto;
+  object-fit: contain;
+  filter: drop-shadow(0 22px 40px rgba(170, 91, 79, 0.08));
+  pointer-events: none;
+  transform: scale(1.24);
+  transform-origin: center center;
+  user-select: none;
+}
+
+.chairsImage {
+  width: min(468px, calc(100% + 84px));
+  transform: translateY(14px) scale(1.28);
+}
+
+.chairsSceneImage {
+  width: min(482px, calc(100% + 96px));
+  transform: translateY(6px) scale(1.25);
+}
+
+.loungeImage {
+  width: min(466px, calc(100% + 82px));
+  transform: translateY(8px) scale(1.21);
+}
+
+.card h3 {
+  margin: 18px 0 0;
+  color: var(--sd-ink-900);
+  font-size: 28px;
+  font-weight: 800;
+  letter-spacing: 0;
+  line-height: 1.16;
+}
+
+.dateLine {
+  margin: 12px 0 0;
+  color: var(--sd-ink-600);
+  font-size: 18px;
+  font-weight: 500;
+  line-height: 1.35;
+}
+
+.chips,
+.infoRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.chips {
+  margin-top: 16px;
+}
+
+.chips span,
+.price {
+  display: inline-flex;
+  min-height: 38px;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid rgba(255, 113, 97, 0.14);
+  border-radius: var(--sd-radius-pill);
+  background: rgba(255, 255, 255, 0.66);
+  color: var(--sd-ink-900);
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1;
+  padding: 0 14px;
+}
+
+.chips svg {
+  color: var(--sd-coral-600);
+  flex: 0 0 auto;
+}
+
+.availability svg {
+  color: currentColor;
+}
+
+.infoRow {
+  margin-top: 12px;
+  margin-bottom: 22px;
+}
+
+.availability {
+  flex: 0 1 auto;
+  border: 1px solid rgba(255, 113, 97, 0.14);
+  box-shadow: 0 10px 22px rgba(170, 91, 79, 0.045);
+}
+
+.infoRow .availability {
+  background: rgba(255, 255, 255, 0.92);
+  color: var(--sd-ink-900);
+}
+
+.infoRow .availability svg {
+  color: var(--sd-coral-600);
+}
+
+.price {
+  margin-left: auto;
+  color: var(--sd-coral-600);
+  font-size: 22px;
+  font-weight: 800;
+  padding-right: 18px;
+  padding-left: 18px;
+}
+
+.detailsButton {
+  display: inline-flex;
+  min-height: 58px;
+  width: 100%;
+  align-items: center;
+  justify-content: center;
+  gap: 26px;
+  margin-top: auto;
+  border: 0;
+  border-radius: var(--sd-radius-pill);
+  background: linear-gradient(135deg, var(--sd-coral-500) 0%, var(--sd-coral-600) 100%);
+  color: var(--sd-white);
+  cursor: pointer;
+  font: inherit;
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1;
+  padding: 0 24px;
+  box-shadow: var(--sd-shadow-cta);
+  transition:
+    box-shadow 160ms ease,
+    transform 160ms ease;
+}
+
+.detailsButton:hover {
+  box-shadow: 0 16px 28px rgba(252, 66, 56, 0.26);
+  transform: translateY(-1px);
+}
+
+@media (max-width: 1180px) {
+  .section {
+    padding: 76px 28px 60px;
+  }
+
+  .inner {
+    width: 100%;
+  }
+
+  .title {
+    font-size: clamp(42px, 7vw, 54px);
+  }
+
+  .subtitle {
+    font-size: 19px;
+  }
+
+  .grid {
+    grid-template-columns: 1fr;
+    gap: 22px;
+  }
+
+  .card {
+    min-height: 0;
+  }
+
+  .imageWrap {
+    height: 260px;
+  }
+
+  .eventImage {
+    width: min(452px, 86vw);
+    max-height: 260px;
+  }
+
+  .titleDecor {
+    opacity: 0.4;
+  }
+}
+
+@media (max-width: 700px) {
+  .section {
+    scroll-margin-top: 96px;
+    padding: 56px 12px 44px;
+  }
+
+  .header {
+    margin-bottom: 26px;
+  }
+
+  .title {
+    font-size: 34px;
+  }
+
+  .subtitle {
+    margin-top: 12px;
+    font-size: 15px;
+  }
+
+  .grid {
+    gap: 16px;
+  }
+
+  .card {
+    min-height: 0;
+    padding: 18px 18px 20px;
+  }
+
+  .dateBadge {
+    top: 15px;
+    left: 16px;
+    width: 68px;
+    height: 74px;
+    border-radius: 16px;
+  }
+
+  .dateBadge span {
+    font-size: 32px;
+  }
+
+  .dateBadge small {
+    margin-top: 6px;
+    font-size: 16px;
+  }
+
+  .imageWrap {
+    height: 218px;
+    margin: 0 -22px 0;
+  }
+
+  .eventImage {
+    width: min(360px, 96vw);
+    max-height: 218px;
+    transform: scale(1.17);
+  }
+
+  .chairsImage {
+    transform: translateY(10px) scale(1.17);
+  }
+
+  .chairsSceneImage {
+    width: min(376px, 96vw);
+    transform: translateY(5px) scale(1.16);
+  }
+
+  .loungeImage {
+    width: min(356px, 96vw);
+    transform: translateY(6px) scale(1.15);
+  }
+
+  .card h3 {
+    margin-top: 14px;
+    font-size: 24px;
+  }
+
+  .dateLine {
+    font-size: 16px;
+  }
+
+  .chips span,
+  .price {
+    min-height: 34px;
+    font-size: 13px;
+    padding: 0 11px;
+  }
+
+  .price {
+    font-size: 18px;
+    margin-left: 0;
+  }
+
+  .detailsButton {
+    min-height: 52px;
+    gap: 18px;
+    font-size: 16px;
+  }
+
+  .titleDecor {
+    display: none;
+  }
+}

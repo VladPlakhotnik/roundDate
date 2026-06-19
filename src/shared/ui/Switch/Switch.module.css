@@ -1,0 +1,72 @@
+.root {
+  position: relative;
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  border: 1px solid rgba(112, 123, 135, 0.18);
+  border-radius: 999px;
+  background: #eef0f3;
+  cursor: pointer;
+  padding: 0;
+  transition:
+    background 160ms ease,
+    border-color 160ms ease,
+    box-shadow 160ms ease,
+    opacity 160ms ease;
+}
+
+.root:focus-visible {
+  outline: 3px solid rgba(255, 90, 82, 0.28);
+  outline-offset: 3px;
+}
+
+.root:disabled {
+  cursor: not-allowed;
+  opacity: 0.72;
+}
+
+.root[data-active="true"] {
+  border-color: rgba(252, 66, 56, 0.25);
+  background: linear-gradient(135deg, var(--sd-coral-500), var(--sd-coral-600));
+  box-shadow: 0 10px 18px rgba(252, 66, 56, 0.14);
+}
+
+.thumb {
+  position: absolute;
+  border-radius: 999px;
+  background: var(--sd-white);
+  box-shadow: 0 5px 12px rgba(101, 51, 44, 0.12);
+  transition: transform 160ms ease;
+}
+
+.root[data-active="true"] .thumb {
+  transform: translateX(var(--switch-thumb-offset));
+}
+
+.sm {
+  --switch-thumb-offset: 20px;
+
+  width: 44px;
+  height: 24px;
+}
+
+.sm .thumb {
+  top: 2px;
+  left: 2px;
+  width: 18px;
+  height: 18px;
+}
+
+.md {
+  --switch-thumb-offset: 22px;
+
+  width: 50px;
+  height: 28px;
+}
+
+.md .thumb {
+  top: 3px;
+  left: 3px;
+  width: 20px;
+  height: 20px;
+}

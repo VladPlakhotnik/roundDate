@@ -1,0 +1,283 @@
+.section {
+  position: relative;
+  scroll-margin-top: 24px;
+  overflow: hidden;
+  background: transparent;
+  padding: 94px 0 88px;
+}
+
+.inner {
+  position: relative;
+  z-index: 2;
+  width: min(1344px, calc(100vw - 96px));
+  margin: 0 auto;
+}
+
+.header {
+  max-width: 880px;
+  margin: 0 auto 46px;
+  text-align: center;
+}
+
+.title {
+  margin: 0;
+  color: var(--sd-ink-900);
+  font-size: 58px;
+  font-weight: 800;
+  letter-spacing: 0;
+  line-height: 1.08;
+}
+
+.title span {
+  color: var(--sd-coral-600);
+}
+
+.subtitle {
+  max-width: 570px;
+  margin: 18px auto 0;
+  color: var(--sd-ink-600);
+  font-size: 21px;
+  font-weight: 500;
+  line-height: 1.48;
+}
+
+.gallery {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  grid-template-rows: 306px 226px;
+  gap: 26px 24px;
+}
+
+.photoCard {
+  position: relative;
+  z-index: 2;
+  display: block;
+  overflow: hidden;
+  margin: 0;
+  border-radius: var(--sd-radius-lg);
+  background: rgba(255, 255, 255, 0.58);
+  box-shadow: 0 24px 58px rgba(95, 55, 47, 0.11);
+}
+
+.photoCard img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.photoOne {
+  grid-column: 1 / 5;
+  grid-row: 1;
+  height: 318px;
+  align-self: end;
+  transform: rotate(-1.6deg);
+}
+
+.photoTwo {
+  grid-column: 5 / 9;
+  grid-row: 1;
+  height: 252px;
+  align-self: start;
+}
+
+.photoThree {
+  grid-column: 9 / 13;
+  grid-row: 1;
+  height: 306px;
+  align-self: start;
+  transform: rotate(-1.4deg);
+}
+
+.photoFour {
+  grid-column: 1 / 6;
+  grid-row: 2;
+  height: 222px;
+}
+
+.photoFive {
+  grid-column: 9 / 13;
+  grid-row: 2;
+  height: 226px;
+}
+
+.quoteCard {
+  position: relative;
+  z-index: 3;
+  grid-column: 6 / 9;
+  grid-row: 2;
+  display: flex;
+  height: 270px;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  align-self: start;
+  border: 1px solid rgba(255, 113, 97, 0.13);
+  border-radius: var(--sd-radius-lg);
+  background: rgba(255, 249, 247, 0.72);
+  color: var(--sd-ink-800);
+  box-shadow: 0 20px 56px rgba(170, 91, 79, 0.055);
+  text-align: center;
+  transform: translateY(-48px);
+  backdrop-filter: blur(14px);
+}
+
+.quoteCard span {
+  color: var(--sd-coral-500);
+  font-size: 48px;
+  font-weight: 800;
+  line-height: 0.65;
+}
+
+.quoteCard p {
+  max-width: 210px;
+  margin: 20px 0 0;
+  font-size: 20px;
+  font-weight: 500;
+  line-height: 1.45;
+}
+
+.quoteCard i {
+  margin-top: 28px;
+  color: var(--sd-coral-500);
+  font-style: normal;
+  font-size: 32px;
+  line-height: 1;
+}
+
+.sparkle {
+  position: absolute;
+  display: block;
+  z-index: 1;
+  width: 42px;
+  height: auto;
+  object-fit: contain;
+  opacity: 0.86;
+  pointer-events: none;
+  filter: drop-shadow(0 14px 24px rgba(255, 90, 82, 0.14));
+  user-select: none;
+}
+
+.sparkleLeft {
+  top: 196px;
+  left: max(260px, calc((100vw - 1344px) / 2 + 226px));
+  transform: rotate(-9deg);
+}
+
+.sparkleRight {
+  top: 198px;
+  right: max(260px, calc((100vw - 1344px) / 2 + 226px));
+  width: 36px;
+  transform: rotate(8deg);
+}
+
+@media (max-width: 1180px) {
+  .section {
+    padding: 76px 28px 66px;
+  }
+
+  .inner {
+    width: 100%;
+  }
+
+  .title {
+    font-size: clamp(42px, 7vw, 54px);
+  }
+
+  .subtitle {
+    font-size: 19px;
+  }
+
+  .gallery {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-rows: none;
+    gap: 18px;
+  }
+
+  .photoCard,
+  .quoteCard {
+    grid-column: auto;
+    grid-row: auto;
+    height: auto;
+    min-height: 0;
+    transform: none;
+  }
+
+  .photoCard {
+    aspect-ratio: 1.46;
+  }
+
+  .photoThree {
+    aspect-ratio: 1.54;
+  }
+
+  .photoFour,
+  .photoFive {
+    aspect-ratio: 1.92;
+  }
+
+  .quoteCard {
+    min-height: 230px;
+  }
+
+}
+
+@media (max-width: 700px) {
+  .section {
+    scroll-margin-top: 96px;
+    padding: 58px 12px 50px;
+  }
+
+  .header {
+    margin-bottom: 26px;
+  }
+
+  .title {
+    font-size: 34px;
+  }
+
+  .subtitle {
+    max-width: 340px;
+    margin-top: 12px;
+    font-size: 15px;
+  }
+
+  .gallery {
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+
+  .photoCard {
+    aspect-ratio: 1.36;
+    border-radius: 20px;
+  }
+
+  .photoFour,
+  .photoFive {
+    aspect-ratio: 1.68;
+  }
+
+  .quoteCard {
+    min-height: 196px;
+    border-radius: 20px;
+  }
+
+  .quoteCard span {
+    font-size: 40px;
+  }
+
+  .quoteCard p {
+    max-width: 220px;
+    font-size: 17px;
+  }
+
+  .quoteCard i {
+    margin-top: 20px;
+    font-size: 28px;
+  }
+
+  .sparkle {
+    display: none;
+  }
+}

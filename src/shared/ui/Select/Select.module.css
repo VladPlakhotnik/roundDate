@@ -1,0 +1,195 @@
+.field {
+  position: relative;
+  display: grid;
+  gap: 8px;
+}
+
+.label {
+  color: var(--sd-ink-900);
+  font-size: 15px;
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+.hiddenInput {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.trigger {
+  position: relative;
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: 14px;
+  border: var(--sd-control-border);
+  border-radius: var(--sd-control-radius);
+  background: var(--sd-control-background);
+  color: var(--sd-ink-900);
+  cursor: pointer;
+  font: inherit;
+  outline: none;
+  text-align: left;
+  transition:
+    border-color 160ms ease,
+    box-shadow 160ms ease,
+    background 160ms ease;
+}
+
+.triggerSm {
+  height: var(--sd-control-height-sm);
+  padding: 0 var(--sd-control-padding-x-sm);
+  font-size: var(--sd-control-font-size-sm);
+}
+
+.triggerMd {
+  height: var(--sd-control-height-md);
+  padding: 0 var(--sd-control-padding-x-md);
+  font-size: var(--sd-control-font-size-md);
+}
+
+.triggerLg {
+  height: var(--sd-control-height-lg);
+  padding: 0 var(--sd-control-padding-x-lg);
+  font-size: var(--sd-control-font-size-lg);
+}
+
+.triggerXl {
+  height: var(--sd-control-height-xl);
+  padding: 0 var(--sd-control-padding-x-xl);
+  font-size: var(--sd-control-font-size-xl);
+}
+
+.trigger:hover:not(:disabled),
+.trigger[aria-expanded="true"] {
+  border-color: var(--sd-control-border-hover);
+  background: var(--sd-control-background-hover);
+}
+
+.triggerFilter {
+  gap: 9px;
+  border-color: transparent;
+  border-radius: 14px;
+  background: #f4f4f6;
+  color: var(--sd-ink-600);
+}
+
+.triggerFilter:hover:not(:disabled),
+.triggerFilter[aria-expanded="true"] {
+  border-color: rgba(96, 102, 112, 0.1);
+  background: #eeeef1;
+}
+
+.trigger:focus-visible {
+  border-color: var(--sd-control-border-focus);
+  box-shadow: var(--sd-control-focus-ring);
+}
+
+.trigger:disabled {
+  cursor: not-allowed;
+  opacity: 0.56;
+}
+
+.leadingIcon,
+.chevron {
+  display: inline-flex;
+  flex: 0 0 auto;
+  color: var(--sd-coral-600);
+}
+
+.triggerFilter .leadingIcon,
+.triggerFilter .chevron {
+  color: var(--sd-ink-500);
+}
+
+.value {
+  min-width: 0;
+  flex: 1 1 auto;
+  overflow: hidden;
+  color: var(--sd-ink-900);
+  font-weight: 700;
+  line-height: 1.2;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.placeholder {
+  color: var(--sd-ink-500);
+  font-weight: 600;
+}
+
+.triggerFilter .value,
+.triggerFilter .placeholder {
+  color: var(--sd-ink-600);
+  font-weight: 800;
+}
+
+.chevron {
+  transition: transform 160ms ease;
+}
+
+.chevronOpen {
+  transform: rotate(180deg);
+}
+
+.popover {
+  position: fixed;
+  z-index: 140;
+  display: grid;
+  gap: 6px;
+  box-sizing: border-box;
+  overflow: auto;
+  border: 1px solid rgba(255, 113, 97, 0.18);
+  border-radius: var(--sd-radius-md);
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: 0 18px 48px rgba(170, 91, 79, 0.13);
+  padding: 8px;
+  backdrop-filter: blur(16px);
+  overscroll-behavior: contain;
+}
+
+.option {
+  display: flex;
+  min-height: 42px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border: 0;
+  border-radius: 14px;
+  background: transparent;
+  color: var(--sd-ink-900);
+  cursor: pointer;
+  font: inherit;
+  font-size: 15px;
+  font-weight: 700;
+  padding: 0 12px;
+  text-align: left;
+}
+
+.option:hover:not(:disabled),
+.optionActive,
+.optionSelected {
+  background: var(--sd-coral-050);
+  color: var(--sd-coral-600);
+}
+
+.option:disabled {
+  cursor: not-allowed;
+  opacity: 0.48;
+}
+
+.error {
+  color: #cf3028;
+  font-size: 13px;
+  line-height: 1.35;
+}
+
+.invalid .trigger {
+  border-color: var(--sd-control-error-border);
+  box-shadow: var(--sd-control-error-ring);
+}

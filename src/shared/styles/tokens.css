@@ -1,0 +1,64 @@
+:root {
+  --sd-font-sans: "Manrope", "Manrope Fallback", ui-sans-serif, system-ui, sans-serif;
+  --sd-font-mono: "Geist Mono", "Geist Mono Fallback", ui-monospace, monospace;
+
+  --sd-white: #ffffff;
+  --sd-bg: #fff6f4;
+  --sd-bg-soft: #fff9f7;
+  --sd-surface: rgba(255, 248, 246, 0.82);
+  --sd-surface-strong: rgba(255, 255, 255, 0.9);
+
+  --sd-ink-900: #080c0f;
+  --sd-ink-800: #111317;
+  --sd-ink-700: #272b31;
+  --sd-ink-600: #5f6973;
+  --sd-ink-500: #7b828a;
+
+  --sd-coral-050: #fff4f2;
+  --sd-coral-100: #ffe8e4;
+  --sd-coral-200: #ffc9c2;
+  --sd-coral-400: #ff756d;
+  --sd-coral-500: #ff5a52;
+  --sd-coral-600: #fc4238;
+
+  --sd-border: rgba(255, 113, 97, 0.18);
+  --sd-border-strong: rgba(255, 113, 97, 0.28);
+
+  --sd-radius-sm: 12px;
+  --sd-radius-md: 18px;
+  --sd-radius-lg: 24px;
+  --sd-radius-xl: 28px;
+  --sd-radius-pill: 999px;
+
+  --sd-control-height-sm: 38px;
+  --sd-control-height-md: 44px;
+  --sd-control-height-lg: 52px;
+  --sd-control-height-xl: 60px;
+  --sd-control-padding-x-sm: 14px;
+  --sd-control-padding-x-md: 16px;
+  --sd-control-padding-x-lg: 18px;
+  --sd-control-padding-x-xl: 22px;
+  --sd-control-font-size-sm: 13px;
+  --sd-control-font-size-md: 14px;
+  --sd-control-font-size-lg: 16px;
+  --sd-control-font-size-xl: 17px;
+  --sd-control-border: 1px solid rgba(255, 113, 97, 0.18);
+  --sd-control-border-hover: rgba(255, 90, 82, 0.34);
+  --sd-control-border-focus: rgba(252, 66, 56, 0.5);
+  --sd-control-background: rgba(255, 255, 255, 0.76);
+  --sd-control-background-hover: rgba(255, 255, 255, 0.92);
+  --sd-control-radius: var(--sd-radius-md);
+  --sd-control-focus-ring: 0 0 0 4px rgba(252, 66, 56, 0.11);
+  --sd-control-error-border: rgba(207, 48, 40, 0.5);
+  --sd-control-error-ring: 0 0 0 4px rgba(207, 48, 40, 0.08);
+
+  --sd-shadow-cta: 0 13px 24px rgba(252, 66, 56, 0.22);
+  --sd-shadow-card: 0 18px 52px rgba(170, 91, 79, 0.075);
+  --sd-shadow-soft: 0 24px 64px rgba(170, 91, 79, 0.12);
+
+  --background: var(--sd-bg);
+  --foreground: var(--sd-ink-900);
+  --muted: var(--sd-ink-600);
+  --accent: var(--sd-coral-500);
+  --surface: var(--sd-bg);
+}

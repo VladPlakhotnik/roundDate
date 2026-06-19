@@ -1,0 +1,41 @@
+.row {
+  display: flex;
+  justify-content: center;
+  margin-top: 18px;
+}
+
+.loadingWave {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.loadingWave i {
+  width: 5px;
+  height: 5px;
+  border-radius: 999px;
+  background: currentColor;
+  animation: load-more-wave 760ms ease-in-out infinite;
+}
+
+.loadingWave i:nth-child(2) {
+  animation-delay: 110ms;
+}
+
+.loadingWave i:nth-child(3) {
+  animation-delay: 220ms;
+}
+
+@keyframes load-more-wave {
+  0%,
+  80%,
+  100% {
+    opacity: 0.34;
+    transform: translateY(0);
+  }
+
+  40% {
+    opacity: 1;
+    transform: translateY(-3px);
+  }
+}

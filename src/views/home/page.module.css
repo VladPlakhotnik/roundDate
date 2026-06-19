@@ -1,0 +1,48 @@
+.root {
+  overflow: hidden;
+  background: var(--sd-white);
+}
+
+.topBand {
+  position: relative;
+  background:
+    radial-gradient(circle at 15% 6%, rgba(255, 255, 255, 0.92) 0 240px, transparent 560px),
+    radial-gradient(circle at 86% 7%, rgba(255, 255, 255, 0.82) 0 220px, transparent 540px),
+    radial-gradient(circle at 50% 17%, rgba(255, 255, 255, 0.54) 0 260px, transparent 660px),
+    radial-gradient(circle at 78% 58%, rgba(255, 255, 255, 0.42) 0 220px, transparent 600px),
+    linear-gradient(
+      180deg,
+      #fff9f7 0,
+      #fff1ef 520px,
+      #fff6f4 820px,
+      #fff5f3 calc(100% - 520px),
+      #fffaf9 calc(100% - 260px),
+      var(--sd-white) 100%
+    );
+}
+
+.whiteBand {
+  position: relative;
+  margin-top: -420px;
+  padding-top: 420px;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0) 0,
+    rgba(255, 250, 249, 0.52) 140px,
+    rgba(255, 253, 252, 0.88) 300px,
+    #fffdfc 420px,
+    var(--sd-white) 620px,
+    var(--sd-white) 100%
+  );
+}
+
+.waitlistBand {
+  position: relative;
+  margin-top: -220px;
+  padding-top: 220px;
+  background:
+    radial-gradient(circle at 12% 24%, rgba(255, 255, 255, 0.78) 0 190px, transparent 520px),
+    radial-gradient(circle at 88% 18%, rgba(255, 255, 255, 0.7) 0 180px, transparent 500px),
+    radial-gradient(circle at 50% 54%, rgba(255, 255, 255, 0.36) 0 250px, transparent 650px),
+    linear-gradient(180deg, rgba(255, 255, 255, 0) 0, #fffaf9 68px, #fff3f0 220px, #fff6f4 100%);
+}

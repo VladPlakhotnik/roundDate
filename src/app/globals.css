@@ -1,0 +1,37 @@
+@import "../shared/styles/tokens.css";
+@import "maplibre-gl/dist/maplibre-gl.css";
+@import "tailwindcss";
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-muted: var(--muted);
+  --color-accent: var(--accent);
+  --color-surface: var(--surface);
+  --font-sans: "Manrope", "Manrope Fallback", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "Geist Mono", "Geist Mono Fallback", ui-monospace, monospace;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--sd-font-sans);
+}
+
+button,
+a {
+  font: inherit;
+}
+
+img {
+  max-width: 100%;
+}

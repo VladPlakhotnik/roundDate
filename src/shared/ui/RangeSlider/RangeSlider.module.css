@@ -1,0 +1,138 @@
+.root {
+  display: grid;
+  gap: 14px;
+}
+
+.root[data-disabled="true"] {
+  opacity: 0.58;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.label {
+  color: var(--sd-ink-900);
+  font-size: 14px;
+  font-weight: 900;
+  line-height: 1.2;
+}
+
+.value {
+  display: inline-flex;
+  min-height: 30px;
+  align-items: center;
+  border-radius: 999px;
+  background: var(--sd-coral-050);
+  color: var(--sd-coral-600);
+  font-size: 13px;
+  font-weight: 900;
+  line-height: 1;
+  padding: 0 11px;
+  white-space: nowrap;
+}
+
+.track {
+  --range-from: 0%;
+  --range-to: 100%;
+
+  position: relative;
+  height: 34px;
+}
+
+.track::before,
+.track::after {
+  position: absolute;
+  top: 50%;
+  right: 0;
+  left: 0;
+  height: 8px;
+  border-radius: 999px;
+  content: "";
+  transform: translateY(-50%);
+}
+
+.track::before {
+  background: rgba(255, 113, 97, 0.14);
+}
+
+.track::after {
+  right: calc(100% - var(--range-to));
+  left: var(--range-from);
+  background: linear-gradient(90deg, var(--sd-coral-400), var(--sd-coral-600));
+  box-shadow: 0 8px 18px rgba(252, 66, 56, 0.16);
+}
+
+.input {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  z-index: 2;
+  width: 100%;
+  height: 34px;
+  margin: 0;
+  appearance: none;
+  background: transparent;
+  cursor: pointer;
+  outline: none;
+  pointer-events: none;
+  transform: translateY(-50%);
+}
+
+.input:disabled {
+  cursor: not-allowed;
+}
+
+.input::-webkit-slider-thumb {
+  width: 22px;
+  height: 22px;
+  border: 4px solid var(--sd-white);
+  border-radius: 999px;
+  appearance: none;
+  background: var(--sd-coral-600);
+  box-shadow:
+    0 8px 18px rgba(252, 66, 56, 0.22),
+    0 0 0 1px rgba(252, 66, 56, 0.12);
+  pointer-events: auto;
+}
+
+.input::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  border: 4px solid var(--sd-white);
+  border-radius: 999px;
+  background: var(--sd-coral-600);
+  box-shadow:
+    0 8px 18px rgba(252, 66, 56, 0.22),
+    0 0 0 1px rgba(252, 66, 56, 0.12);
+  pointer-events: auto;
+}
+
+.input::-webkit-slider-runnable-track {
+  height: 34px;
+  background: transparent;
+}
+
+.input::-moz-range-track {
+  height: 34px;
+  background: transparent;
+}
+
+.input:focus-visible::-webkit-slider-thumb {
+  box-shadow:
+    0 8px 18px rgba(252, 66, 56, 0.22),
+    var(--sd-control-focus-ring);
+}
+
+.input:focus-visible::-moz-range-thumb {
+  box-shadow:
+    0 8px 18px rgba(252, 66, 56, 0.22),
+    var(--sd-control-focus-ring);
+}
+
+.inputTo {
+  z-index: 3;
+}

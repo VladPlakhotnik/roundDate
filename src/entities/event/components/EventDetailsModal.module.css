@@ -1,0 +1,575 @@
+.modalContent {
+  --modal-max-height: min(980px, calc(100vh - 48px));
+
+  height: var(--modal-max-height);
+  border-radius: 28px;
+  background-color: var(--sd-white);
+  background:
+    radial-gradient(circle at 58% 40%, rgba(255, 232, 228, 0.52), transparent 24%), var(--sd-white);
+}
+
+.modalBody {
+  height: 100%;
+  overflow: visible;
+}
+
+.shell {
+  isolation: isolate;
+  display: flex;
+  height: 100%;
+  flex-direction: column;
+  border-radius: inherit;
+  background:
+    radial-gradient(circle at 58% 41%, rgba(255, 248, 246, 0.9), transparent 26%), var(--sd-white);
+  padding: 28px 32px 18px;
+}
+
+.mapShell {
+  position: relative;
+  overflow: hidden;
+  height: 180px;
+  flex: 0 0 auto;
+  border-radius: 24px;
+  background:
+    linear-gradient(90deg, rgba(255, 255, 255, 0.3) 49%, rgba(255, 255, 255, 0) 50%) 0 0 / 74px 74px,
+    linear-gradient(rgba(255, 255, 255, 0.28) 49%, rgba(255, 255, 255, 0) 50%) 0 0 / 74px 74px,
+    linear-gradient(135deg, #f4e4dc, #d9edf8);
+}
+
+.mapCanvas,
+.mapFallback {
+  position: absolute;
+  inset: 0;
+}
+
+.mapCanvas {
+  opacity: 0.92;
+}
+
+.mapFallback {
+  background:
+    linear-gradient(25deg, transparent 42%, rgba(255, 255, 255, 0.9) 43% 48%, transparent 49%) 0 0 /
+      180px 110px,
+    linear-gradient(110deg, transparent 45%, rgba(255, 255, 255, 0.82) 46% 52%, transparent 53%) 0
+      0 / 220px 130px,
+    linear-gradient(135deg, rgba(255, 232, 228, 0.5), rgba(216, 236, 248, 0.72));
+}
+
+.mapShell::after {
+  position: absolute;
+  inset: 0;
+  background: rgba(255, 255, 255, 0.1);
+  content: "";
+  pointer-events: none;
+}
+
+.mapCity {
+  position: absolute;
+  top: 68px;
+  left: 21%;
+  z-index: 2;
+  display: grid;
+  color: var(--sd-ink-900);
+  line-height: 1.08;
+}
+
+.mapCity strong {
+  font-size: 25px;
+  font-weight: 900;
+}
+
+.mapCity span {
+  margin-top: 6px;
+  font-size: 16px;
+  font-weight: 800;
+}
+
+.mapPin {
+  position: absolute;
+  top: 44px;
+  right: 42%;
+  z-index: 3;
+  width: 39px;
+  height: 39px;
+  border: 10px solid var(--sd-coral-500);
+  border-radius: 999px 999px 999px 0;
+  background: var(--sd-white);
+  box-shadow: 0 16px 28px rgba(252, 66, 56, 0.24);
+  transform: rotate(-45deg);
+}
+
+.mapVenue {
+  position: absolute;
+  top: 51px;
+  right: 23%;
+  z-index: 3;
+  display: grid;
+  min-width: 190px;
+  gap: 3px;
+  border: 1px solid rgba(255, 113, 97, 0.12);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 16px 32px rgba(101, 51, 44, 0.12);
+  color: var(--sd-ink-900);
+  padding: 14px 18px;
+}
+
+.mapVenue strong {
+  font-size: 14px;
+  font-weight: 900;
+}
+
+.mapVenue span {
+  color: var(--sd-ink-600);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.bodyGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 360px;
+  flex: 1 1 auto;
+  gap: 32px;
+  min-height: 0;
+  margin-top: 22px;
+}
+
+.mainColumn {
+  display: grid;
+  align-content: start;
+  gap: 22px;
+  min-width: 0;
+}
+
+.infoBlock,
+.programBlock,
+.importantBlock {
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr);
+  gap: 16px;
+}
+
+.sectionIcon {
+  display: inline-flex;
+  width: 43px;
+  height: 43px;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(255, 113, 97, 0.16);
+  border-radius: 999px;
+  background: var(--sd-white);
+  box-shadow: 0 10px 22px rgba(170, 91, 79, 0.09);
+  color: var(--sd-coral-600);
+}
+
+.infoBlock h2,
+.programBlock h2,
+.importantBlock h2 {
+  margin: 0;
+  color: var(--sd-ink-900);
+  font-size: 19px;
+  font-weight: 900;
+  line-height: 1.16;
+}
+
+.infoBlock p {
+  margin: 6px 0 0;
+  color: var(--sd-ink-600);
+  font-size: 15px;
+  font-weight: 650;
+  line-height: 1.48;
+}
+
+.timeline {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 16px;
+  margin-top: 18px;
+}
+
+.timeline::before {
+  position: absolute;
+  top: 8px;
+  right: 7%;
+  left: 7%;
+  height: 2px;
+  background: rgba(255, 113, 97, 0.2);
+  content: "";
+}
+
+.timelineItem {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  gap: 5px;
+  color: var(--sd-ink-900);
+}
+
+.timelineDot {
+  width: 9px;
+  height: 9px;
+  border-radius: 999px;
+  background: var(--sd-coral-500);
+  box-shadow: 0 0 0 5px rgba(255, 113, 97, 0.12);
+}
+
+.timelineItem strong {
+  margin-top: 4px;
+  font-size: 14px;
+  font-weight: 900;
+}
+
+.timelineItem small {
+  color: var(--sd-ink-700);
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+.importantGrid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.importantItem {
+  display: grid;
+  min-height: 76px;
+  align-content: start;
+  gap: 8px;
+  border: 1px solid rgba(255, 113, 97, 0.14);
+  border-radius: 13px;
+  background: rgba(255, 255, 255, 0.94);
+  color: var(--sd-ink-700);
+  font-size: 12px;
+  font-weight: 750;
+  line-height: 1.25;
+  padding: 12px;
+}
+
+.importantItem svg {
+  color: var(--sd-coral-600);
+}
+
+.summaryCard {
+  align-self: start;
+  border: 1px solid rgba(255, 113, 97, 0.18);
+  border-radius: 22px;
+  background:
+    radial-gradient(circle at 88% 12%, rgba(255, 232, 228, 0.72), transparent 18%),
+    rgba(255, 255, 255, 0.94);
+  box-shadow: 0 18px 50px rgba(170, 91, 79, 0.08);
+  padding: 24px;
+}
+
+.summaryHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.summaryHeader h2 {
+  margin: 0;
+  color: var(--sd-ink-900);
+  font-size: 25px;
+  font-weight: 900;
+  line-height: 1.16;
+}
+
+.summaryHeader svg {
+  flex: 0 0 auto;
+  color: var(--sd-coral-400);
+  filter: drop-shadow(0 8px 16px rgba(252, 66, 56, 0.2));
+}
+
+.summaryList {
+  display: grid;
+  gap: 14px;
+  margin-top: 18px;
+}
+
+.summaryList > div {
+  display: grid;
+  grid-template-columns: 24px minmax(0, 1fr);
+  gap: 12px;
+  color: var(--sd-ink-900);
+  font-size: 15px;
+  font-weight: 800;
+}
+
+.summaryList svg,
+.spotsLine svg,
+.priceBlock svg {
+  color: var(--sd-coral-600);
+}
+
+.summaryList span {
+  display: grid;
+  gap: 4px;
+}
+
+.summaryList strong {
+  font-weight: 900;
+}
+
+.summaryList a {
+  width: fit-content;
+  color: var(--sd-coral-600);
+  font-size: 14px;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.statusStack {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 18px;
+}
+
+.spotsLine {
+  display: flex;
+  gap: 12px;
+  margin-top: 18px;
+  border-bottom: 1px solid rgba(255, 113, 97, 0.14);
+  color: var(--sd-ink-800);
+  font-size: 15px;
+  font-weight: 800;
+  padding-bottom: 18px;
+}
+
+.spotsLine strong {
+  color: var(--sd-coral-600);
+  font-size: 24px;
+  font-weight: 900;
+}
+
+.priceBlock {
+  display: grid;
+  grid-template-columns: 24px minmax(0, 1fr);
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.priceBlock span {
+  display: grid;
+  color: var(--sd-ink-600);
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.priceBlock strong {
+  margin-top: 4px;
+  color: var(--sd-ink-900);
+  font-size: 23px;
+  font-weight: 900;
+}
+
+.priceBlock small {
+  margin-top: 3px;
+  color: var(--sd-ink-500);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.organizerCard {
+  display: grid;
+  grid-template-columns: 56px minmax(0, 1fr);
+  gap: 14px;
+  margin-top: 18px;
+  border: 1px solid rgba(255, 113, 97, 0.14);
+  border-radius: 17px;
+  background: rgba(255, 244, 242, 0.65);
+  padding: 14px;
+}
+
+.organizerAvatar {
+  display: inline-flex;
+  width: 56px;
+  height: 56px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #ffe8e4, #ff756d);
+  color: var(--sd-white);
+  font-size: 22px;
+  font-weight: 900;
+}
+
+.organizerCard div:last-child {
+  display: grid;
+  min-width: 0;
+  gap: 2px;
+}
+
+.organizerCard small {
+  color: var(--sd-ink-500);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.organizerCard strong {
+  color: var(--sd-ink-900);
+  font-size: 15px;
+  font-weight: 900;
+}
+
+.organizerCard span,
+.organizerCard a {
+  color: var(--sd-ink-600);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.organizerCard a {
+  display: inline-flex;
+  width: fit-content;
+  align-items: center;
+  gap: 6px;
+  margin-top: 5px;
+  color: var(--sd-coral-600);
+  text-decoration: none;
+}
+
+.footerBar {
+  flex: 0 0 auto;
+  z-index: 4;
+  margin: 20px -32px -18px;
+  background: var(--sd-white);
+  padding: 18px 32px 14px;
+}
+
+.footerActions {
+  display: grid;
+  grid-template-columns: 250px minmax(260px, 1fr) 360px;
+  gap: 98px;
+}
+
+.footerActions > * {
+  width: 100%;
+}
+
+.disabledAction {
+  box-shadow: none;
+}
+
+.securityNote {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin: 14px 0 0;
+  color: var(--sd-ink-500);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+@media (max-width: 1180px) {
+  .bodyGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .summaryCard {
+    width: min(100%, 520px);
+  }
+
+  .footerActions {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 14px;
+  }
+}
+
+@media (max-width: 760px) {
+  .modalContent {
+    height: auto;
+  }
+
+  .modalBody {
+    max-height: inherit;
+    overflow: auto;
+  }
+
+  .shell {
+    display: block;
+    height: auto;
+    padding: 18px;
+  }
+
+  .mapShell {
+    height: 190px;
+    border-radius: 20px;
+  }
+
+  .mapCity {
+    top: 28px;
+    left: 24px;
+  }
+
+  .mapVenue {
+    top: auto;
+    right: 16px;
+    bottom: 16px;
+    left: 16px;
+  }
+
+  .mapPin {
+    top: 72px;
+    right: 46px;
+  }
+
+  .infoBlock,
+  .programBlock,
+  .importantBlock {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .timeline,
+  .importantGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .timeline {
+    gap: 14px;
+    margin-left: 5px;
+  }
+
+  .timeline::before {
+    top: 5px;
+    bottom: 18px;
+    left: 4px;
+    width: 2px;
+    height: auto;
+  }
+
+  .timelineItem {
+    grid-template-columns: 18px minmax(0, 1fr);
+    column-gap: 10px;
+  }
+
+  .timelineDot {
+    grid-row: span 2;
+  }
+
+  .timelineItem strong {
+    margin-top: 0;
+  }
+
+  .summaryCard {
+    padding: 20px;
+  }
+
+  .footerBar {
+    bottom: -18px;
+    margin: 22px -18px -18px;
+    padding: 22px 18px 14px;
+  }
+
+  .footerActions {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+}

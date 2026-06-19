@@ -1,0 +1,54 @@
+.root {
+  display: inline-flex;
+  width: fit-content;
+  max-width: 100%;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  border-radius: var(--sd-radius-pill);
+  font-weight: 800;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.root svg {
+  flex: 0 0 auto;
+}
+
+.root span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sm {
+  min-height: 26px;
+  font-size: 12px;
+  padding: 0 10px;
+}
+
+.md {
+  min-height: 34px;
+  font-size: 14px;
+  padding: 0 14px;
+}
+
+.success {
+  background: #dcf7df;
+  color: #168329;
+}
+
+.warning {
+  background: #fff0d8;
+  color: #d5790a;
+}
+
+.info {
+  background: #e5f1ff;
+  color: #1f6fd1;
+}
+
+.neutral {
+  background: var(--sd-coral-050);
+  color: var(--sd-coral-600);
+}
