@@ -22,6 +22,83 @@
       "when": 1781712015152,
       "tag": "0002_bent_vapor",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1781940878179,
+      "tag": "0003_optimal_fat_cobra",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1781940985739,
+      "tag": "0004_even_joshua_kane",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1782011321427,
+      "tag": "0005_omniscient_ezekiel",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1782013785810,
+      "tag": "0006_complete_shadow_king",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1782015200000,
+      "tag": "0007_badge_numbers_and_event_likes",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1782854800000,
+      "tag": "0008_admin_audit_logs",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1782940800000,
+      "tag": "0009_add_manager_role",
+      "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1782957134168,
+      "tag": "0010_hot_the_renegades",
+      "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1782958200000,
+      "tag": "0011_profile_notifications",
+      "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1783094400000,
+      "tag": "0012_newsletter_subscriptions",
+      "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1783180800000,
+      "tag": "0013_email_campaigns",
+      "breakpoints": true
     }
   ]
 }

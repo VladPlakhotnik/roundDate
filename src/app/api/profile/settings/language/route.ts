@@ -3,24 +3,26 @@ import { z } from "zod";
 
 import { getDb } from "@/shared/server/db/client";
 import { profiles } from "@/shared/server/db/schema";
+import { localeCookieName, locales } from "@/shared/i18n/locales";
 
-import { getSettingsSession, jsonError, readJson } from "../_utils";
+import { getSettingsSession, getSettingsTranslator, jsonError, readJson } from "../_utils";
 
 const languagePayloadSchema = z.object({
-  locale: z.enum(["ru", "en", "pl"]),
+  locale: z.enum(locales),
 });
 
 export async function PATCH(request: Request) {
+  const t = getSettingsTranslator(request);
   const session = await getSettingsSession(request);
 
   if (!session?.user) {
-    return jsonError("Unauthorized", 401);
+    return jsonError(t("api.common.unauthorized"), 401);
   }
 
   const parsed = languagePayloadSchema.safeParse(await readJson(request));
 
   if (!parsed.success) {
-    return jsonError("Некорректный язык интерфейса.");
+    return jsonError(t("api.settings.invalidLanguage"));
   }
 
   const now = new Date();
@@ -40,5 +42,12 @@ export async function PATCH(request: Request) {
       target: profiles.userId,
     });
 
-  return NextResponse.json({ locale: parsed.data.locale, ok: true });
+  const response = NextResponse.json({ locale: parsed.data.locale, ok: true });
+  response.cookies.set(localeCookieName, parsed.data.locale, {
+    maxAge: 60 * 60 * 24 * 365,
+    path: "/",
+    sameSite: "lax",
+  });
+
+  return response;
 }

@@ -1,4 +1,5 @@
 import type {
+  IControl,
   Map as MapLibreMap,
   MapStyleImageMissingEvent,
   StyleSpecification,
@@ -103,6 +104,163 @@ export function bindMissingMapStyleImages(map: MapLibreMap) {
   return () => {
     map.off("styleimagemissing", handleStyleImageMissing);
   };
+}
+
+type EventAttributionControlConstructor = new (options: {
+  compact?: boolean;
+}) => IControl;
+
+export function createCollapsedEventAttributionControl(
+  AttributionControl: EventAttributionControlConstructor,
+) {
+  const attributionControl = new AttributionControl({ compact: true });
+  const originalOnAdd = attributionControl.onAdd.bind(attributionControl);
+
+  attributionControl.onAdd = (map) => {
+    const control = originalOnAdd(map);
+
+    collapseEventAttributionElement(control);
+
+    return control;
+  };
+
+  return attributionControl;
+}
+
+export function bindEventAttributionControl(map: MapLibreMap, container: HTMLElement | null) {
+  const control = getEventAttributionControl(container);
+  const nativeButton = control?.querySelector<HTMLElement>(".maplibregl-ctrl-attrib-button");
+
+  if (!control || !nativeButton) {
+    return () => undefined;
+  }
+
+  control.dataset.eventAttributionBound = "true";
+  nativeButton.setAttribute("aria-expanded", "false");
+
+  const refreshAttributionControl = () => {
+    syncDefaultCollapsedEventAttributionControl(container);
+  };
+  let didHandlePointerDown = false;
+  const isEventAttributionControlClick = (event: Event) => {
+    const target = event.target instanceof Node ? event.target : null;
+    const targetElement = target instanceof Element ? target : target?.parentElement ?? null;
+
+    return !targetElement?.closest("a");
+  };
+  const toggleEventAttributionControl = (event: Event) => {
+    if (!isEventAttributionControlClick(event)) {
+      return;
+    }
+
+    event.preventDefault();
+    event.stopImmediatePropagation();
+
+    const nextControl = getEventAttributionControl(container);
+
+    if (!nextControl?.classList.contains("maplibregl-compact")) {
+      return;
+    }
+
+    if (
+      nextControl.dataset.eventAttributionUserOpen === "true" &&
+      nextControl.classList.contains("maplibregl-compact-show")
+    ) {
+      collapseEventAttributionControl(container);
+      return;
+    }
+
+    nextControl.dataset.eventAttributionUserOpen = "true";
+    nextControl.setAttribute("open", "");
+    nextControl.classList.add("maplibregl-compact-show");
+    setEventAttributionButtonExpanded(nextControl, true);
+  };
+  const handleEventAttributionPointerDown = (event: Event) => {
+    if (!isEventAttributionControlClick(event)) {
+      return;
+    }
+
+    didHandlePointerDown = true;
+    toggleEventAttributionControl(event);
+  };
+  const handleEventAttributionClick = (event: Event) => {
+    if (!didHandlePointerDown) {
+      toggleEventAttributionControl(event);
+      return;
+    }
+
+    didHandlePointerDown = false;
+
+    if (!isEventAttributionControlClick(event)) {
+      return;
+    }
+
+    event.preventDefault();
+    event.stopImmediatePropagation();
+  };
+  const observer = new MutationObserver(refreshAttributionControl);
+
+  refreshAttributionControl();
+  control.addEventListener("pointerdown", handleEventAttributionPointerDown, true);
+  control.addEventListener("click", handleEventAttributionClick, true);
+  observer.observe(control, {
+    childList: true,
+    subtree: true,
+  });
+  map.on("styledata", refreshAttributionControl);
+  map.on("sourcedata", refreshAttributionControl);
+
+  return () => {
+    control.removeEventListener("pointerdown", handleEventAttributionPointerDown, true);
+    control.removeEventListener("click", handleEventAttributionClick, true);
+    nativeButton.removeAttribute("aria-expanded");
+    delete control.dataset.eventAttributionBound;
+    observer.disconnect();
+    map.off("styledata", refreshAttributionControl);
+    map.off("sourcedata", refreshAttributionControl);
+  };
+}
+
+function syncDefaultCollapsedEventAttributionControl(container: HTMLElement | null) {
+  const control = getEventAttributionControl(container);
+
+  if (control?.dataset.eventAttributionUserOpen !== "true") {
+    collapseEventAttributionControl(container);
+  }
+}
+
+function collapseEventAttributionControl(container: HTMLElement | null) {
+  collapseEventAttributionElement(getEventAttributionControl(container));
+}
+
+function collapseEventAttributionElement(control: HTMLElement | null) {
+  if (!control?.classList.contains("maplibregl-compact")) {
+    return;
+  }
+
+  if (control.dataset.eventAttributionUserOpen) {
+    delete control.dataset.eventAttributionUserOpen;
+  }
+
+  if (control.classList.contains("maplibregl-compact-show")) {
+    control.classList.remove("maplibregl-compact-show");
+  }
+
+  if (control.hasAttribute("open")) {
+    control.removeAttribute("open");
+  }
+
+  setEventAttributionButtonExpanded(control, false);
+}
+
+function setEventAttributionButtonExpanded(control: HTMLElement, isExpanded: boolean) {
+  const button = control.querySelector<HTMLElement>(".maplibregl-ctrl-attrib-button");
+
+  button?.setAttribute("aria-expanded", String(isExpanded));
+}
+
+function getEventAttributionControl(container: HTMLElement | null) {
+  return container?.querySelector<HTMLElement>(".maplibregl-ctrl-attrib") ?? null;
 }
 
 export type EventMapStyle = string | StyleSpecification;

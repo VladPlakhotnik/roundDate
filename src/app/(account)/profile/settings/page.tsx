@@ -1,6 +1,7 @@
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 
+import { getUserPaymentHistory } from "@/entities/events/server/user-payments";
 import { getProfileOnboardingState } from "@/entities/profile/server/onboarding";
 import { ProfileSettingsView } from "@/views/profile/settings-page";
 
@@ -22,14 +23,20 @@ function getDisplayName(input: {
     return authName;
   }
 
-  return input.email.split("@")[0] ?? "Пользователь";
+  return input.email.split("@")[0] ?? "Użytkownik";
 }
 
 export default async function ProfileSettingsPage() {
   const requestHeaders = await headers();
-  const onboardingState = await getProfileOnboardingState({
-    headers: new Headers(requestHeaders),
-  });
+  const normalizedHeaders = new Headers(requestHeaders);
+  const [onboardingState, payments] = await Promise.all([
+    getProfileOnboardingState({
+      headers: normalizedHeaders,
+    }),
+    getUserPaymentHistory({
+      headers: normalizedHeaders,
+    }),
+  ]);
 
   if (!onboardingState) {
     redirect("/");
@@ -62,6 +69,7 @@ export default async function ProfileSettingsPage() {
         preferredTimes: onboardingState.profile.preferredTimes,
         provider: onboardingState.provider,
       }}
+      payments={payments}
     />
   );
 }

@@ -1,0 +1,468 @@
+.page {
+  display: grid;
+  gap: 18px;
+}
+
+.headerCard {
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.96), rgba(255, 247, 245, 0.9)),
+    rgba(255, 255, 255, 0.92);
+  box-shadow: 0 24px 70px rgba(15, 23, 42, 0.06);
+}
+
+.headerContent {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 28px;
+}
+
+.headerContent h1,
+.headerContent p {
+  margin: 0;
+}
+
+.headerContent h1 {
+  margin-top: 12px;
+  color: #111827;
+  font-size: 34px;
+  font-weight: 900;
+  line-height: 1.08;
+}
+
+.headerContent p {
+  max-width: 760px;
+  margin-top: 10px;
+  color: #64748b;
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.55;
+}
+
+.headerIcon {
+  display: inline-flex;
+  width: 56px;
+  height: 56px;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  border-radius: 18px;
+  background: #ffffff;
+  color: #f04438;
+  box-shadow: 0 16px 38px rgba(240, 68, 56, 0.13);
+}
+
+.summaryGrid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.summaryCard {
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr);
+  gap: 13px;
+  align-items: center;
+  padding: 16px;
+}
+
+.summaryCard > span {
+  display: inline-flex;
+  width: 44px;
+  height: 44px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 14px;
+  background: #fff1ee;
+  color: #f04438;
+}
+
+.summaryCard > span[data-tone="numbers"] {
+  background: #eff6ff;
+  color: #2563eb;
+}
+
+.summaryCard > span[data-tone="likes"] {
+  background: #f0fdf4;
+  color: #16a34a;
+}
+
+.summaryCard > span[data-tone="matches"] {
+  background: #fff7ed;
+  color: #ea580c;
+}
+
+.summaryCard small,
+.summaryCard strong {
+  display: block;
+}
+
+.summaryCard small {
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.summaryCard strong {
+  margin-top: 4px;
+  color: #111827;
+  font-size: 25px;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.tableHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+}
+
+.filters {
+  display: grid;
+  grid-template-columns: minmax(240px, 1fr) 170px auto auto;
+  gap: 10px;
+  align-items: end;
+}
+
+.searchField {
+  min-width: 0;
+}
+
+.resetLink {
+  display: inline-flex;
+  min-height: var(--sd-control-height-sm);
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  border-radius: 12px;
+  background: #ffffff;
+  color: #475569;
+  font-size: var(--sd-control-font-size-sm);
+  font-weight: 850;
+  padding: 0 var(--sd-control-padding-x-sm);
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.eventCell,
+.participantCell,
+.likesMetrics,
+.contactText {
+  display: grid;
+  min-width: 0;
+  gap: 4px;
+}
+
+.eventCell {
+  min-width: 250px;
+}
+
+.eventCell strong,
+.participantCell strong {
+  color: #111827;
+  font-size: 14px;
+  font-weight: 900;
+  line-height: 1.2;
+}
+
+.eventCell small,
+.participantCell small,
+.contactText,
+.likesMetrics small,
+.modalFooter p {
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 1.35;
+}
+
+.metricText,
+.genderMetric,
+.attendanceMetrics span,
+.likesMetrics span {
+  color: #111827;
+  font-size: 13px;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+.genderMetric,
+.attendanceMetrics span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.genderMetric svg {
+  color: #f04438;
+}
+
+.attendanceMetrics {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.rowActions {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
+}
+
+.attendanceMetrics span:first-child svg {
+  color: #16a34a;
+}
+
+.attendanceMetrics span:last-child svg {
+  color: #ea580c;
+}
+
+.modalContent {
+  --modal-max-height: min(92dvh, 880px);
+  --modal-width: 1180px;
+}
+
+.modalBody {
+  padding: 0 28px 26px;
+}
+
+.modalForm {
+  display: grid;
+  gap: 18px;
+}
+
+.modalSummaryGrid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.summaryPill {
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr);
+  gap: 2px 10px;
+  align-items: center;
+  min-width: 0;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  border-radius: 14px;
+  background: #ffffff;
+  padding: 12px;
+}
+
+.summaryPill svg {
+  grid-row: span 2;
+  color: #f04438;
+}
+
+.summaryPill span {
+  color: #64748b;
+  font-size: 11px;
+  font-weight: 900;
+  line-height: 1.2;
+  text-transform: uppercase;
+}
+
+.summaryPill strong {
+  color: #111827;
+  font-size: 18px;
+  font-weight: 900;
+  line-height: 1.1;
+}
+
+.modalTableScroll {
+  overflow-x: auto;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  border-radius: 16px;
+}
+
+.numberBadge {
+  display: inline-flex;
+  min-width: 42px;
+  min-height: 34px;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(240, 68, 56, 0.18);
+  border-radius: 10px;
+  background: #fff1ee;
+  color: #f04438;
+  font-size: 14px;
+  font-weight: 950;
+}
+
+.participantCell {
+  min-width: 190px;
+}
+
+.likesInputLabel {
+  display: block;
+}
+
+.statusSelectField {
+  min-width: 170px;
+}
+
+.likesInputLabel {
+  min-width: 230px;
+}
+
+.likesInput {
+  width: 100%;
+  min-width: 0;
+  border: 1px solid rgba(15, 23, 42, 0.1);
+  border-radius: 12px;
+  background: #ffffff;
+  color: #111827;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 800;
+  outline: none;
+  transition:
+    border-color 160ms ease,
+    box-shadow 160ms ease;
+}
+
+.likesInput {
+  min-height: 40px;
+  padding: 0 12px;
+}
+
+.likesInput:focus {
+  border-color: rgba(240, 68, 56, 0.36);
+  box-shadow: 0 0 0 4px rgba(240, 68, 56, 0.08);
+}
+
+.contactText {
+  min-width: 210px;
+}
+
+.contactText span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.modalFooter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  border-top: 1px solid rgba(15, 23, 42, 0.08);
+  padding-top: 16px;
+}
+
+.modalFooter p {
+  margin: 0;
+}
+
+.modalFooterActions {
+  display: flex;
+  flex: 0 0 auto;
+  gap: 10px;
+}
+
+.confirmBody {
+  padding: 0 28px 28px;
+}
+
+.confirmForm {
+  display: grid;
+  gap: 18px;
+}
+
+.confirmText {
+  margin: 0;
+  color: #475569;
+  font-size: 14px;
+  font-weight: 750;
+  line-height: 1.55;
+}
+
+.confirmActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.emptyState {
+  display: grid;
+  justify-items: center;
+  padding: 56px 20px;
+  text-align: center;
+}
+
+.emptyState svg {
+  color: #f04438;
+}
+
+.emptyState h2,
+.emptyState p {
+  margin: 0;
+}
+
+.emptyState h2 {
+  margin-top: 14px;
+  color: #111827;
+  font-size: 21px;
+  font-weight: 900;
+}
+
+.emptyState p {
+  max-width: 420px;
+  margin-top: 8px;
+  color: #64748b;
+  font-size: 14px;
+  font-weight: 800;
+  line-height: 1.45;
+}
+
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  border: 0;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+}
+
+@media (max-width: 1120px) {
+  .summaryGrid,
+  .modalSummaryGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 720px) {
+  .headerContent,
+  .tableHeader,
+  .modalFooter {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .headerContent {
+    padding: 24px;
+  }
+
+  .summaryGrid,
+  .filters,
+  .modalSummaryGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .modalBody {
+    padding: 0 18px 22px;
+  }
+
+  .modalFooterActions {
+    width: 100%;
+    flex-direction: column-reverse;
+  }
+}

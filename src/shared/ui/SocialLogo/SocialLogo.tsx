@@ -22,18 +22,3 @@ export function GoogleLogo(props: SVGProps<SVGSVGElement>) {
     </svg>
   );
 }
-
-export function FacebookLogo(props: SVGProps<SVGSVGElement>) {
-  return (
-    <svg viewBox="0 0 24 24" aria-hidden {...props}>
-      <path
-        fill="#1877F2"
-        d="M24 12a12 12 0 1 0-13.88 11.86v-8.39H7.08V12h3.04V9.36c0-3 1.79-4.66 4.52-4.66 1.31 0 2.68.23 2.68.23v2.95h-1.51c-1.49 0-1.95.92-1.95 1.87V12h3.32l-.53 3.47h-2.79v8.39A12 12 0 0 0 24 12Z"
-      />
-      <path
-        fill="#fff"
-        d="m16.65 15.47.53-3.47h-3.32V9.75c0-.95.46-1.87 1.95-1.87h1.51V4.93s-1.37-.23-2.68-.23c-2.73 0-4.52 1.66-4.52 4.66V12H7.08v3.47h3.04v8.39a12.2 12.2 0 0 0 3.74 0v-8.39h2.79Z"
-      />
-    </svg>
-  );
-}

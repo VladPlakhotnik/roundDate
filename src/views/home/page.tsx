@@ -36,7 +36,7 @@ function getDisplayName(input: {
     return authName;
   }
 
-  return input.email.split("@")[0] ?? "Профиль";
+  return input.email.split("@")[0] ?? "Profil";
 }
 
 async function getHomeViewer(): Promise<HomeViewer | null> {
@@ -75,18 +75,26 @@ async function getHomeViewer(): Promise<HomeViewer | null> {
 }
 
 export async function HomeView() {
-  const [events, viewer] = await Promise.all([getHomeEvents(), getHomeViewer()]);
+  const [events, viewer] = await Promise.all([
+    getHomeEvents({ useFallback: false }),
+    getHomeViewer(),
+  ]);
   const featuredEvent = events[0];
+  const hasEvents = events.length > 0;
 
   return (
     <main className={styles.root}>
       <div className={styles.topBand}>
-        <HomeHero {...(featuredEvent ? { featuredEvent } : {})} viewer={viewer} />
+        <HomeHero
+          {...(featuredEvent ? { featuredEvent } : {})}
+          hasEvents={hasEvents}
+          viewer={viewer}
+        />
         <HomeHowItWorks />
       </div>
       <div className={styles.whiteBand}>
         <HomeWhyBetter />
-        <HomeEvents events={events} />
+        {hasEvents ? <HomeEvents events={events} isAuthenticated={Boolean(viewer)} /> : null}
         <HomeAtmosphere />
       </div>
       <div className={styles.waitlistBand}>

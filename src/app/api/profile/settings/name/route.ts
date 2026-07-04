@@ -5,24 +5,37 @@ import { z } from "zod";
 import { getDb } from "@/shared/server/db/client";
 import { authUsers, profiles } from "@/shared/server/db/schema";
 
-import { getSettingsSession, jsonError, nullableText, readJson } from "../_utils";
+import {
+  getSettingsSession,
+  getSettingsTranslator,
+  jsonError,
+  nullableText,
+  readJson,
+} from "../_utils";
 
 const namePayloadSchema = z.object({
-  firstName: z.string().trim().min(1, "Введите имя.").max(80),
+  firstName: z.string().trim().min(1).max(80),
   lastName: z.string().trim().max(80),
 });
 
 export async function PATCH(request: Request) {
+  const t = getSettingsTranslator(request);
   const session = await getSettingsSession(request);
 
   if (!session?.user) {
-    return jsonError("Unauthorized", 401);
+    return jsonError(t("api.common.unauthorized"), 401);
   }
 
   const parsed = namePayloadSchema.safeParse(await readJson(request));
 
   if (!parsed.success) {
-    return jsonError(parsed.error.issues[0]?.message ?? "Проверьте имя и фамилию.");
+    const hasMissingFirstName = parsed.error.issues.some(
+      (issue) => issue.path.includes("firstName") && issue.code === "too_small",
+    );
+
+    return jsonError(
+      hasMissingFirstName ? t("api.settings.nameRequired") : t("api.settings.invalidName"),
+    );
   }
 
   const now = new Date();

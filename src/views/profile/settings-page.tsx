@@ -15,7 +15,6 @@ import {
   MapPin,
   Phone,
   ReceiptText,
-  Settings,
   Trash2,
   UserRound,
   type LucideIcon,
@@ -27,12 +26,15 @@ import type {
   OnboardingDay,
   OnboardingTime,
 } from "@/entities/profile/model/onboarding";
+import type { UserPaymentHistoryItem } from "@/entities/events/server/user-payments";
+import { useI18n } from "@/shared/i18n/I18nProvider";
+import { localeLabels, locales, resolveLocale, type Locale } from "@/shared/i18n/locales";
 import { Button } from "@/shared/ui/Button";
 import { Input } from "@/shared/ui/Input";
 import { Modal } from "@/shared/ui/Modal";
 import { RangeSlider, type RangeSliderValue } from "@/shared/ui/RangeSlider";
 import { Select } from "@/shared/ui/Select";
-import { FacebookLogo, GoogleLogo } from "@/shared/ui/SocialLogo";
+import { GoogleLogo } from "@/shared/ui/SocialLogo";
 import { Switch } from "@/shared/ui/Switch";
 import { useToast } from "@/shared/ui/Toast";
 
@@ -40,79 +42,82 @@ import styles from "./ProfileView.module.css";
 
 type SettingsSection = "account" | "notifications" | "payments" | "preferences";
 
-type ProfileSettingsViewProps = {
-  account: {
-    displayName: string;
-    email: string;
-    emailNotifications: boolean;
-    eventCriteriaNotifications: boolean;
-    eventReminderNotifications: boolean;
-    eventResultNotifications: boolean;
-    firstName: string;
-    hasPassword: boolean;
-    image: string | null;
-    lastName: string;
-    linkedProviders: OnboardingAuthProvider[];
-    locale: string;
-    marketingConsent: boolean;
-    newDateNotifications: boolean;
-    phone: string;
-    preferredDays: OnboardingDay[];
-    preferredTimes: OnboardingTime[];
-    provider: OnboardingAuthProvider;
-  };
+type ProfileSettingsAccount = {
+  displayName: string;
+  email: string;
+  emailNotifications: boolean;
+  eventCriteriaNotifications: boolean;
+  eventReminderNotifications: boolean;
+  eventResultNotifications: boolean;
+  firstName: string;
+  hasPassword: boolean;
+  image: string | null;
+  lastName: string;
+  linkedProviders: OnboardingAuthProvider[];
+  locale: string;
+  marketingConsent: boolean;
+  newDateNotifications: boolean;
+  phone: string;
+  preferredDays: OnboardingDay[];
+  preferredTimes: OnboardingTime[];
+  provider: OnboardingAuthProvider;
 };
 
-type NotificationKey =
-  | "eventReminders"
-  | "eventResults"
-  | "marketing"
-  | "newDates"
-  | "newEventsByCriteria";
+type ProfileSettingsAccountProps = {
+  account: ProfileSettingsAccount;
+};
+
+type ProfileSettingsViewProps = {
+  account: ProfileSettingsAccount;
+  payments: UserPaymentHistoryItem[];
+};
+
+type PaymentsSettingsProps = {
+  payments: UserPaymentHistoryItem[];
+};
+
+type NotificationKey = "eventReminders" | "eventResults" | "newEvents";
 
 type AccountDialog = "delete" | "email" | "name" | "password" | "phone" | null;
 
 const settingsSections = [
-  { icon: UserRound, id: "account", label: "Информация об аккаунте" },
-  { icon: Bell, id: "notifications", label: "Уведомления" },
-  { icon: Heart, id: "preferences", label: "Предпочтения мероприятий" },
-  { icon: CreditCard, id: "payments", label: "Оплаты" },
-] satisfies Array<{ icon: LucideIcon; id: SettingsSection; label: string }>;
+  { icon: UserRound, id: "account", labelKey: "profile.settingsPage.nav.account" },
+  { icon: Bell, id: "notifications", labelKey: "profile.settingsPage.nav.notifications" },
+  { icon: Heart, id: "preferences", labelKey: "profile.settingsPage.nav.preferences" },
+  { icon: CreditCard, id: "payments", labelKey: "profile.settingsPage.nav.payments" },
+] satisfies Array<{ icon: LucideIcon; id: SettingsSection; labelKey: string }>;
 
-const languageOptions = [
-  { label: "Русский", value: "ru" },
-  { label: "English", value: "en" },
-  { label: "Polski", value: "pl" },
-];
+const languageOptions = locales.map((locale) => ({
+  label: localeLabels[locale],
+  value: locale,
+})) satisfies Array<{ label: string; value: Locale }>;
 
 const districtOptions = [
-  { label: "Старый город", value: "old-town" },
-  { disabled: true, label: "Wrzeszcz скоро", value: "wrzeszcz" },
-  { disabled: true, label: "Oliwa скоро", value: "oliwa" },
+  { labelKey: "profile.settingsPage.preferences.districtOldTown", value: "old-town" },
+  { disabled: true, label: "Wrzeszcz", value: "wrzeszcz" },
+  { disabled: true, label: "Oliwa", value: "oliwa" },
 ];
 
 const dayOptions = [
-  { label: "Пн", value: "mon" },
-  { label: "Вт", value: "tue" },
-  { label: "Ср", value: "wed" },
-  { label: "Чт", value: "thu" },
-  { label: "Пт", value: "fri" },
-  { label: "Сб", value: "sat" },
-  { label: "Вс", value: "sun" },
-] satisfies Array<{ label: string; value: OnboardingDay }>;
+  { labelKey: "profile.settingsPage.preferences.weekdays.mon", value: "mon" },
+  { labelKey: "profile.settingsPage.preferences.weekdays.tue", value: "tue" },
+  { labelKey: "profile.settingsPage.preferences.weekdays.wed", value: "wed" },
+  { labelKey: "profile.settingsPage.preferences.weekdays.thu", value: "thu" },
+  { labelKey: "profile.settingsPage.preferences.weekdays.fri", value: "fri" },
+  { labelKey: "profile.settingsPage.preferences.weekdays.sat", value: "sat" },
+  { labelKey: "profile.settingsPage.preferences.weekdays.sun", value: "sun" },
+] satisfies Array<{ labelKey: string; value: OnboardingDay }>;
 
 const timePreferenceLabels = {
-  day: "Днем",
-  evening: "Вечером",
-  late: "Поздно",
+  day: "profile.settingsPage.preferences.timePreferences.day",
+  evening: "profile.settingsPage.preferences.timePreferences.evening",
+  late: "profile.settingsPage.preferences.timePreferences.late",
 } satisfies Record<OnboardingTime, string>;
 
 const notificationTitles = {
-  eventReminders: "Напоминания о мероприятиях",
-  eventResults: "Результаты мероприятий",
-  marketing: "Маркетинговые рассылки",
-  newDates: "Новые даты",
-  newEventsByCriteria: "Новые мероприятия по критериям",
+  eventReminders: "profile.settingsPage.notifications.eventReminders.title",
+  eventResults: "profile.settingsPage.notifications.eventResults.title",
+  newEvents: "profile.settingsPage.notifications.newEvents.title",
 } satisfies Record<NotificationKey, string>;
 
 function formatTimeRangeValue(value: number) {
@@ -128,14 +133,14 @@ function getInitials(name: string) {
     .join("");
 }
 
-async function readApiResponse(response: Response) {
+async function readApiResponse(response: Response, fallbackMessage: string) {
   const data = (await response.json().catch(() => null)) as {
     error?: string;
     message?: string;
   } | null;
 
   if (!response.ok) {
-    throw new Error(data?.error || "Что-то пошло не так. Попробуйте еще раз.");
+    throw new Error(data?.error || fallbackMessage);
   }
 
   return data;
@@ -217,6 +222,8 @@ function SettingsToggleRow({
   onChange: () => void;
   title: string;
 }) {
+  const { t } = useI18n();
+
   return (
     <div className={styles.settingsToggleRow}>
       <span className={styles.settingsActionIcon}>
@@ -227,7 +234,12 @@ function SettingsToggleRow({
         <p>{description}</p>
       </div>
       <Switch
-        aria-label={checked ? `Отключить: ${title}` : `Включить: ${title}`}
+        aria-label={t(
+          checked
+            ? "profile.settingsPage.notifications.ariaDisable"
+            : "profile.settingsPage.notifications.ariaEnable",
+          { title },
+        )}
         checked={checked}
         disabled={disabled}
         onCheckedChange={onChange}
@@ -236,8 +248,12 @@ function SettingsToggleRow({
   );
 }
 
-function AccountSettings({ account }: ProfileSettingsViewProps) {
-  const [accountState, setAccountState] = useState(account);
+function AccountSettings({ account }: ProfileSettingsAccountProps) {
+  const { locale, setLocale, t } = useI18n();
+  const [accountState, setAccountState] = useState(() => ({
+    ...account,
+    locale,
+  }));
   const [dialog, setDialog] = useState<AccountDialog>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
@@ -246,25 +262,19 @@ function AccountSettings({ account }: ProfileSettingsViewProps) {
   const avatarStyle = accountState.image
     ? { backgroundImage: `url(${accountState.image})` }
     : undefined;
-  const initials = getInitials(accountState.displayName) || "SD";
+  const initials = getInitials(accountState.displayName) || "RD";
   const linkedAccounts = [
     {
       connected: accountState.linkedProviders.includes("google"),
       icon: <GoogleLogo className={styles.settingsProviderLogo} />,
       label: "Google",
-      subtitle: "Вход и быстрая регистрация через Google",
-    },
-    {
-      connected: accountState.linkedProviders.includes("facebook"),
-      icon: <FacebookLogo className={styles.settingsProviderLogo} />,
-      label: "Facebook",
-      subtitle: "Вход через социальный аккаунт",
+      subtitle: t("profile.settingsPage.account.providerGoogleSubtitle"),
     },
     {
       connected: accountState.hasPassword,
       icon: <Mail aria-hidden size={18} />,
       label: "Email",
-      subtitle: "Классический вход по email и паролю",
+      subtitle: t("profile.settingsPage.account.providerEmailSubtitle"),
     },
   ];
 
@@ -284,15 +294,21 @@ function AccountSettings({ account }: ProfileSettingsViewProps) {
         method: "POST",
         body: formData,
       });
-      const data = (await readApiResponse(response)) as { image?: string };
+      const data = (await readApiResponse(response, t("profile.settingsPage.apiError"))) as {
+        image?: string;
+      };
 
       if (data.image) {
         setAccountState((current) => ({ ...current, image: data.image ?? current.image }));
       }
 
-      toast.success("Фотография обновлена.");
+      toast.success(t("profile.settingsPage.account.avatarUpdated"));
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Не удалось обновить фотографию.");
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : t("profile.settingsPage.account.avatarUpdateError"),
+      );
     } finally {
       setIsUploadingAvatar(false);
       event.target.value = "";
@@ -300,20 +316,27 @@ function AccountSettings({ account }: ProfileSettingsViewProps) {
   }
 
   async function handleLanguageChange(nextLocale: string) {
-    const previousLocale = accountState.locale;
-    setAccountState((current) => ({ ...current, locale: nextLocale }));
+    const previousLocale = locale;
+    const resolvedNextLocale = resolveLocale(nextLocale);
+    setAccountState((current) => ({ ...current, locale: resolvedNextLocale }));
+    setLocale(resolvedNextLocale);
 
     try {
       const response = await fetch("/api/profile/settings/language", {
-        body: JSON.stringify({ locale: nextLocale }),
+        body: JSON.stringify({ locale: resolvedNextLocale }),
         headers: { "Content-Type": "application/json" },
         method: "PATCH",
       });
-      await readApiResponse(response);
-      toast.success("Язык интерфейса сохранен.");
+      await readApiResponse(response, t("profile.settingsPage.apiError"));
+      toast.success(t("profile.settingsPage.account.languageSaved"));
     } catch (error) {
       setAccountState((current) => ({ ...current, locale: previousLocale }));
-      toast.error(error instanceof Error ? error.message : "Не удалось сохранить язык.");
+      setLocale(previousLocale);
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : t("profile.settingsPage.account.languageSaveError"),
+      );
     }
   }
 
@@ -330,7 +353,7 @@ function AccountSettings({ account }: ProfileSettingsViewProps) {
         headers: { "Content-Type": "application/json" },
         method: "PATCH",
       });
-      const data = (await readApiResponse(response)) as {
+      const data = (await readApiResponse(response, t("profile.settingsPage.apiError"))) as {
         displayName?: string;
         firstName?: string;
         lastName?: string;
@@ -343,9 +366,11 @@ function AccountSettings({ account }: ProfileSettingsViewProps) {
         lastName: data.lastName ?? current.lastName,
       }));
       setDialog(null);
-      toast.success("Имя и фамилия сохранены.");
+      toast.success(t("profile.settingsPage.account.nameSaved"));
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Не удалось сохранить имя.");
+      toast.error(
+        error instanceof Error ? error.message : t("profile.settingsPage.account.nameSaveError"),
+      );
     } finally {
       setIsSaving(false);
     }
@@ -363,11 +388,13 @@ function AccountSettings({ account }: ProfileSettingsViewProps) {
         headers: { "Content-Type": "application/json" },
         method: "POST",
       });
-      const data = await readApiResponse(response);
+      const data = await readApiResponse(response, t("profile.settingsPage.apiError"));
       setDialog(null);
-      toast.success(data?.message || "Письмо с подтверждением отправлено на новую почту.");
+      toast.success(data?.message || t("profile.settingsPage.account.emailConfirmationSent"));
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Не удалось отправить подтверждение.");
+      toast.error(
+        error instanceof Error ? error.message : t("profile.settingsPage.account.emailSendError"),
+      );
     } finally {
       setIsSaving(false);
     }
@@ -385,12 +412,16 @@ function AccountSettings({ account }: ProfileSettingsViewProps) {
         headers: { "Content-Type": "application/json" },
         method: "PATCH",
       });
-      const data = (await readApiResponse(response)) as { phone?: string };
+      const data = (await readApiResponse(response, t("profile.settingsPage.apiError"))) as {
+        phone?: string;
+      };
       setAccountState((current) => ({ ...current, phone: data.phone ?? "" }));
       setDialog(null);
-      toast.success("Телефон сохранен.");
+      toast.success(t("profile.settingsPage.account.phoneSaved"));
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Не удалось сохранить телефон.");
+      toast.error(
+        error instanceof Error ? error.message : t("profile.settingsPage.account.phoneSaveError"),
+      );
     } finally {
       setIsSaving(false);
     }
@@ -404,7 +435,7 @@ function AccountSettings({ account }: ProfileSettingsViewProps) {
     const passwordConfirm = String(formData.get("passwordConfirm") ?? "");
 
     if (newPassword !== passwordConfirm) {
-      toast.error("Пароли не совпадают.");
+      toast.error(t("profile.settingsPage.account.passwordMismatch"));
       return;
     }
 
@@ -419,12 +450,20 @@ function AccountSettings({ account }: ProfileSettingsViewProps) {
         headers: { "Content-Type": "application/json" },
         method: "POST",
       });
-      await readApiResponse(response);
+      await readApiResponse(response, t("profile.settingsPage.apiError"));
       setAccountState((current) => ({ ...current, hasPassword: true }));
       setDialog(null);
-      toast.success(accountState.hasPassword ? "Пароль обновлен." : "Пароль привязан к аккаунту.");
+      toast.success(
+        accountState.hasPassword
+          ? t("profile.settingsPage.account.passwordSaved")
+          : t("profile.settingsPage.account.passwordAdded"),
+      );
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Не удалось сохранить пароль.");
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : t("profile.settingsPage.account.passwordSaveError"),
+      );
     } finally {
       setIsSaving(false);
     }
@@ -437,11 +476,13 @@ function AccountSettings({ account }: ProfileSettingsViewProps) {
       const response = await fetch("/api/profile/settings/account", {
         method: "DELETE",
       });
-      await readApiResponse(response);
-      toast.success("Аккаунт удален.");
+      await readApiResponse(response, t("profile.settingsPage.apiError"));
+      toast.success(t("profile.settingsPage.account.deleteSuccess"));
       window.location.assign("/");
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Не удалось удалить аккаунт.");
+      toast.error(
+        error instanceof Error ? error.message : t("profile.settingsPage.account.deleteError"),
+      );
       setIsSaving(false);
     }
   }
@@ -449,9 +490,9 @@ function AccountSettings({ account }: ProfileSettingsViewProps) {
   return (
     <div className={styles.settingsSection}>
       <SettingsPanel
-        description="Основные данные, которые используются для входа и связи по вашим записям."
+        description={t("profile.settingsPage.account.description")}
         icon={UserRound}
-        title="Информация об аккаунте"
+        title={t("profile.settingsPage.account.title")}
       >
         <div className={styles.settingsAvatarCard}>
           <span className={styles.settingsAvatar} style={avatarStyle}>
@@ -479,21 +520,21 @@ function AccountSettings({ account }: ProfileSettingsViewProps) {
             variant="secondary"
             onClick={() => avatarInputRef.current?.click()}
           >
-            Изменить фото
+            {t("profile.settingsPage.account.changePhoto")}
           </Button>
         </div>
 
         <div className={styles.settingsRows}>
           <SettingsActionRow
-            actionLabel="Изменить"
+            actionLabel={t("profile.settingsPage.actions.change")}
             icon={UserRound}
-            title="Имя и фамилия"
+            title={t("profile.settingsPage.account.nameRow")}
             onAction={() => setDialog("name")}
           >
             {accountState.displayName}
           </SettingsActionRow>
           <SettingsActionRow
-            actionLabel="Изменить"
+            actionLabel={t("profile.settingsPage.actions.change")}
             icon={Mail}
             title="Email"
             onAction={() => setDialog("email")}
@@ -501,36 +542,44 @@ function AccountSettings({ account }: ProfileSettingsViewProps) {
             {accountState.email}
           </SettingsActionRow>
           <SettingsActionRow
-            actionLabel={accountState.phone ? "Изменить" : "Привязать"}
+            actionLabel={
+              accountState.phone
+                ? t("profile.settingsPage.actions.change")
+                : t("profile.settingsPage.actions.link")
+            }
             icon={Phone}
-            title="Телефон"
+            title={t("common.form.phone")}
             onAction={() => setDialog("phone")}
           >
-            {accountState.phone || "Телефон пока не привязан"}
+            {accountState.phone || t("profile.settingsPage.account.phoneEmpty")}
           </SettingsActionRow>
           <SettingsActionRow
-            actionLabel={accountState.hasPassword ? "Изменить" : "Привязать"}
+            actionLabel={
+              accountState.hasPassword
+                ? t("profile.settingsPage.actions.change")
+                : t("profile.settingsPage.actions.link")
+            }
             icon={LockKeyhole}
-            title="Пароль"
+            title={t("profile.settingsPage.account.password")}
             onAction={() => setDialog("password")}
           >
             {accountState.hasPassword
-              ? "Обновите пароль для входа по email"
-              : "Добавьте пароль для входа по email"}
+              ? t("profile.settingsPage.account.passwordUpdateDescription")
+              : t("profile.settingsPage.account.passwordAddDescription")}
           </SettingsActionRow>
           <div className={styles.settingsActionRow}>
             <span className={styles.settingsActionIcon}>
               <Globe2 aria-hidden size={20} />
             </span>
             <div>
-              <h3>Язык интерфейса</h3>
-              <p>Используется в личном кабинете и уведомлениях</p>
+              <h3>{t("profile.settingsPage.account.language")}</h3>
+              <p>{t("profile.settingsPage.account.languageDescription")}</p>
             </div>
             <Select
               className={styles.settingsSelect ?? ""}
               options={languageOptions}
               size="sm"
-              value={accountState.locale}
+              value={resolveLocale(locale)}
               onChange={handleLanguageChange}
             />
           </div>
@@ -538,9 +587,9 @@ function AccountSettings({ account }: ProfileSettingsViewProps) {
       </SettingsPanel>
 
       <SettingsPanel
-        description="Подключайте внешние аккаунты, чтобы входить быстрее и безопаснее."
+        description={t("profile.settingsPage.account.linkedAccountsDescription")}
         icon={Link2}
-        title="Связанные аккаунты"
+        title={t("profile.settingsPage.account.linkedAccounts")}
       >
         <div className={styles.settingsLinkedList}>
           {linkedAccounts.map((provider) => (
@@ -551,7 +600,9 @@ function AccountSettings({ account }: ProfileSettingsViewProps) {
                 <p>{provider.subtitle}</p>
               </div>
               <Button size="sm" variant={provider.connected ? "soft" : "outline"}>
-                {provider.connected ? "Подключен" : "Подключить"}
+                {provider.connected
+                  ? t("profile.settingsPage.actions.connected")
+                  : t("profile.settingsPage.actions.connect")}
               </Button>
             </div>
           ))}
@@ -560,8 +611,8 @@ function AccountSettings({ account }: ProfileSettingsViewProps) {
 
       <section className={styles.settingsDangerPanel}>
         <div>
-          <h2>Удаление аккаунта</h2>
-          <p>Удалит профиль, записи, историю платежей и настройки. Это действие нельзя отменить.</p>
+          <h2>{t("profile.settingsPage.account.deleteAccount")}</h2>
+          <p>{t("profile.settingsPage.account.deleteDescription")}</p>
         </div>
         <Button
           leftIcon={<Trash2 aria-hidden size={16} />}
@@ -569,39 +620,39 @@ function AccountSettings({ account }: ProfileSettingsViewProps) {
           variant="outline"
           onClick={() => setDialog("delete")}
         >
-          Удалить аккаунт
+          {t("profile.settingsPage.account.deleteAccount")}
         </Button>
       </section>
 
       <Modal
         open={dialog === "name"}
         size="sm"
-        title="Изменить имя"
+        title={t("profile.settingsPage.account.nameTitle")}
         onOpenChange={(open) => setDialog(open ? "name" : null)}
       >
         <form className={styles.settingsModalForm} onSubmit={submitName} noValidate>
           <p className={styles.settingsModalText}>
-            Имя и фамилия будут отображаться в профиле и на главной странице.
+            {t("profile.settingsPage.account.nameDescription")}
           </p>
           <Input
             autoComplete="given-name"
             defaultValue={accountState.firstName}
-            label="Имя"
+            label={t("common.form.firstName")}
             name="firstName"
             required
           />
           <Input
             autoComplete="family-name"
             defaultValue={accountState.lastName}
-            label="Фамилия"
+            label={t("common.form.lastName")}
             name="lastName"
           />
           <div className={styles.settingsModalActions}>
             <Button variant="outline" onClick={() => setDialog(null)}>
-              Отмена
+              {t("common.actions.cancel")}
             </Button>
             <Button disabled={isSaving} isLoading={isSaving} type="submit">
-              Сохранить
+              {t("common.actions.save")}
             </Button>
           </div>
         </form>
@@ -610,28 +661,27 @@ function AccountSettings({ account }: ProfileSettingsViewProps) {
       <Modal
         open={dialog === "email"}
         size="sm"
-        title="Изменить email"
+        title={t("profile.settingsPage.account.emailTitle")}
         onOpenChange={(open) => setDialog(open ? "email" : null)}
       >
         <form className={styles.settingsModalForm} onSubmit={submitEmail} noValidate>
           <p className={styles.settingsModalText}>
-            На новую почту придет письмо с подтверждением. Email изменится только после перехода по
-            ссылке.
+            {t("profile.settingsPage.account.emailChangeDescription")}
           </p>
           <Input
             autoComplete="email"
             defaultValue={accountState.email}
-            label="Новый email"
+            label={t("profile.settingsPage.account.newEmail")}
             name="email"
             required
             type="email"
           />
           <div className={styles.settingsModalActions}>
             <Button variant="outline" onClick={() => setDialog(null)}>
-              Отмена
+              {t("common.actions.cancel")}
             </Button>
             <Button disabled={isSaving} isLoading={isSaving} type="submit">
-              Отправить письмо
+              {t("profile.settingsPage.actions.sendEmail")}
             </Button>
           </div>
         </form>
@@ -640,27 +690,31 @@ function AccountSettings({ account }: ProfileSettingsViewProps) {
       <Modal
         open={dialog === "phone"}
         size="sm"
-        title={accountState.phone ? "Изменить телефон" : "Привязать телефон"}
+        title={
+          accountState.phone
+            ? t("profile.settingsPage.account.phoneTitleChange")
+            : t("profile.settingsPage.account.phoneTitleAdd")
+        }
         onOpenChange={(open) => setDialog(open ? "phone" : null)}
       >
         <form className={styles.settingsModalForm} onSubmit={submitPhone} noValidate>
           <p className={styles.settingsModalText}>
-            СМС-подтверждение пока не подключаем. Номер сохранится сразу после отправки формы.
+            {t("profile.settingsPage.account.phoneDescription")}
           </p>
           <Input
             autoComplete="tel"
             defaultValue={accountState.phone}
-            label="Телефон"
+            label={t("common.form.phone")}
             name="phone"
             placeholder="+48 512 345 678"
             type="tel"
           />
           <div className={styles.settingsModalActions}>
             <Button variant="outline" onClick={() => setDialog(null)}>
-              Отмена
+              {t("common.actions.cancel")}
             </Button>
             <Button disabled={isSaving} isLoading={isSaving} type="submit">
-              Сохранить
+              {t("common.actions.save")}
             </Button>
           </div>
         </form>
@@ -669,19 +723,23 @@ function AccountSettings({ account }: ProfileSettingsViewProps) {
       <Modal
         open={dialog === "password"}
         size="sm"
-        title={accountState.hasPassword ? "Изменить пароль" : "Привязать пароль"}
+        title={
+          accountState.hasPassword
+            ? t("profile.settingsPage.account.passwordTitleChange")
+            : t("profile.settingsPage.account.passwordTitleAdd")
+        }
         onOpenChange={(open) => setDialog(open ? "password" : null)}
       >
         <form className={styles.settingsModalForm} onSubmit={submitPassword} noValidate>
           <p className={styles.settingsModalText}>
             {accountState.hasPassword
-              ? "Введите текущий пароль и новый пароль."
-              : "Задайте пароль, чтобы входить в аккаунт по email."}
+              ? t("profile.settingsPage.account.passwordChangeDescription")
+              : t("profile.settingsPage.account.passwordCreateDescription")}
           </p>
           {accountState.hasPassword ? (
             <Input
               autoComplete="current-password"
-              label="Текущий пароль"
+              label={t("profile.settingsPage.account.passwordCurrent")}
               name="currentPassword"
               required
               type="password"
@@ -689,24 +747,24 @@ function AccountSettings({ account }: ProfileSettingsViewProps) {
           ) : null}
           <Input
             autoComplete="new-password"
-            label="Новый пароль"
+            label={t("profile.settingsPage.account.passwordNew")}
             name="newPassword"
             required
             type="password"
           />
           <Input
             autoComplete="new-password"
-            label="Повторите пароль"
+            label={t("profile.settingsPage.account.passwordRepeat")}
             name="passwordConfirm"
             required
             type="password"
           />
           <div className={styles.settingsModalActions}>
             <Button variant="outline" onClick={() => setDialog(null)}>
-              Отмена
+              {t("common.actions.cancel")}
             </Button>
             <Button disabled={isSaving} isLoading={isSaving} type="submit">
-              Сохранить пароль
+              {t("profile.settingsPage.actions.savePassword")}
             </Button>
           </div>
         </form>
@@ -715,16 +773,16 @@ function AccountSettings({ account }: ProfileSettingsViewProps) {
       <Modal
         open={dialog === "delete"}
         size="sm"
-        title="Удалить аккаунт?"
+        title={t("profile.settingsPage.account.deleteModalTitle")}
         onOpenChange={(open) => setDialog(open ? "delete" : null)}
       >
         <div className={styles.settingsModalForm}>
           <p className={styles.settingsModalText}>
-            Аккаунт, профиль, записи и связанные данные будут удалены. Это действие нельзя отменить.
+            {t("profile.settingsPage.account.deleteModalDescription")}
           </p>
           <div className={styles.settingsModalActions}>
             <Button variant="outline" onClick={() => setDialog(null)}>
-              Отмена
+              {t("common.actions.cancel")}
             </Button>
             <Button
               disabled={isSaving}
@@ -732,7 +790,7 @@ function AccountSettings({ account }: ProfileSettingsViewProps) {
               leftIcon={<Trash2 aria-hidden size={16} />}
               onClick={deleteAccount}
             >
-              Да, удалить
+              {t("profile.settingsPage.account.deleteConfirm")}
             </Button>
           </div>
         </div>
@@ -741,31 +799,28 @@ function AccountSettings({ account }: ProfileSettingsViewProps) {
   );
 }
 
-function NotificationSettings({ account }: ProfileSettingsViewProps) {
+function NotificationSettings({ account }: ProfileSettingsAccountProps) {
   const [notifications, setNotifications] = useState<Record<NotificationKey, boolean>>({
     eventReminders: account.eventReminderNotifications,
     eventResults: account.eventResultNotifications,
-    marketing: account.marketingConsent,
-    newDates: account.newDateNotifications,
-    newEventsByCriteria: account.eventCriteriaNotifications,
+    newEvents: account.marketingConsent,
   });
   const [savingKey, setSavingKey] = useState<NotificationKey | null>(null);
   const toast = useToast();
+  const { t } = useI18n();
 
   async function saveNotifications(nextNotifications: Record<NotificationKey, boolean>) {
     const response = await fetch("/api/profile/settings/notifications", {
       body: JSON.stringify({
-        eventCriteriaNotifications: nextNotifications.newEventsByCriteria,
         eventReminderNotifications: nextNotifications.eventReminders,
         eventResultNotifications: nextNotifications.eventResults,
-        marketingConsent: nextNotifications.marketing,
-        newDateNotifications: nextNotifications.newDates,
+        newEventNotifications: nextNotifications.newEvents,
       }),
       headers: { "Content-Type": "application/json" },
       method: "PATCH",
     });
 
-    await readApiResponse(response);
+    await readApiResponse(response, t("profile.settingsPage.apiError"));
   }
 
   async function toggle(key: NotificationKey) {
@@ -780,11 +835,13 @@ function NotificationSettings({ account }: ProfileSettingsViewProps) {
 
     try {
       await saveNotifications(nextNotifications);
-      toast.success(`${notificationTitles[key]} сохранены.`);
+      toast.success(
+        t("profile.settingsPage.notifications.saved", { title: t(notificationTitles[key]) }),
+      );
     } catch (error) {
       setNotifications(previousNotifications);
       toast.error(
-        error instanceof Error ? error.message : "Не удалось сохранить настройки уведомлений.",
+        error instanceof Error ? error.message : t("profile.settingsPage.notifications.saveError"),
       );
     } finally {
       setSavingKey(null);
@@ -794,50 +851,34 @@ function NotificationSettings({ account }: ProfileSettingsViewProps) {
   return (
     <div className={styles.settingsSection}>
       <SettingsPanel
-        description="Выберите, какие сообщения SpeedDate будет отправлять вам в профиле и по email."
+        description={t("profile.settingsPage.notifications.description")}
         icon={Bell}
-        title="Уведомления"
+        title={t("profile.settingsPage.notifications.title")}
       >
         <div className={styles.settingsRows}>
           <SettingsToggleRow
             checked={notifications.eventReminders}
-            description="Напомним о времени, адресе и подготовке к мероприятию."
+            description={t("profile.settingsPage.notifications.eventReminders.description")}
             disabled={savingKey !== null}
             icon={CalendarClock}
-            title="Напоминания о мероприятиях"
+            title={t("profile.settingsPage.notifications.eventReminders.title")}
             onChange={() => toggle("eventReminders")}
           />
           <SettingsToggleRow
             checked={notifications.eventResults}
-            description="Сообщим, когда станут доступны результаты и мэтчи."
+            description={t("profile.settingsPage.notifications.eventResults.description")}
             disabled={savingKey !== null}
             icon={Heart}
-            title="Результаты мероприятий"
+            title={t("profile.settingsPage.notifications.eventResults.title")}
             onChange={() => toggle("eventResults")}
           />
           <SettingsToggleRow
-            checked={notifications.marketing}
-            description="Редкие письма с подборками, акциями и полезными обновлениями."
+            checked={notifications.newEvents}
+            description={t("profile.settingsPage.notifications.newEvents.description")}
             disabled={savingKey !== null}
             icon={Mail}
-            title="Маркетинговые рассылки"
-            onChange={() => toggle("marketing")}
-          />
-          <SettingsToggleRow
-            checked={notifications.newDates}
-            description="Новые даты ближайших встреч в вашем городе."
-            disabled={savingKey !== null}
-            icon={Clock3}
-            title="Новые даты"
-            onChange={() => toggle("newDates")}
-          />
-          <SettingsToggleRow
-            checked={notifications.newEventsByCriteria}
-            description="События, которые подходят по возрасту, времени и району."
-            disabled={savingKey !== null}
-            icon={Settings}
-            title="Новые мероприятия по критериям"
-            onChange={() => toggle("newEventsByCriteria")}
+            title={t("profile.settingsPage.notifications.newEvents.title")}
+            onChange={() => toggle("newEvents")}
           />
         </div>
       </SettingsPanel>
@@ -845,7 +886,8 @@ function NotificationSettings({ account }: ProfileSettingsViewProps) {
   );
 }
 
-function PreferenceSettings({ account }: ProfileSettingsViewProps) {
+function PreferenceSettings({ account }: ProfileSettingsAccountProps) {
+  const { t } = useI18n();
   const initialDays: OnboardingDay[] = account.preferredDays.length
     ? account.preferredDays
     : ["fri", "sat"];
@@ -857,7 +899,14 @@ function PreferenceSettings({ account }: ProfileSettingsViewProps) {
   const [timeRange, setTimeRange] = useState<RangeSliderValue>({ from: 18, to: 21 });
   const [district, setDistrict] = useState("old-town");
 
-  const selectedTimeLabels = initialTimes.map((time) => timePreferenceLabels[time]).join(", ");
+  const selectedTimeLabels = initialTimes.map((time) => t(timePreferenceLabels[time])).join(", ");
+  const districtSelectOptions = districtOptions.map((option) => ({
+    ...option,
+    label:
+      "labelKey" in option
+        ? t(option.labelKey)
+        : t("profile.settingsPage.preferences.comingSoon", { name: option.label }),
+  }));
 
   function toggleDay(day: OnboardingDay) {
     setDays((current) =>
@@ -868,9 +917,9 @@ function PreferenceSettings({ account }: ProfileSettingsViewProps) {
   return (
     <div className={styles.settingsSection}>
       <SettingsPanel
-        description="Эти фильтры помогут показывать мероприятия, которые лучше подходят вам."
+        description={t("profile.settingsPage.preferences.description")}
         icon={Heart}
-        title="Предпочтения мероприятий"
+        title={t("profile.settingsPage.preferences.title")}
       >
         <div className={styles.settingsPreferenceGrid}>
           <div className={styles.settingsPreferenceBlock}>
@@ -879,14 +928,17 @@ function PreferenceSettings({ account }: ProfileSettingsViewProps) {
                 <UserRound aria-hidden size={20} />
               </span>
               <div>
-                <h3>Возраст</h3>
+                <h3>{t("profile.settingsPage.preferences.age")}</h3>
                 <p>
-                  Сейчас: {ageRange.from}-{ageRange.to}
+                  {t("profile.settingsPage.preferences.currentAge", {
+                    from: ageRange.from,
+                    to: ageRange.to,
+                  })}
                 </p>
               </div>
             </div>
             <RangeSlider
-              label="Возраст"
+              label={t("profile.settingsPage.preferences.age")}
               max={65}
               min={18}
               value={ageRange}
@@ -900,11 +952,14 @@ function PreferenceSettings({ account }: ProfileSettingsViewProps) {
                 <CalendarClock aria-hidden size={20} />
               </span>
               <div>
-                <h3>Дни</h3>
-                <p>Выберите удобные дни недели</p>
+                <h3>{t("profile.settingsPage.preferences.days")}</h3>
+                <p>{t("profile.settingsPage.preferences.daysDescription")}</p>
               </div>
             </div>
-            <div className={styles.settingsChips} aria-label="Предпочтительные дни">
+            <div
+              className={styles.settingsChips}
+              aria-label={t("profile.settingsPage.preferences.daysAria")}
+            >
               {dayOptions.map((day) => {
                 const isActive = days.includes(day.value);
 
@@ -916,7 +971,7 @@ function PreferenceSettings({ account }: ProfileSettingsViewProps) {
                     onClick={() => toggleDay(day.value)}
                     type="button"
                   >
-                    {day.label}
+                    {t(day.labelKey)}
                   </button>
                 );
               })}
@@ -929,16 +984,16 @@ function PreferenceSettings({ account }: ProfileSettingsViewProps) {
                 <Clock3 aria-hidden size={20} />
               </span>
               <div>
-                <h3>Время</h3>
+                <h3>{t("profile.settingsPage.preferences.time")}</h3>
                 <p>
-                  {selectedTimeLabels || "Вечером"} · {formatTimeRangeValue(timeRange.from)}-
-                  {formatTimeRangeValue(timeRange.to)}
+                  {selectedTimeLabels || t("profile.settingsPage.preferences.evening")} ·{" "}
+                  {formatTimeRangeValue(timeRange.from)}-{formatTimeRangeValue(timeRange.to)}
                 </p>
               </div>
             </div>
             <RangeSlider
               formatValue={formatTimeRangeValue}
-              label="Время"
+              label={t("profile.settingsPage.preferences.time")}
               max={24}
               min={10}
               value={timeRange}
@@ -952,13 +1007,13 @@ function PreferenceSettings({ account }: ProfileSettingsViewProps) {
                 <MapPin aria-hidden size={20} />
               </span>
               <div>
-                <h3>Район</h3>
-                <p>Пока доступен один район, позже добавим больше.</p>
+                <h3>{t("profile.settingsPage.preferences.district")}</h3>
+                <p>{t("profile.settingsPage.preferences.districtDescription")}</p>
               </div>
             </div>
             <Select
               disabled
-              options={districtOptions}
+              options={districtSelectOptions}
               size="sm"
               value={district}
               onChange={setDistrict}
@@ -970,56 +1025,68 @@ function PreferenceSettings({ account }: ProfileSettingsViewProps) {
   );
 }
 
-function PaymentsSettings() {
+function PaymentsSettings({ payments }: PaymentsSettingsProps) {
+  const { t } = useI18n();
+
   return (
     <div className={styles.settingsSection}>
       <SettingsPanel
-        description="Здесь будет храниться информация об оплатах, способах платежа и чеках."
+        description={t("profile.settingsPage.payments.description")}
         icon={CreditCard}
-        title="Оплаты"
+        title={t("profile.settingsPage.payments.title")}
       >
-        <div className={styles.settingsPaymentHero}>
-          <span className={styles.settingsPaymentIcon}>
-            <CreditCard aria-hidden size={28} />
-          </span>
-          <div>
-            <h3>Способ оплаты</h3>
-            <p>Карта пока не добавлена. Для будущих записей можно будет сохранить способ оплаты.</p>
-          </div>
-          <Button size="sm" variant="secondary">
-            Добавить карту
-          </Button>
-        </div>
-
         <div className={styles.settingsPaymentList}>
-          <div className={styles.settingsPaymentRow}>
-            <span className={styles.settingsActionIcon}>
-              <ReceiptText aria-hidden size={20} />
-            </span>
-            <div>
-              <h3>Speed dating 25-35</h3>
-              <p>24 мая · Hotel Almond</p>
+          {payments.length ? (
+            payments.map((payment) => (
+              <div className={styles.settingsPaymentRow} key={payment.id}>
+                <span className={styles.settingsActionIcon}>
+                  <ReceiptText aria-hidden size={20} />
+                </span>
+                <div>
+                  <h3>{payment.eventTitle}</h3>
+                  <p>
+                    {payment.eventDateLabel} · {payment.venueName}
+                  </p>
+                  <p className={styles.settingsPaymentMeta}>
+                    {payment.paidAtLabel
+                      ? t("profile.settingsPage.payments.paidAt", { date: payment.paidAtLabel })
+                      : t("profile.settingsPage.payments.paidAtEmpty")}
+                    {" · "}
+                    {t("profile.settingsPage.payments.paymentMethod", {
+                      method: payment.paymentMethodLabel,
+                    })}
+                    {payment.refundedAtLabel
+                      ? ` · ${t("profile.settingsPage.payments.refundedAt", {
+                          date: payment.refundedAtLabel,
+                        })}`
+                      : ""}
+                  </p>
+                </div>
+                <strong className={styles.settingsPaymentStatus}>
+                  {payment.statusLabel} · {payment.amountLabel}
+                </strong>
+              </div>
+            ))
+          ) : (
+            <div className={styles.settingsPaymentEmpty}>
+              <span className={styles.settingsActionIcon}>
+                <ReceiptText aria-hidden size={20} />
+              </span>
+              <div>
+                <h3>{t("profile.settingsPage.payments.emptyTitle")}</h3>
+                <p>{t("profile.settingsPage.payments.emptyDescription")}</p>
+              </div>
             </div>
-            <strong>Оплачено · 69 PLN</strong>
-          </div>
-          <div className={styles.settingsPaymentRow}>
-            <span className={styles.settingsActionIcon}>
-              <CreditCard aria-hidden size={20} />
-            </span>
-            <div>
-              <h3>Speed dating 32-44</h3>
-              <p>31 мая · Loft event space</p>
-            </div>
-            <strong>Ожидает оплаты · 69 PLN</strong>
-          </div>
+          )}
         </div>
       </SettingsPanel>
     </div>
   );
 }
 
-export function ProfileSettingsView({ account }: ProfileSettingsViewProps) {
+export function ProfileSettingsView({ account, payments }: ProfileSettingsViewProps) {
   const [activeSection, setActiveSection] = useState<SettingsSection>("account");
+  const { t } = useI18n();
 
   return (
     <section className={styles.settingsScreen} aria-labelledby="profile-section-title">
@@ -1027,10 +1094,10 @@ export function ProfileSettingsView({ account }: ProfileSettingsViewProps) {
         {activeSection === "account" ? <AccountSettings account={account} /> : null}
         {activeSection === "notifications" ? <NotificationSettings account={account} /> : null}
         {activeSection === "preferences" ? <PreferenceSettings account={account} /> : null}
-        {activeSection === "payments" ? <PaymentsSettings /> : null}
+        {activeSection === "payments" ? <PaymentsSettings payments={payments} /> : null}
       </div>
 
-      <aside className={styles.settingsNav} aria-label="Разделы настроек">
+      <aside className={styles.settingsNav} aria-label={t("profile.settingsPage.navAria")}>
         {settingsSections.map((section) => {
           const Icon = section.icon;
           const isActive = section.id === activeSection;
@@ -1044,7 +1111,7 @@ export function ProfileSettingsView({ account }: ProfileSettingsViewProps) {
               type="button"
             >
               <Icon aria-hidden size={19} />
-              <span>{section.label}</span>
+              <span>{t(section.labelKey)}</span>
             </button>
           );
         })}

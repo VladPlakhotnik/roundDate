@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Geist_Mono, Manrope } from "next/font/google";
 
+import { getRequestLocale } from "@/shared/i18n/server";
+
 import { AppProviders } from "./providers";
 
 import "./globals.css";
@@ -17,19 +19,21 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Speed Dating Gdansk",
-  description: "Offline speed dating events in Gdansk.",
+  title: "RoundDate Gdańsk",
+  description: "Spotkania offline RoundDate w Gdańsku.",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const locale = await getRequestLocale();
+
   return (
-    <html lang="pl" className={`${manrope.variable} ${geistMono.variable} h-full antialiased`}>
+    <html lang={locale} className={`${manrope.variable} ${geistMono.variable} h-full antialiased`}>
       <body className="flex min-h-full flex-col">
-        <AppProviders>{children}</AppProviders>
+        <AppProviders locale={locale}>{children}</AppProviders>
       </body>
     </html>
   );

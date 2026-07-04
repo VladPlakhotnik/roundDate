@@ -11,3 +11,4 @@ behavior where needed.
 - `Select` - custom listbox-style selector for reusable option fields.
 - `DatePicker` - custom pink calendar picker with month and year controls.
 - `Switch` - controlled semantic switch for binary settings.
+- `ScrollArea` - reusable thin vertical scroll container for dense panels.

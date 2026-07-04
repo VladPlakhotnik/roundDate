@@ -1,6 +1,6 @@
 .section {
   position: relative;
-  scroll-margin-top: 24px;
+  scroll-margin-top: 118px;
   overflow: hidden;
   background: transparent;
   padding: 92px 0 86px;
@@ -9,7 +9,7 @@
 .inner {
   position: relative;
   z-index: 2;
-  width: min(1344px, calc(100vw - 96px));
+  width: var(--sd-container-width);
   margin: 0 auto;
 }
 
@@ -65,6 +65,16 @@
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 30px;
+}
+
+.grid[data-count="1"] {
+  grid-template-columns: minmax(0, 428px);
+  justify-content: center;
+}
+
+.grid[data-count="2"] {
+  grid-template-columns: repeat(2, minmax(0, 428px));
+  justify-content: center;
 }
 
 .card {
@@ -224,8 +234,22 @@
 }
 
 .infoRow {
+  align-items: flex-end;
   margin-top: 12px;
   margin-bottom: 22px;
+}
+
+.availabilityBlock {
+  display: grid;
+  min-width: 0;
+  gap: 8px;
+}
+
+.availabilityLabel {
+  color: var(--sd-ink-500);
+  font-size: 13px;
+  font-weight: 800;
+  line-height: 1;
 }
 
 .availability {
@@ -271,6 +295,7 @@
   line-height: 1;
   padding: 0 24px;
   box-shadow: var(--sd-shadow-cta);
+  text-decoration: none;
   transition:
     box-shadow 160ms ease,
     transform 160ms ease;
@@ -300,20 +325,22 @@
 
   .grid {
     grid-template-columns: 1fr;
+    justify-items: center;
     gap: 22px;
   }
 
   .card {
+    width: min(100%, 560px);
     min-height: 0;
   }
 
   .imageWrap {
-    height: 260px;
+    height: 238px;
   }
 
   .eventImage {
     width: min(452px, 86vw);
-    max-height: 260px;
+    max-height: 238px;
   }
 
   .titleDecor {
@@ -323,7 +350,7 @@
 
 @media (max-width: 700px) {
   .section {
-    scroll-margin-top: 96px;
+    scroll-margin-top: 92px;
     padding: 56px 12px 44px;
   }
 
@@ -346,58 +373,69 @@
 
   .card {
     min-height: 0;
-    padding: 18px 18px 20px;
+    padding: 14px 14px 16px;
+    border-radius: 20px;
   }
 
   .dateBadge {
-    top: 15px;
-    left: 16px;
-    width: 68px;
-    height: 74px;
-    border-radius: 16px;
+    top: 14px;
+    left: 14px;
+    width: 58px;
+    height: 64px;
+    border-radius: 14px;
   }
 
   .dateBadge span {
-    font-size: 32px;
+    font-size: 28px;
   }
 
   .dateBadge small {
-    margin-top: 6px;
-    font-size: 16px;
+    margin-top: 5px;
+    font-size: 14px;
   }
 
   .imageWrap {
-    height: 218px;
-    margin: 0 -22px 0;
+    height: 176px;
+    margin: 2px -18px 0;
   }
 
   .eventImage {
-    width: min(360px, 96vw);
-    max-height: 218px;
-    transform: scale(1.17);
+    width: min(330px, 96vw);
+    max-height: 176px;
+    transform: scale(1.15);
   }
 
   .chairsImage {
-    transform: translateY(10px) scale(1.17);
+    transform: translateY(4px) scale(1.14);
   }
 
   .chairsSceneImage {
-    width: min(376px, 96vw);
-    transform: translateY(5px) scale(1.16);
+    width: min(344px, 96vw);
+    transform: translateY(2px) scale(1.13);
   }
 
   .loungeImage {
-    width: min(356px, 96vw);
-    transform: translateY(6px) scale(1.15);
+    width: min(328px, 96vw);
+    transform: translateY(3px) scale(1.12);
   }
 
   .card h3 {
-    margin-top: 14px;
-    font-size: 24px;
+    margin-top: 12px;
+    font-size: 20px;
   }
 
   .dateLine {
-    font-size: 16px;
+    margin-top: 8px;
+    font-size: 14px;
+  }
+
+  .chips,
+  .infoRow {
+    gap: 8px;
+  }
+
+  .chips {
+    margin-top: 12px;
   }
 
   .chips span,
@@ -407,15 +445,33 @@
     padding: 0 11px;
   }
 
+  .infoRow {
+    align-items: flex-start;
+    margin-top: 10px;
+    margin-bottom: 16px;
+  }
+
+  .availabilityBlock {
+    gap: 7px;
+  }
+
+  .availabilityLabel {
+    font-size: 12px;
+  }
+
+  .availability {
+    gap: 6px;
+  }
+
   .price {
     font-size: 18px;
     margin-left: 0;
   }
 
   .detailsButton {
-    min-height: 52px;
+    min-height: 48px;
     gap: 18px;
-    font-size: 16px;
+    font-size: 15px;
   }
 
   .titleDecor {

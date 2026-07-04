@@ -1,25 +1,33 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
+import { emailSchema } from "@/shared/lib/validation/contact";
 import { getAuth } from "@/shared/server/auth/auth";
 
-import { getApiErrorMessage, getSettingsSession, jsonError, readJson } from "../_utils";
+import {
+  getApiErrorMessage,
+  getSettingsSession,
+  getSettingsTranslator,
+  jsonError,
+  readJson,
+} from "../_utils";
 
 const emailPayloadSchema = z.object({
-  email: z.email("Введите корректный email."),
+  email: emailSchema,
 });
 
 export async function POST(request: Request) {
+  const t = getSettingsTranslator(request);
   const session = await getSettingsSession(request);
 
   if (!session?.user) {
-    return jsonError("Unauthorized", 401);
+    return jsonError(t("api.common.unauthorized"), 401);
   }
 
   const parsed = emailPayloadSchema.safeParse(await readJson(request));
 
   if (!parsed.success) {
-    return jsonError(parsed.error.issues[0]?.message ?? "Введите корректный email.");
+    return jsonError(t("api.settings.invalidEmail"));
   }
 
   try {
@@ -31,11 +39,11 @@ export async function POST(request: Request) {
       headers: request.headers,
     });
   } catch (error) {
-    return jsonError(getApiErrorMessage(error));
+    return jsonError(getApiErrorMessage(error, t("api.common.generic")));
   }
 
   return NextResponse.json({
     ok: true,
-    message: "Мы отправили письмо с подтверждением на новую почту.",
+    message: t("api.settings.emailConfirmationSent"),
   });
 }

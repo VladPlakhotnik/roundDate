@@ -5,7 +5,9 @@ import type { Map as MapLibreMap } from "maplibre-gl";
 
 import {
   addEventMap3dBuildings,
+  bindEventAttributionControl,
   bindMissingMapStyleImages,
+  createCollapsedEventAttributionControl,
   EVENT_MAP_DEFAULT_VIEW,
   EVENT_MAP_STYLE,
 } from "./maplibre-config";
@@ -34,6 +36,7 @@ export function EventDetailsMap({ location }: EventDetailsMapProps) {
   useEffect(() => {
     let disposed = false;
     let map: MapLibreMap | null = null;
+    let unbindAttribution: (() => void) | undefined;
     let unbindMissingImages: (() => void) | undefined;
 
     async function initMap() {
@@ -44,7 +47,7 @@ export function EventDetailsMap({ location }: EventDetailsMapProps) {
       }
 
       map = new maplibregl.Map({
-        attributionControl: { compact: true },
+        attributionControl: false,
         bearing: location.bearing ?? EVENT_MAP_DEFAULT_VIEW.bearing,
         canvasContextAttributes: { antialias: true },
         center: [location.center[0], location.center[1]],
@@ -58,6 +61,11 @@ export function EventDetailsMap({ location }: EventDetailsMapProps) {
         zoom: location.zoom ?? 15.5,
       });
       unbindMissingImages = bindMissingMapStyleImages(map);
+      map.addControl(
+        createCollapsedEventAttributionControl(maplibregl.AttributionControl),
+        "bottom-right",
+      );
+      unbindAttribution = bindEventAttributionControl(map, mapNodeRef.current);
 
       map.on("error", () => {
         if (!disposed) {
@@ -87,6 +95,7 @@ export function EventDetailsMap({ location }: EventDetailsMapProps) {
 
     return () => {
       disposed = true;
+      unbindAttribution?.();
       unbindMissingImages?.();
       map?.remove();
     };

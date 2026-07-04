@@ -10,18 +10,20 @@ import {
 } from "react";
 
 export type FloatingPopoverOptions = {
+  container?: HTMLElement | null;
   estimatedHeight?: number;
   gap?: number;
   matchTriggerWidth?: boolean;
   maxWidth?: number;
   minWidth?: number;
   preferredWidth?: number;
+  strategy?: "absolute" | "fixed";
   viewportPadding?: number;
 };
 
 export type FloatingPopoverStyle = Pick<
   CSSProperties,
-  "bottom" | "left" | "maxHeight" | "top" | "width"
+  "bottom" | "left" | "maxHeight" | "position" | "top" | "width"
 >;
 
 export function useFloatingPopover(
@@ -30,12 +32,14 @@ export function useFloatingPopover(
   options: FloatingPopoverOptions = {},
 ) {
   const {
+    container = null,
     estimatedHeight = 280,
     gap = 10,
     matchTriggerWidth = false,
     maxWidth,
     minWidth,
     preferredWidth,
+    strategy = "fixed",
     viewportPadding = 12,
   } = options;
   const [style, setStyle] = useState<FloatingPopoverStyle | null>(null);
@@ -69,22 +73,27 @@ export function useFloatingPopover(
       120,
       Math.min(estimatedHeight, Math.floor(openAbove ? spaceAbove : spaceBelow)),
     );
+    const containerRect =
+      strategy === "absolute" && container ? container.getBoundingClientRect() : null;
 
     setStyle({
-      left: Math.round(left),
+      left: Math.round(left - (containerRect?.left ?? 0)),
       maxHeight,
+      position: strategy,
       width: Math.round(width),
       ...(openAbove
-        ? { bottom: Math.round(window.innerHeight - rect.top + gap) }
-        : { top: Math.round(rect.bottom + gap) }),
+        ? { bottom: Math.round((containerRect?.bottom ?? window.innerHeight) - rect.top + gap) }
+        : { top: Math.round(rect.bottom + gap - (containerRect?.top ?? 0)) }),
     });
   }, [
+    container,
     estimatedHeight,
     gap,
     matchTriggerWidth,
     maxWidth,
     minWidth,
     preferredWidth,
+    strategy,
     triggerRef,
     viewportPadding,
   ]);

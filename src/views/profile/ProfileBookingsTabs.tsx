@@ -1,17 +1,21 @@
 "use client";
 
-import { ArrowRight, Building2, CalendarDays, Clock3, History, MapPin, X } from "lucide-react";
+import { ArrowRight, Building2, CalendarDays, Clock3, History, MapPin } from "lucide-react";
 import Image from "next/image";
 import { useState } from "react";
 
 import { EventDetailsModal, type EventDetailsModalEvent } from "@/entities/event";
+import { useI18n } from "@/shared/i18n/I18nProvider";
 import { Badge, type BadgeStatus } from "@/shared/ui/Badge";
 import { Button } from "@/shared/ui/Button";
 import { LoadMore } from "@/shared/ui/LoadMore";
 
+import { CancelBookingButton } from "./CancelBookingButton";
 import styles from "./ProfileView.module.css";
 
 export type ProfileBookingItem = EventDetailsModalEvent & {
+  attendeeNumber: number | null;
+  bookingId: string;
   imageSrc: string;
   paymentLabel: string;
   priceLabel: string;
@@ -27,6 +31,8 @@ type ProfileBookingsTabsProps = {
 type BookingTab = "upcoming" | "past";
 
 function BookingRow({ booking, past = false }: { booking: ProfileBookingItem; past?: boolean }) {
+  const { t } = useI18n();
+
   return (
     <article className={styles.bookingRow}>
       <div className={styles.bookingSummary}>
@@ -53,14 +59,14 @@ function BookingRow({ booking, past = false }: { booking: ProfileBookingItem; pa
             <strong>
               {booking.dateLabel}, {booking.weekdayShort}
             </strong>
-            <small>Дата</small>
+            <small>{t("event.labels.date")}</small>
           </span>
         </div>
         <div className={styles.bookingDetail}>
           <Clock3 aria-hidden size={21} />
           <span>
             <strong>{booking.timeLabel}</strong>
-            <small>Время начала</small>
+            <small>{t("profile.home.startTime")}</small>
           </span>
         </div>
         <div className={styles.bookingDetail}>
@@ -76,12 +82,17 @@ function BookingRow({ booking, past = false }: { booking: ProfileBookingItem; pa
         <div className={styles.bookingPayment}>
           <span>{booking.paymentLabel}</span>
           <Badge size="sm" status={booking.status} />
+          {booking.attendeeNumber ? (
+            <span className={styles.bookingNumber}>№ {booking.attendeeNumber}</span>
+          ) : null}
         </div>
         <div className={styles.bookingRowActions}>
           {!past ? (
-            <Button leftIcon={<X aria-hidden size={16} />} size="sm" variant="outline">
-              Отменить участие
-            </Button>
+            <CancelBookingButton
+              bookingId={booking.bookingId}
+              eventTitle={booking.title}
+              startsAt={booking.startsAt}
+            />
           ) : null}
           <EventDetailsModal
             context={past ? "past" : "booking"}
@@ -93,7 +104,7 @@ function BookingRow({ booking, past = false }: { booking: ProfileBookingItem; pa
                 size="sm"
                 variant="secondary"
               >
-                Детали
+                {t("profile.bookings.details")}
               </Button>
             }
           />
@@ -104,6 +115,7 @@ function BookingRow({ booking, past = false }: { booking: ProfileBookingItem; pa
 }
 
 export function ProfileBookingsTabs({ pastBookings, upcomingBookings }: ProfileBookingsTabsProps) {
+  const { t } = useI18n();
   const [activeTab, setActiveTab] = useState<BookingTab>("upcoming");
   const bookings = activeTab === "upcoming" ? upcomingBookings : pastBookings;
 
@@ -111,10 +123,12 @@ export function ProfileBookingsTabs({ pastBookings, upcomingBookings }: ProfileB
     <section className={styles.bookingTabsBlock} aria-labelledby="booking-tabs-title">
       <div className={styles.bookingTabsHeader}>
         <h2 id="booking-tabs-title">
-          {activeTab === "upcoming" ? "Другие предстоящие записи" : "Прошедшие события"}
+          {activeTab === "upcoming"
+            ? t("profile.bookings.titleUpcoming")
+            : t("profile.bookings.titlePast")}
         </h2>
 
-        <div className={styles.bookingTabs} role="tablist" aria-label="Фильтр записей">
+        <div className={styles.bookingTabs} role="tablist" aria-label={t("profile.bookings.tabsAria")}>
           <button
             aria-selected={activeTab === "upcoming"}
             className={activeTab === "upcoming" ? styles.bookingTabActive : styles.bookingTab}
@@ -123,7 +137,7 @@ export function ProfileBookingsTabs({ pastBookings, upcomingBookings }: ProfileB
             onClick={() => setActiveTab("upcoming")}
           >
             <CalendarDays aria-hidden size={18} />
-            Предстоящие
+            {t("profile.bookings.tabsUpcoming")}
           </button>
           <button
             aria-selected={activeTab === "past"}
@@ -133,14 +147,18 @@ export function ProfileBookingsTabs({ pastBookings, upcomingBookings }: ProfileB
             onClick={() => setActiveTab("past")}
           >
             <History aria-hidden size={18} />
-            Прошедшие
+            {t("profile.bookings.tabsPast")}
           </button>
         </div>
       </div>
 
       <LoadMore
         items={bookings}
-        label={activeTab === "upcoming" ? "Показать еще записи" : "Показать еще события"}
+        label={
+          activeTab === "upcoming"
+            ? t("profile.bookings.showMoreRecords")
+            : t("profile.bookings.showMoreEvents")
+        }
         resetKey={activeTab}
       >
         {(visibleBookings) => (

@@ -2,27 +2,36 @@ import {
   ArrowRight,
   Building2,
   CalendarDays,
-  CheckCircle2,
   Clock3,
   Heart,
   MapPin,
   MessageSquare,
-  UsersRound,
-  X,
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
+import { headers } from "next/headers";
 
 import {
   EventDetailsCardTrigger,
   EventDetailsModal,
+  EventGenderAvailability,
   OrganizerModal,
+  type BookingParticipantDefaults,
   type EventDetailsModalEvent,
   type EventMapLocation,
 } from "@/entities/event";
-import { getHomeEvents, type HomeEvent } from "@/entities/events";
+import {
+  getHomeEvents,
+  getUserBookings,
+  type HomeEvent,
+  type UserBookingEvent,
+} from "@/entities/events";
+import { getProfileOnboardingState } from "@/entities/profile/server/onboarding";
+import { getRequestTranslator } from "@/shared/i18n/server";
+import { Badge } from "@/shared/ui/Badge";
 import { Button } from "@/shared/ui/Button";
 
+import { CancelBookingButton } from "./CancelBookingButton";
 import styles from "./ProfileView.module.css";
 
 const eventImages = [
@@ -32,49 +41,11 @@ const eventImages = [
   "/assets/atmosphere/welcome-board.png",
 ];
 
-const eventMapLocations = [
-  {
-    bearing: -18,
-    center: [18.6533, 54.3464],
-    cityLabel: "Гданьск",
-    districtLabel: "Старый город",
-    marker: [18.6533, 54.3464],
-    pitch: 58,
-    venueAddress: "ul. Toruńska 12, Gdańsk",
-    venueLabel: "Hotel Almond",
-    zoom: 16,
-  },
-  {
-    bearing: -18,
-    center: [18.6084, 54.3793],
-    cityLabel: "Гданьск",
-    districtLabel: "Wrzeszcz",
-    marker: [18.6084, 54.3793],
-    pitch: 58,
-    venueAddress: "ul. Grunwaldzka 87, Gdańsk",
-    venueLabel: "Loft event space",
-    zoom: 15.8,
-  },
-  {
-    bearing: -18,
-    center: [18.5605, 54.4104],
-    cityLabel: "Гданьск",
-    districtLabel: "Oliwa",
-    marker: [18.5605, 54.4104],
-    pitch: 58,
-    venueAddress: "ul. Opacka 12, Gdańsk",
-    venueLabel: "Garden lounge",
-    zoom: 15.7,
-  },
-] satisfies EventMapLocation[];
-
 function formatRecommendedMeta(event: HomeEvent) {
   return `${event.dateLabel}, ${event.weekdayLabel.slice(0, 2).toLowerCase()} · ${event.timeLabel}`;
 }
 
-function eventToDetailsEvent(event: HomeEvent, index: number): EventDetailsModalEvent {
-  const mapLocation = eventMapLocations[index] ?? eventMapLocations[0]!;
-
+function eventToDetailsEvent(event: HomeEvent | UserBookingEvent): EventDetailsModalEvent {
   return {
     ageRange: event.ageRange,
     capacityTotal: event.capacityTotal,
@@ -83,28 +54,62 @@ function eventToDetailsEvent(event: HomeEvent, index: number): EventDetailsModal
     dateLabel: event.dateLabel,
     description: event.description,
     durationMinutes: event.durationMinutes,
+    femaleSpotsAvailable: event.femaleSpotsAvailable,
     highlights: event.highlights,
     id: event.id,
     language: event.language,
-    locationLabel: `${mapLocation.cityLabel}, ${mapLocation.districtLabel}`,
-    mapLocation,
+    locationLabel: event.locationLabel,
+    maleSpotsAvailable: event.maleSpotsAvailable,
+    mapLocation: event.mapLocation as EventMapLocation,
+    organizer: event.organizer,
     priceLabel: event.priceLabel,
     spotsAvailable: event.spotsAvailable,
     startsAt: event.startsAt,
     statusLabel: event.statusLabel,
     timeLabel: event.timeLabel,
     title: event.title,
-    venueAddress: mapLocation.venueAddress,
-    venueName: mapLocation.venueLabel,
+    venueAddress: event.venueAddress,
+    venueName: event.venueName,
     weekdayLabel: event.weekdayLabel,
   };
 }
 
+async function getRequestHeaders() {
+  try {
+    return new Headers(await headers());
+  } catch {
+    return new Headers();
+  }
+}
+
+function getBookingDefaults(
+  onboardingState: Awaited<ReturnType<typeof getProfileOnboardingState>>,
+): BookingParticipantDefaults | undefined {
+  if (!onboardingState) {
+    return undefined;
+  }
+
+  return {
+    email: onboardingState.user.email,
+    firstName: onboardingState.profile.firstName,
+    gender: onboardingState.profile.gender,
+    lastName: onboardingState.profile.lastName,
+    phone: onboardingState.profile.phone,
+  };
+}
+
 export async function ProfileView() {
-  const events = await getHomeEvents();
-  const featuredEvent = events[0];
+  const requestHeaders = await getRequestHeaders();
+  const [bookings, events, onboardingState, t] = await Promise.all([
+    getUserBookings({ headers: requestHeaders, scope: "upcoming" }),
+    getHomeEvents(),
+    getProfileOnboardingState({ headers: requestHeaders }),
+    getRequestTranslator(),
+  ]);
+  const bookingDefaults = getBookingDefaults(onboardingState);
+  const featuredEvent = bookings[0];
   const recommendedEvents = events.slice(0, 3);
-  const featuredDetailsEvent = featuredEvent ? eventToDetailsEvent(featuredEvent, 0) : undefined;
+  const featuredDetailsEvent = featuredEvent ? eventToDetailsEvent(featuredEvent) : undefined;
 
   return (
     <>
@@ -116,12 +121,13 @@ export async function ProfileView() {
         >
           {featuredDetailsEvent ? (
             <EventDetailsModal
+              {...(bookingDefaults ? { bookingDefaults } : {})}
               context="booking"
-              event={featuredDetailsEvent}
-              status="confirmed"
-              trigger={
-                <button
-                  aria-label={`Открыть детали ${featuredEvent.title}`}
+                  event={featuredDetailsEvent}
+                  status={featuredEvent.status}
+                  trigger={
+                    <button
+                  aria-label={t("profile.home.openDetails", { title: featuredEvent.title })}
                   className={styles.cardOverlayTrigger}
                   type="button"
                 />
@@ -129,13 +135,13 @@ export async function ProfileView() {
             />
           ) : null}
           <div className={styles.featuredMedia}>
-            <span className={styles.featuredBadge}>Ближайшее мероприятие</span>
+            <span className={styles.featuredBadge}>{t("profile.home.featured")}</span>
             <Image
               alt=""
               className={styles.featuredImage}
               height={360}
               priority
-              src={eventImages[0]!}
+              src={featuredEvent.imageSrc || eventImages[0]!}
               width={560}
             />
           </div>
@@ -145,10 +151,7 @@ export async function ProfileView() {
               <h2 className={styles.featuredTitle} id="featured-event-title">
                 {featuredEvent.title}
               </h2>
-              <span className={styles.confirmedBadge}>
-                <CheckCircle2 aria-hidden size={19} strokeWidth={2.1} />
-                Запись подтверждена
-              </span>
+              <Badge className={styles.confirmedBadge} status={featuredEvent.status} />
             </div>
 
             <p className={styles.locationLine}>
@@ -163,14 +166,14 @@ export async function ProfileView() {
                   <strong>
                     {featuredEvent.dateLabel}, {featuredEvent.weekdayLabel.slice(0, 2)}
                   </strong>
-                  <small>Дата</small>
+                  <small>{t("profile.home.date")}</small>
                 </span>
               </div>
               <div className={styles.detailItem}>
                 <Clock3 aria-hidden size={23} />
                 <span>
                   <strong>{featuredEvent.timeLabel}</strong>
-                  <small>Время начала</small>
+                  <small>{t("profile.home.startTime")}</small>
                 </span>
               </div>
               <div className={styles.detailItem}>
@@ -184,37 +187,43 @@ export async function ProfileView() {
               </div>
             </div>
 
-            <p className={styles.spotsLine}>
-              <UsersRound aria-hidden size={24} />
-              Осталось мест: <strong>{featuredEvent.spotsAvailable}</strong> из{" "}
-              {featuredEvent.capacityTotal}
-            </p>
+            <EventGenderAvailability
+              className={styles.featuredAvailability}
+              femaleSpotsAvailable={featuredEvent.femaleSpotsAvailable}
+              maleSpotsAvailable={featuredEvent.maleSpotsAvailable}
+              spotsAvailable={featuredEvent.spotsAvailable}
+            />
 
             <div className={styles.featuredActions}>
               {featuredDetailsEvent ? (
                 <EventDetailsModal
+                  {...(bookingDefaults ? { bookingDefaults } : {})}
                   context="booking"
                   event={featuredDetailsEvent}
-                  status="confirmed"
+                  status={featuredEvent.status}
                   trigger={
                     <Button rightIcon={<ArrowRight aria-hidden size={18} />} size="lg">
-                      Посмотреть детали
+                      {t("profile.home.details")}
                     </Button>
                   }
                 />
               ) : null}
-              <Button leftIcon={<X aria-hidden size={17} />} size="lg" variant="outline">
-                Отменить участие
-              </Button>
+              <CancelBookingButton
+                bookingId={featuredEvent.bookingId}
+                eventTitle={featuredEvent.title}
+                size="lg"
+                startsAt={featuredEvent.startsAt}
+              />
               <OrganizerModal
                 eventTitle={featuredEvent.title}
+                organizer={featuredEvent.organizer}
                 trigger={
                   <Button
                     leftIcon={<MessageSquare aria-hidden size={18} />}
                     size="lg"
                     variant="outline"
                   >
-                    Связаться с организатором
+                    {t("profile.home.contactOrganizer")}
                   </Button>
                 }
               />
@@ -223,45 +232,50 @@ export async function ProfileView() {
         </section>
       ) : (
         <section className={styles.emptyState}>
-          <h2>Пока нет запланированных мероприятий</h2>
-          <p>Когда вы запишетесь на событие, оно появится на главной странице профиля.</p>
+          <h2>{t("profile.home.emptyTitle")}</h2>
+          <p>{t("profile.home.emptyDescription")}</p>
         </section>
       )}
 
       <section className={styles.recommendations} id="events" aria-labelledby="recommended-title">
         <div className={styles.sectionHeader}>
           <h2 id="recommended-title">
-            Рекомендованные ближайшие мероприятия
+            {t("profile.home.recommended")}
             <Heart aria-hidden size={20} />
           </h2>
           <Link className={styles.allEventsLink} href="/profile/events">
-            Смотреть все
+            {t("profile.home.allEvents")}
             <ArrowRight aria-hidden size={18} />
           </Link>
         </div>
 
         <div className={styles.recommendationGrid}>
           {recommendedEvents.map((event, index) => {
-            const detailsEvent = eventToDetailsEvent(event, index);
+            const detailsEvent = eventToDetailsEvent(event);
 
             return (
               <EventDetailsCardTrigger
-                ariaLabel={`Открыть детали ${event.title}`}
+                ariaLabel={t("profile.home.openDetails", { title: event.title })}
+                {...(bookingDefaults ? { bookingDefaults } : {})}
                 className={styles.recommendationCard}
                 event={detailsEvent}
                 key={event.id}
               >
-                <div className={styles.recommendationTop}>
+                <div className={styles.recommendationTop} key="recommendation-top">
                   <Image
                     alt=""
                     className={styles.recommendationImage}
                     height={160}
-                    src={eventImages[index + 1] ?? eventImages[1]!}
+                    src={event.imageSrc || eventImages[index + 1] || eventImages[1]!}
                     width={160}
                   />
                   <div>
                     <span className={styles.recommendationBadge}>
-                      {index === 0 ? "Популярное" : index === 1 ? "Новая дата" : "Last chance"}
+                      {index === 0
+                        ? t("profile.home.popular")
+                        : index === 1
+                          ? t("profile.home.newDate")
+                          : t("profile.home.lastChance")}
                     </span>
                     <h3>{event.title}</h3>
                     <p>
@@ -279,11 +293,14 @@ export async function ProfileView() {
                   </div>
                 </div>
 
-                <div className={styles.recommendationFooter}>
-                  <span>
-                    <UsersRound aria-hidden size={19} />
-                    Осталось мест: <strong>{event.spotsAvailable}</strong>
-                  </span>
+                <div className={styles.recommendationFooter} key="recommendation-footer">
+                  <EventGenderAvailability
+                    className={styles.recommendationAvailability}
+                    femaleSpotsAvailable={event.femaleSpotsAvailable}
+                    maleSpotsAvailable={event.maleSpotsAvailable}
+                    size="sm"
+                    spotsAvailable={event.spotsAvailable}
+                  />
                   <strong className={styles.price}>{event.priceLabel}</strong>
                 </div>
               </EventDetailsCardTrigger>

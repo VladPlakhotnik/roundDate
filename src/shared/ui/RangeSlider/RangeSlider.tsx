@@ -2,6 +2,7 @@
 
 import type { CSSProperties } from "react";
 
+import { useI18n } from "@/shared/i18n/I18nProvider";
 import { cn } from "@/shared/lib/cn";
 
 import styles from "./RangeSlider.module.css";
@@ -38,6 +39,7 @@ export function RangeSlider({
   step = 1,
   value,
 }: RangeSliderProps) {
+  const { t } = useI18n();
   const clampedFrom = Math.min(Math.max(value.from, min), max);
   const clampedTo = Math.min(Math.max(value.to, min), max);
   const fromPercent = ((clampedFrom - min) / (max - min)) * 100;
@@ -68,7 +70,7 @@ export function RangeSlider({
         }
       >
         <input
-          aria-label={`${label} от`}
+          aria-label={t("common.ui.rangeFrom", { label })}
           className={cn(styles.input, styles.inputFrom)}
           disabled={disabled}
           max={max}
@@ -79,7 +81,7 @@ export function RangeSlider({
           onChange={(event) => emit({ from: Number(event.currentTarget.value), to: clampedTo })}
         />
         <input
-          aria-label={`${label} до`}
+          aria-label={t("common.ui.rangeTo", { label })}
           className={cn(styles.input, styles.inputTo)}
           disabled={disabled}
           max={max}

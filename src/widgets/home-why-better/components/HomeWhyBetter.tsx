@@ -1,4 +1,8 @@
+"use client";
+
 import Image, { type StaticImageData } from "next/image";
+
+import { useI18n } from "@/shared/i18n/I18nProvider";
 
 import styles from "./HomeWhyBetter.module.css";
 
@@ -7,8 +11,8 @@ type WhyBetterCard = {
   height: number;
   image: string | StaticImageData;
   imageClassName: string | undefined;
-  text: string;
-  title: string;
+  textKey: string;
+  titleKey: string;
   width: number;
 };
 
@@ -18,8 +22,8 @@ const cards: WhyBetterCard[] = [
     height: 903,
     image: "/assets/why-better/phone-swipe-v2.png",
     imageClassName: styles.phoneImage,
-    text: "Один вечер вместо недель переписки.",
-    title: "Без бесконечных свайпов",
+    textKey: "home.whyBetter.items.swipes.text",
+    titleKey: "home.whyBetter.items.swipes.title",
     width: 781,
   },
   {
@@ -27,8 +31,8 @@ const cards: WhyBetterCard[] = [
     height: 384,
     image: "/assets/why-better/chairs-group-v2.png",
     imageClassName: styles.chairsImage,
-    text: "Люди близкого возраста и понятный формат.",
-    title: "Комфортная группа",
+    textKey: "home.whyBetter.items.group.text",
+    titleKey: "home.whyBetter.items.group.title",
     width: 384,
   },
   {
@@ -36,8 +40,8 @@ const cards: WhyBetterCard[] = [
     height: 384,
     image: "/assets/why-better/lock-key-v2.png",
     imageClassName: styles.lockImage,
-    text: "Контакты открываются только при взаимной симпатии.",
-    title: "Приватность",
+    textKey: "home.whyBetter.items.privacy.text",
+    titleKey: "home.whyBetter.items.privacy.title",
     width: 384,
   },
   {
@@ -45,13 +49,21 @@ const cards: WhyBetterCard[] = [
     height: 891,
     image: "/assets/why-better/cafe-place-v2.png",
     imageClassName: styles.cafeImage,
-    text: "Безопасная и спокойная атмосфера.",
-    title: "Публичное место",
+    textKey: "home.whyBetter.items.place.text",
+    titleKey: "home.whyBetter.items.place.title",
     width: 1202,
   },
 ];
 
-function MiniCard({ alt, height, image, imageClassName, text, title, width }: WhyBetterCard) {
+function MiniCard({
+  alt,
+  height,
+  image,
+  imageClassName,
+  text,
+  title,
+  width,
+}: Omit<WhyBetterCard, "textKey" | "titleKey"> & { text: string; title: string }) {
   return (
     <article className={styles.miniCard}>
       <div className={styles.miniImageWrap}>
@@ -71,17 +83,17 @@ function MiniCard({ alt, height, image, imageClassName, text, title, width }: Wh
 }
 
 export function HomeWhyBetter() {
+  const { t } = useI18n();
+
   return (
     <section className={styles.section} id="why-better" aria-labelledby="why-better-title">
       <div className={styles.panel}>
         <header className={styles.header}>
           <h2 id="why-better-title" className={styles.title}>
-            Почему это работает
-            <span>лучше переписок</span>
+            {t("home.whyBetter.title")}
+            <span>{t("home.whyBetter.titleAccent")}</span>
           </h2>
-          <p className={styles.subtitle}>
-            За один вечер становится ясно то, что в чате тянется неделями.
-          </p>
+          <p className={styles.subtitle}>{t("home.whyBetter.body")}</p>
         </header>
 
         <div className={styles.grid}>
@@ -90,19 +102,28 @@ export function HomeWhyBetter() {
               <Image
                 className={styles.featureImage}
                 src="/assets/why-better/couple-scene-v2.png"
-                alt="Пара общается на speed dating вечере"
+                alt="RoundDate"
                 width={1208}
                 height={952}
                 loading="eager"
               />
             </div>
-            <h3>Живая химия сразу</h3>
-            <p>Голос, взгляд и энергия понятны быстрее, чем в чате.</p>
+            <h3>{t("home.whyBetter.cardTitle")}</h3>
+            <p>{t("home.whyBetter.cardBody")}</p>
           </article>
 
           <div className={styles.cardGrid}>
             {cards.map((card) => (
-              <MiniCard key={card.title} {...card} />
+              <MiniCard
+                alt={card.alt}
+                height={card.height}
+                image={card.image}
+                imageClassName={card.imageClassName}
+                key={card.titleKey}
+                text={t(card.textKey)}
+                title={t(card.titleKey)}
+                width={card.width}
+              />
             ))}
           </div>
         </div>

@@ -1,6 +1,6 @@
-# Speed Dating
+# RoundDate
 
-Next.js application for offline speed dating events in Gdansk.
+Next.js application for RoundDate offline dating events in Gdańsk.
 
 ## Stack
 

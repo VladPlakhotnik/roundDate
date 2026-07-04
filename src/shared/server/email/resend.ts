@@ -2,6 +2,8 @@ import "server-only";
 
 import { Resend } from "resend";
 
+import { contactEmail } from "@/shared/config/contact";
+
 let resend: Resend | undefined;
 
 export function getResend() {
@@ -21,5 +23,5 @@ export function getResend() {
 }
 
 export function getDefaultFromEmail() {
-  return process.env.EMAIL_FROM ?? "Speed Dating <hello@example.com>";
+  return process.env.EMAIL_FROM ?? `RoundDate <${contactEmail}>`;
 }

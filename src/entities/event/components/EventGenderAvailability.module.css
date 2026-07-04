@@ -1,0 +1,54 @@
+.root {
+  display: inline-flex;
+  max-width: 100%;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid transparent;
+  border-radius: var(--sd-radius-pill);
+  font-weight: 800;
+  line-height: 1;
+  white-space: nowrap;
+  box-shadow: 0 10px 22px rgba(170, 91, 79, 0.045);
+}
+
+.badge svg {
+  flex: 0 0 auto;
+}
+
+.badge strong {
+  margin-left: 4px;
+  font-weight: 900;
+}
+
+.md .badge {
+  min-height: 34px;
+  gap: 7px;
+  padding: 0 13px;
+  font-size: 14px;
+}
+
+.sm .badge {
+  min-height: 28px;
+  gap: 6px;
+  padding: 0 10px;
+  font-size: 12px;
+}
+
+.female {
+  border-color: rgba(255, 113, 144, 0.2);
+  background: rgba(255, 232, 238, 0.94);
+  color: #db4161;
+}
+
+.male {
+  border-color: rgba(86, 144, 232, 0.22);
+  background: rgba(232, 243, 255, 0.96);
+  color: #2567c7;
+}

@@ -43,6 +43,11 @@
   color: #d5790a;
 }
 
+.danger {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
 .info {
   background: #e5f1ff;
   color: #1f6fd1;

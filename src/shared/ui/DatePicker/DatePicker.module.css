@@ -136,9 +136,10 @@
 
 .popover {
   position: fixed;
-  z-index: 140;
+  z-index: 1000;
   box-sizing: border-box;
   overflow: auto;
+  pointer-events: auto;
   border: 1px solid rgba(255, 113, 97, 0.18);
   border-radius: 22px;
   background: rgba(255, 255, 255, 0.97);
@@ -336,6 +337,86 @@
 
 .day:active:not(:disabled) {
   transform: scale(0.96);
+}
+
+.timePanel {
+  display: grid;
+  gap: 14px;
+  margin-top: 16px;
+  border-top: 1px solid rgba(15, 23, 42, 0.08);
+  padding-top: 16px;
+}
+
+.timePanelOnly {
+  margin-top: 0;
+  border-top: 0;
+  padding-top: 0;
+}
+
+.timeField {
+  display: grid;
+  gap: 8px;
+}
+
+.timeField span {
+  color: var(--sd-ink-900);
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.timeInputs {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  gap: 10px;
+  align-items: end;
+}
+
+.timeInputs label {
+  display: grid;
+  gap: 6px;
+}
+
+.timeInputs label span {
+  color: var(--sd-ink-500);
+  font-size: 11px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.timeInputs input {
+  width: 100%;
+  height: var(--sd-control-height-md);
+  border: var(--sd-control-border);
+  border-radius: var(--sd-control-radius);
+  background: var(--sd-control-background);
+  color: var(--sd-ink-900);
+  font: inherit;
+  font-size: var(--sd-control-font-size-md);
+  font-weight: 800;
+  outline: none;
+  padding: 0 var(--sd-control-padding-x-md);
+  text-align: center;
+  transition:
+    border-color 160ms ease,
+    box-shadow 160ms ease,
+    background 160ms ease;
+}
+
+.timeInputs input:hover,
+.timeInputs input:focus {
+  border-color: var(--sd-control-border-focus);
+  background: var(--sd-control-background-hover);
+}
+
+.timeInputs input:focus {
+  box-shadow: var(--sd-control-focus-ring);
+}
+
+.timeInputs b {
+  color: var(--sd-ink-500);
+  font-size: 24px;
+  font-weight: 900;
+  line-height: var(--sd-control-height-md);
 }
 
 .error {

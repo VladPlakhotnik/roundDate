@@ -1,0 +1,159 @@
+.page {
+  display: grid;
+  gap: 22px;
+}
+
+.header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  border-radius: 26px;
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 22px 64px rgba(15, 23, 42, 0.055);
+  padding: 24px;
+}
+
+.headerText {
+  display: grid;
+  gap: 8px;
+  max-width: 760px;
+}
+
+.backLink {
+  display: inline-flex;
+  width: fit-content;
+  align-items: center;
+  gap: 7px;
+  color: #f04438;
+  font-size: 13px;
+  font-weight: 900;
+  text-decoration: none;
+}
+
+.headerText h1,
+.headerText p {
+  margin: 0;
+}
+
+.headerText h1 {
+  color: #111827;
+  font-size: 30px;
+  font-weight: 900;
+  line-height: 1.08;
+}
+
+.headerText p {
+  color: #64748b;
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.55;
+}
+
+.headerIcon {
+  display: inline-flex;
+  width: 54px;
+  height: 54px;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  border-radius: 18px;
+  background: #fff1ee;
+  color: #f04438;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.templateCard {
+  min-width: 0;
+}
+
+.templateId {
+  display: inline-flex;
+  width: fit-content;
+  margin-bottom: 9px;
+  border-radius: 999px;
+  background: #fff7f5;
+  color: #f04438;
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.02em;
+  line-height: 1;
+  padding: 6px 9px;
+}
+
+.htmlLink {
+  display: inline-flex;
+  min-height: 36px;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  border: 1px solid rgba(240, 68, 56, 0.18);
+  border-radius: 999px;
+  background: #fff;
+  color: #f04438;
+  font-size: 12px;
+  font-weight: 900;
+  padding: 0 12px;
+  text-decoration: none;
+}
+
+.subjectBlock,
+.textBlock {
+  display: grid;
+  gap: 7px;
+}
+
+.subjectBlock span,
+.textBlock span {
+  color: #64748b;
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.subjectBlock strong {
+  color: #111827;
+  font-size: 14px;
+  font-weight: 900;
+  line-height: 1.4;
+}
+
+.textBlock {
+  margin-top: 16px;
+}
+
+.textBlock pre {
+  overflow: auto;
+  max-height: 230px;
+  margin: 0;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  border-radius: 16px;
+  background: #f8fafc;
+  color: #334155;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.55;
+  padding: 14px;
+  white-space: pre-wrap;
+}
+
+@media (max-width: 940px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 760px) {
+  .header {
+    display: grid;
+  }
+}

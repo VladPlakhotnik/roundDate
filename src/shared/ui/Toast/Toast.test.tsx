@@ -9,14 +9,14 @@ function ToastDemo() {
 
   return (
     <>
-      <button onClick={() => toast.success("Профиль обновлен")} type="button">
+      <button onClick={() => toast.success("Profil zaktualizowany")} type="button">
         success
       </button>
-      <button onClick={() => toast.error("Не удалось сохранить")} type="button">
+      <button onClick={() => toast.error("Nie udało się zapisać")} type="button">
         error
       </button>
       <button
-        onClick={() => toast.warning("Проверьте диапазон", "Минимум больше максимума")}
+        onClick={() => toast.warning("Sprawdź zakres", "Minimum jest większe niż maksimum")}
         type="button"
       >
         warning
@@ -37,7 +37,7 @@ describe("ToastProvider", () => {
 
     await user.click(screen.getByRole("button", { name: "success" }));
 
-    expect(screen.getByRole("status")).toHaveTextContent("Профиль обновлен");
+    expect(screen.getByRole("status")).toHaveTextContent("Profil zaktualizowany");
   });
 
   it("renders error toasts as alerts and allows dismissing them", async () => {
@@ -51,9 +51,9 @@ describe("ToastProvider", () => {
 
     await user.click(screen.getByRole("button", { name: "error" }));
 
-    expect(screen.getByRole("alert")).toHaveTextContent("Не удалось сохранить");
+    expect(screen.getByRole("alert")).toHaveTextContent("Nie udało się zapisać");
 
-    await user.click(screen.getByRole("button", { name: "Закрыть уведомление" }));
+    await user.click(screen.getByRole("button", { name: "Zamknij powiadomienie" }));
 
     expect(screen.queryByRole("alert")).not.toBeInTheDocument();
   });
@@ -73,7 +73,7 @@ describe("ToastProvider", () => {
 
     expect(toast).toHaveAttribute("data-type", "warning");
     expect(toast).toHaveAttribute("data-has-description", "true");
-    expect(toast).toHaveTextContent("Проверьте диапазон");
-    expect(toast).toHaveTextContent("Минимум больше максимума");
+    expect(toast).toHaveTextContent("Sprawdź zakres");
+    expect(toast).toHaveTextContent("Minimum jest większe niż maksimum");
   });
 });

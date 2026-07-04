@@ -1,0 +1,105 @@
+.root {
+  display: inline-flex;
+  width: fit-content;
+  align-items: center;
+  gap: 10px;
+  color: inherit;
+  line-height: 1;
+  text-decoration: none;
+}
+
+.mark {
+  display: inline-flex;
+  width: 42px;
+  height: 42px;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+}
+
+.mark img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  filter: drop-shadow(0 10px 18px rgba(252, 66, 56, 0.14));
+}
+
+.copy {
+  display: grid;
+  min-width: 0;
+  gap: 3px;
+}
+
+.copy strong,
+.copy small {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.copy strong {
+  color: currentColor;
+  font-size: 23px;
+  font-weight: 950;
+  line-height: 1;
+}
+
+.copy small {
+  color: var(--sd-ink-500, #64748b);
+  font-size: 12px;
+  font-weight: 850;
+  line-height: 1;
+}
+
+.root[data-size="xs"] {
+  gap: 8px;
+}
+
+.root[data-size="xs"] .mark {
+  width: 34px;
+  height: 34px;
+}
+
+.root[data-size="xs"] .copy strong {
+  font-size: 16px;
+}
+
+.root[data-size="xs"] .copy small {
+  font-size: 11px;
+}
+
+.root[data-size="sm"] {
+  gap: 9px;
+}
+
+.root[data-size="sm"] .mark {
+  width: 38px;
+  height: 38px;
+}
+
+.root[data-size="sm"] .copy strong {
+  font-size: 18px;
+}
+
+.root[data-size="md"] .mark {
+  width: 44px;
+  height: 44px;
+}
+
+.root[data-size="lg"] {
+  gap: 12px;
+}
+
+.root[data-size="lg"] .mark {
+  width: 52px;
+  height: 52px;
+}
+
+.root[data-size="lg"] .copy strong {
+  font-size: 27px;
+}
+
+.root[data-text="false"] {
+  gap: 0;
+}

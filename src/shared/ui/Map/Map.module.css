@@ -1,0 +1,23 @@
+.map {
+  position: absolute;
+  inset: 0;
+}
+
+.map :global(.maplibregl-ctrl-attrib) {
+  border-radius: 12px 0 0 0;
+  background: rgba(255, 255, 255, 0.86);
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.map
+  :global(
+    .maplibregl-ctrl-attrib.maplibregl-compact-show:not([data-event-attribution-user-open="true"])
+      .maplibregl-ctrl-attrib-inner
+  ) {
+  display: none;
+}
+
+.map :global(.maplibregl-ctrl-attrib-button) {
+  opacity: 0.72;
+}

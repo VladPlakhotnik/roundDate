@@ -1,17 +1,19 @@
 "use client";
 
-import type { KeyboardEvent, ReactNode } from "react";
+import { Children, type KeyboardEvent, type ReactNode } from "react";
 
 import type { BadgeStatus } from "@/shared/ui/Badge";
 
 import {
   EventDetailsModal,
+  type BookingParticipantDefaults,
   type EventDetailsModalContext,
   type EventDetailsModalEvent,
 } from "./EventDetailsModal";
 
 type EventDetailsCardTriggerProps = {
   ariaLabel: string;
+  bookingDefaults?: BookingParticipantDefaults;
   children: ReactNode;
   className?: string | undefined;
   context?: EventDetailsModalContext;
@@ -22,6 +24,7 @@ type EventDetailsCardTriggerProps = {
 
 export function EventDetailsCardTrigger({
   ariaLabel,
+  bookingDefaults,
   children,
   className,
   context = "available",
@@ -35,9 +38,11 @@ export function EventDetailsCardTrigger({
       event.currentTarget.click();
     }
   }
+  const triggerChildren = Children.toArray(children);
 
   return (
     <EventDetailsModal
+      {...(bookingDefaults ? { bookingDefaults } : {})}
       context={context}
       event={event}
       {...(status ? { status } : {})}
@@ -50,7 +55,7 @@ export function EventDetailsCardTrigger({
           tabIndex={0}
           onKeyDown={handleKeyDown}
         >
-          {children}
+          {triggerChildren}
         </article>
       }
     />

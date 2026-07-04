@@ -1,5 +1,5 @@
 {
-  "name": "speed-dating",
+  "name": "rounddate",
   "version": "0.1.0",
   "private": true,
   "packageManager": "pnpm@10.23.0",
@@ -16,10 +16,14 @@
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "db:studio": "drizzle-kit studio",
-    "email:dev": "react-email dev --dir src/emails --port 6671"
+    "email:dev": "react-email dev --dir src/emails --port 6671",
+    "resend:webhooks:create:local": "node scripts/resend-webhooks.mjs create:local",
+    "resend:webhooks:create:prod": "node scripts/resend-webhooks.mjs create:prod",
+    "resend:webhooks:list": "node scripts/resend-webhooks.mjs list"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.4.0",
+    "@internationalized/date": "^3.12.2",
     "@neondatabase/serverless": "^1.1.0",
     "@radix-ui/react-dialog": "^1.1.17",
     "@radix-ui/react-dropdown-menu": "^2.1.18",
@@ -39,6 +43,7 @@
     "react": "19.2.4",
     "react-dom": "19.2.4",
     "react-hook-form": "^7.79.0",
+    "recharts": "^3.8.1",
     "resend": "^6.12.4",
     "server-only": "^0.0.1",
     "stripe": "^22.2.1",

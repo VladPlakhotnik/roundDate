@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, useSyncExternalStore } from "react";
+import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import {
   AmbientLight,
   Box3,
@@ -19,6 +19,10 @@ import {
   WebGLRenderer,
 } from "three";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
+
+import { useI18n } from "@/shared/i18n/I18nProvider";
+import { useToast } from "@/shared/ui/Toast";
+
 import styles from "./HeroChairScene.module.css";
 
 type HeroChairSceneProps = {
@@ -65,11 +69,11 @@ type MotionProfile = {
 
 const isHeroEditorAllowed = process.env.NODE_ENV !== "production";
 const sceneLoadFallbackMs = 6500;
-const sceneWarmupFrames = 6;
+const sceneWarmupFrames = 18;
 
 const modelConfigs = {
   leftChair: {
-    floorY: -1.27,
+    floorY: -1.45,
     rotation: [MathUtils.degToRad(-4), MathUtils.degToRad(-23), MathUtils.degToRad(-7)],
     size: 1.72,
     url: "/assets/hero/models/pink-armchair.glb",
@@ -77,7 +81,7 @@ const modelConfigs = {
     z: 0.12,
   },
   rightChair: {
-    floorY: -1.29,
+    floorY: -1.45,
     materialTint: "#f4c8b8",
     rotation: [MathUtils.degToRad(2), MathUtils.degToRad(-162), MathUtils.degToRad(-10)],
     size: 1.78,
@@ -86,7 +90,7 @@ const modelConfigs = {
     z: 0.2,
   },
   mug: {
-    floorY: -1.66,
+    floorY: -1.9,
     rotation: [MathUtils.degToRad(13), MathUtils.degToRad(-14), 0],
     size: 0.58,
     url: "/assets/hero/models/pink-mug.glb",
@@ -94,7 +98,7 @@ const modelConfigs = {
     z: 0.95,
   },
   speechBubble: {
-    floorY: 0.96,
+    floorY: 0.75,
     rotation: [MathUtils.degToRad(10), MathUtils.degToRad(35), MathUtils.degToRad(-2)],
     size: 0.89,
     url: "/assets/hero/models/speech-bubble.glb",
@@ -104,23 +108,23 @@ const modelConfigs = {
 } satisfies SceneModelConfigs;
 
 const modelLabels = {
-  leftChair: "Левый стул",
-  rightChair: "Правый стул",
-  mug: "Кружка",
-  speechBubble: "Чат",
+  leftChair: "Left chair",
+  rightChair: "Right chair",
+  mug: "Mug",
+  speechBubble: "Chat",
 } satisfies Record<LoadedModelName, string>;
 
 const fieldSettings = {
-  x: { label: "X - левее / правее", max: 7, min: -7, step: 0.01 },
-  floorY: { label: "Y - ниже / выше", max: 2, min: -2, step: 0.01 },
-  z: { label: "Z - глубина", max: 2.5, min: -2.5, step: 0.01 },
-  size: { label: "Размер", max: 3, min: 0.1, step: 0.01 },
+  x: { label: "X - left / right", max: 7, min: -7, step: 0.01 },
+  floorY: { label: "Y - lower / higher", max: 2, min: -2, step: 0.01 },
+  z: { label: "Z - depth", max: 2.5, min: -2.5, step: 0.01 },
+  size: { label: "Size", max: 3, min: 0.1, step: 0.01 },
 } satisfies Record<NumericConfigField, { label: string; max: number; min: number; step: number }>;
 
 const rotationSettings = [
-  { axis: 0, label: "Rotation X - наклон вперед / назад" },
-  { axis: 1, label: "Rotation Y - разворот" },
-  { axis: 2, label: "Rotation Z - завал набок" },
+  { axis: 0, label: "Rotation X - pitch forward / back" },
+  { axis: 1, label: "Rotation Y - turn" },
+  { axis: 2, label: "Rotation Z - side tilt" },
 ] satisfies Array<{ axis: RotationAxis; label: string }>;
 
 const motionProfiles = {
@@ -371,6 +375,12 @@ function animateModel(
   );
 }
 
+export function isHeroEditorSearchEnabled(search: string) {
+  const value = new URLSearchParams(search).get("heroEditor");
+
+  return value === "1" || value === "true";
+}
+
 function useHeroEditorEnabled() {
   return useSyncExternalStore(
     (callback) => {
@@ -379,16 +389,24 @@ function useHeroEditorEnabled() {
       }
 
       window.addEventListener("popstate", callback);
-      window.addEventListener("pushstate", callback);
-      window.addEventListener("replacestate", callback);
 
-      return () => {
-        window.removeEventListener("popstate", callback);
-        window.removeEventListener("pushstate", callback);
-        window.removeEventListener("replacestate", callback);
-      };
+      return () => window.removeEventListener("popstate", callback);
     },
-    () => isHeroEditorAllowed && new URLSearchParams(window.location.search).has("heroEditor"),
+    () => isHeroEditorAllowed && isHeroEditorSearchEnabled(window.location.search),
+    () => false,
+  );
+}
+
+function useHeroSceneViewportEnabled() {
+  return useSyncExternalStore(
+    (callback) => {
+      const mediaQuery = window.matchMedia("(min-width: 1101px)");
+
+      mediaQuery.addEventListener("change", callback);
+
+      return () => mediaQuery.removeEventListener("change", callback);
+    },
+    () => window.matchMedia("(min-width: 1101px)").matches,
     () => false,
   );
 }
@@ -527,7 +545,7 @@ function HeroSceneEditor({
           <div className={styles.editorHeader}>
             <div>
               <p className={styles.editorEyebrow}>Hero 3D editor</p>
-              <h2 className={styles.editorTitle}>Позиция объектов</h2>
+              <h2 className={styles.editorTitle}>Object position</h2>
             </div>
             <button className={styles.editorGhostButton} onClick={onResetAll} type="button">
               Reset all
@@ -650,8 +668,8 @@ function HeroSceneEditor({
           <textarea className={styles.editorOutput} readOnly ref={outputRef} value={configOutput} />
 
           <p className={styles.editorHint}>
-            X двигает влево/вправо, Y ставит объект ниже/выше, Z двигает ближе/дальше. Rotation
-            Y обычно отвечает за разворот объекта к камере.
+            X moves left/right, Y places the object lower/higher, Z moves it closer/farther.
+            Rotation Y usually turns the object toward the camera.
           </p>
         </aside>
       ) : null}
@@ -660,23 +678,23 @@ function HeroSceneEditor({
 }
 
 export function HeroChairScene({ className }: HeroChairSceneProps) {
+  const toast = useToast();
+  const { t } = useI18n();
   const rootRef = useRef<HTMLDivElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const canvasFrameRef = useRef<HTMLDivElement | null>(null);
   const loadedModelsRef = useRef<Partial<Record<LoadedModelName, Group>>>({});
+  const hasReportedLoadErrorRef = useRef(false);
   const [activeModel, setActiveModel] = useState<LoadedModelName>("leftChair");
   const [configs, setConfigs] = useState<SceneModelConfigs>(() => cloneModelConfigs(modelConfigs));
+  const [isSceneContentReady, setIsSceneContentReady] = useState(false);
   const [loadState, setLoadState] = useState<SceneLoadState>("loading");
   const configsRef = useRef(configs);
   const isEditorEnabled = useHeroEditorEnabled();
-  const isReady = loadState === "ready";
-  const showSceneFallback = loadState === "delayed" || loadState === "error";
-  const fallbackTitle =
-    loadState === "error" ? "3D-сцена временно недоступна" : "Готовим 3D-сцену";
-  const fallbackDescription =
-    loadState === "error"
-      ? "Основной экран уже доступен, а декоративную сцену можно будет обновить позже."
-      : "Модели загружаются чуть дольше обычного. Страница уже готова к просмотру.";
+  const isViewportEnabled = useHeroSceneViewportEnabled();
+  const isReady = isViewportEnabled && isSceneContentReady && loadState === "ready";
+  const shouldRenderCanvas = isViewportEnabled && loadState !== "error";
+  const sceneLoadState = isViewportEnabled ? loadState : "disabled";
 
   useEffect(() => {
     configsRef.current = configs;
@@ -708,17 +726,40 @@ export function HeroChairScene({ className }: HeroChairSceneProps) {
     setConfigs(cloneModelConfigs(modelConfigs));
   }
 
+  const reportSceneLoadError = useCallback(
+    (error: unknown) => {
+      console.warn("Hero 3D scene is unavailable, falling back to static state.", error);
+
+      if (hasReportedLoadErrorRef.current) {
+        return;
+      }
+
+      hasReportedLoadErrorRef.current = true;
+      toast.warning(t("home.hero.sceneLoadError"), t("home.hero.sceneLoadErrorDescription"));
+    },
+    [t, toast],
+  );
+
   useEffect(() => {
     const root = rootRef.current;
     const canvas = canvasRef.current;
     const canvasFrame = canvasFrameRef.current;
+    const resetStateTimer = window.setTimeout(() => {
+      setLoadState("loading");
+      setIsSceneContentReady(false);
+    }, 0);
+
+    if (!isViewportEnabled) {
+      return () => window.clearTimeout(resetStateTimer);
+    }
 
     if (!root || !canvas || !canvasFrame) {
-      return;
+      return () => window.clearTimeout(resetStateTimer);
     }
 
     const revealFrame = canvasFrame;
     let disposed = false;
+    let resourcesReleased = false;
     let animationFrame = 0;
     let renderer: WebGLRenderer | undefined;
     let fallbackTimer = 0;
@@ -760,7 +801,9 @@ export function HeroChairScene({ className }: HeroChairSceneProps) {
         canvas,
         powerPreference: "high-performance",
       });
-    } catch {
+    } catch (error) {
+      reportSceneLoadError(error);
+
       const errorTimer = window.setTimeout(() => setLoadState("error"), 0);
 
       return () => window.clearTimeout(errorTimer);
@@ -768,8 +811,8 @@ export function HeroChairScene({ className }: HeroChairSceneProps) {
 
     function applyCanvasReveal(progress: number) {
       const easedProgress = 1 - (1 - progress) ** 3;
-      const translateY = roundValue((1 - easedProgress) * 18, 3);
-      const scale = roundValue(0.985 + easedProgress * 0.015, 4);
+      const translateY = roundValue((1 - easedProgress) * 22, 3);
+      const scale = roundValue(0.975 + easedProgress * 0.025, 4);
 
       revealFrame.style.opacity = String(roundValue(easedProgress, 3));
       revealFrame.style.transform = `translateY(${translateY}px) scale(${scale})`;
@@ -806,6 +849,31 @@ export function HeroChairScene({ className }: HeroChairSceneProps) {
     resizeObserver.observe(container);
     resize();
 
+    function releaseSceneResources() {
+      if (resourcesReleased) {
+        return;
+      }
+
+      resourcesReleased = true;
+      window.clearTimeout(resetStateTimer);
+      cancelAnimationFrame(animationFrame);
+      window.clearTimeout(fallbackTimer);
+      window.removeEventListener("pointermove", handlePointerMove);
+      resizeObserver.disconnect();
+
+      for (const model of Object.values(loadedModels)) {
+        if (model) {
+          stage.remove(model);
+          disposeObject3D(model);
+        }
+      }
+
+      loadedModelsRef.current = {};
+      renderer?.dispose();
+      renderer?.forceContextLoss();
+      renderer = undefined;
+    }
+
     const loader = new GLTFLoader();
 
     Promise.all(
@@ -829,10 +897,12 @@ export function HeroChairScene({ className }: HeroChairSceneProps) {
           warmupFramesRemaining = sceneWarmupFrames;
         }
       })
-      .catch(() => {
+      .catch((error) => {
         if (!disposed) {
-          window.clearTimeout(fallbackTimer);
+          reportSceneLoadError(error);
           setLoadState("error");
+          disposed = true;
+          releaseSceneResources();
         }
       });
 
@@ -840,8 +910,8 @@ export function HeroChairScene({ className }: HeroChairSceneProps) {
       const viewportWidth = window.innerWidth || 1;
       const viewportHeight = window.innerHeight || 1;
 
-      pointer.targetX = ((event.clientX / viewportWidth) - 0.5) * 2;
-      pointer.targetY = ((event.clientY / viewportHeight) - 0.5) * 2;
+      pointer.targetX = (event.clientX / viewportWidth - 0.5) * 2;
+      pointer.targetY = (event.clientY / viewportHeight - 0.5) * 2;
     }
 
     window.addEventListener("pointermove", handlePointerMove);
@@ -879,6 +949,7 @@ export function HeroChairScene({ className }: HeroChairSceneProps) {
 
         if (warmupFramesRemaining === 0) {
           applyCanvasReveal(1);
+          setIsSceneContentReady(true);
           setLoadState("ready");
         }
       }
@@ -890,45 +961,27 @@ export function HeroChairScene({ className }: HeroChairSceneProps) {
 
     return () => {
       disposed = true;
-      cancelAnimationFrame(animationFrame);
-      window.clearTimeout(fallbackTimer);
-      window.removeEventListener("pointermove", handlePointerMove);
-      resizeObserver.disconnect();
-
-      for (const model of Object.values(loadedModels)) {
-        if (model) {
-          stage.remove(model);
-          disposeObject3D(model);
-        }
-      }
-
-      loadedModelsRef.current = {};
-      renderer?.dispose();
-      renderer?.forceContextLoss();
+      releaseSceneResources();
     };
-  }, []);
+  }, [isViewportEnabled, reportSceneLoadError]);
 
   return (
     <>
       <div
-        aria-hidden={showSceneFallback ? undefined : true}
+        aria-hidden
         className={className}
-        data-load-state={loadState}
+        data-load-state={sceneLoadState}
         data-ready={isReady ? "true" : "false"}
         ref={rootRef}
       >
-        <div
-          className={styles.sceneCanvasFrame}
-          data-ready={isReady ? "true" : "false"}
-          data-scene-canvas-frame="true"
-          ref={canvasFrameRef}
-        >
-          <canvas ref={canvasRef} />
-        </div>
-        {showSceneFallback ? (
-          <div aria-live="polite" className={styles.sceneFallback} role="status">
-            <span>{fallbackTitle}</span>
-            <small>{fallbackDescription}</small>
+        {shouldRenderCanvas ? (
+          <div
+            className={styles.sceneCanvasFrame}
+            data-ready={isReady ? "true" : "false"}
+            data-scene-canvas-frame="true"
+            ref={canvasFrameRef}
+          >
+            <canvas ref={canvasRef} />
           </div>
         ) : null}
       </div>

@@ -17,6 +17,11 @@ import { getDb } from "@/shared/server/db/client";
 import { authAccounts, profiles } from "@/shared/server/db/schema";
 
 type ProfileRow = typeof profiles.$inferSelect;
+type ProfileUserRole = ProfileOnboardingState["user"]["role"];
+
+function resolveUserRole(role: unknown): ProfileUserRole {
+  return role === "admin" || role === "manager" ? role : "user";
+}
 
 function splitName(name: string) {
   const parts = name.trim().split(/\s+/).filter(Boolean);
@@ -46,10 +51,6 @@ function normalizeDate(value: unknown) {
 function resolveProvider(providerIds: string[]): OnboardingAuthProvider {
   if (providerIds.includes("google")) {
     return "google";
-  }
-
-  if (providerIds.includes("facebook")) {
-    return "facebook";
   }
 
   return "email";
@@ -136,9 +137,6 @@ export async function getProfileOnboardingState(input: {
   const provider = resolveProvider(accountRows.map((account) => account.providerId));
   const linkedProviders: OnboardingAuthProvider[] = [
     ...(accountRows.some((account) => account.providerId === "google") ? ["google" as const] : []),
-    ...(accountRows.some((account) => account.providerId === "facebook")
-      ? ["facebook" as const]
-      : []),
     ...(accountRows.some((account) => account.providerId === "credential" && account.password)
       ? ["email" as const]
       : []),
@@ -157,6 +155,7 @@ export async function getProfileOnboardingState(input: {
       email: user.email,
       image: user.image ?? null,
       name: user.name ?? "",
+      role: resolveUserRole((user as { role?: unknown }).role),
     },
   };
 }

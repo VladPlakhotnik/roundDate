@@ -6,24 +6,37 @@ import { getAuth } from "@/shared/server/auth/auth";
 import { getDb } from "@/shared/server/db/client";
 import { authAccounts } from "@/shared/server/db/schema";
 
-import { getApiErrorMessage, getSettingsSession, jsonError, readJson } from "../_utils";
+import {
+  getApiErrorMessage,
+  getSettingsSession,
+  getSettingsTranslator,
+  jsonError,
+  readJson,
+} from "../_utils";
 
 const passwordPayloadSchema = z.object({
   currentPassword: z.string().optional(),
-  newPassword: z.string().min(8, "Минимум 8 символов."),
+  newPassword: z.string().min(8),
 });
 
 export async function POST(request: Request) {
+  const t = getSettingsTranslator(request);
   const session = await getSettingsSession(request);
 
   if (!session?.user) {
-    return jsonError("Unauthorized", 401);
+    return jsonError(t("api.common.unauthorized"), 401);
   }
 
   const parsed = passwordPayloadSchema.safeParse(await readJson(request));
 
   if (!parsed.success) {
-    return jsonError(parsed.error.issues[0]?.message ?? "Проверьте пароль.");
+    const hasShortPassword = parsed.error.issues.some(
+      (issue) => issue.path.includes("newPassword") && issue.code === "too_small",
+    );
+
+    return jsonError(
+      hasShortPassword ? t("api.settings.passwordTooShort") : t("api.settings.invalidPassword"),
+    );
   }
 
   const [credentialAccount] = await getDb()
@@ -41,7 +54,7 @@ export async function POST(request: Request) {
   try {
     if (credentialAccount) {
       if (!parsed.data.currentPassword) {
-        return jsonError("Введите текущий пароль.");
+        return jsonError(t("api.settings.currentPasswordRequired"));
       }
 
       await getAuth().api.changePassword({
@@ -61,7 +74,7 @@ export async function POST(request: Request) {
       });
     }
   } catch (error) {
-    return jsonError(getApiErrorMessage(error));
+    return jsonError(getApiErrorMessage(error, t("api.common.generic")));
   }
 
   return NextResponse.json({ hasPassword: true, ok: true });

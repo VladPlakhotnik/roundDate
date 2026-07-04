@@ -1,6 +1,19 @@
+import type { EventStatus } from "@/shared/types";
+
 export type EventsListFilters = {
+  ageFrom?: number;
+  ageTo?: number;
   city?: string;
-  status?: "draft" | "published" | "sold_out";
+  dateFrom?: string;
+  dateTo?: string;
+  district?: string;
+  includePast?: boolean;
+  priceFrom?: number;
+  priceTo?: number;
+  query?: string;
+  sort?: "date" | "price-asc" | "price-desc";
+  status?: EventStatus | EventStatus[];
+  tag?: "all" | "closest" | "today" | "week" | "weekend";
 };
 
 export const eventsQueryKeys = {

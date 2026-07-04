@@ -3,6 +3,7 @@
 import { ChevronDown } from "lucide-react";
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 
+import { useI18n } from "@/shared/i18n/I18nProvider";
 import { Button } from "@/shared/ui/Button";
 
 import styles from "./LoadMore.module.css";
@@ -35,8 +36,9 @@ function LoadMoreState<TItem>({
   items,
   label,
   loadingDurationMs = 480,
-  loadingLabel = "Загружаем",
+  loadingLabel,
 }: Omit<LoadMoreProps<TItem>, "resetKey"> & { initialCount: number }) {
+  const { t } = useI18n();
   const safeInitialCount = Math.max(0, initialCount);
   const safeIncrement = Math.max(1, (increment ?? safeInitialCount) || 1);
   const [visibleCount, setVisibleCount] = useState(safeInitialCount);
@@ -90,7 +92,7 @@ function LoadMoreState<TItem>({
             variant="outline"
             onClick={loadMore}
           >
-            {isLoadingMore ? loadingLabel : label}
+            {isLoadingMore ? (loadingLabel ?? t("common.ui.loadMoreLoading")) : label}
           </Button>
         </div>
       ) : null}

@@ -1,6 +1,6 @@
 .section {
   position: relative;
-  scroll-margin-top: 24px;
+  scroll-margin-top: 118px;
   overflow: hidden;
   background: transparent;
   padding: 82px 0 0;
@@ -9,7 +9,7 @@
 .inner {
   position: relative;
   z-index: 2;
-  width: min(1344px, calc(100vw - 96px));
+  width: var(--sd-container-width);
   margin: 0 auto;
 }
 
@@ -129,12 +129,46 @@
   color: rgba(252, 66, 56, 0.58);
 }
 
-.success {
-  margin: 14px 0 0;
+.successCard {
+  display: inline-flex;
+  max-width: 560px;
+  align-items: flex-start;
+  gap: 14px;
+  margin: 18px auto 0;
+  border: 1px solid rgba(255, 113, 97, 0.18);
+  border-radius: var(--sd-radius-md);
+  background: rgba(255, 255, 255, 0.78);
+  color: var(--sd-ink-700);
+  padding: 16px 20px;
+  text-align: left;
+  box-shadow: 0 14px 34px rgba(170, 91, 79, 0.08);
+}
+
+.successCard svg {
+  flex: 0 0 auto;
   color: var(--sd-coral-600);
+}
+
+.successCard strong {
+  display: block;
+  color: var(--sd-ink-900);
   font-size: 15px;
-  font-weight: 800;
-  line-height: 1.35;
+  font-weight: 900;
+  line-height: 1.25;
+}
+
+.successCard p {
+  margin: 4px 0 0;
+  font-size: 14px;
+  font-weight: 650;
+  line-height: 1.45;
+}
+
+.successCard span {
+  display: block;
+  margin-top: 4px;
+  color: var(--sd-coral-600);
+  font-weight: 850;
 }
 
 .footer {
@@ -144,7 +178,7 @@
   border-radius: 42px 42px 0 0;
   background: rgba(255, 248, 246, 0.72);
   box-shadow: 0 -22px 70px rgba(170, 91, 79, 0.08);
-  padding: 38px 86px 24px;
+  padding: 34px 86px 24px;
   backdrop-filter: blur(16px);
 }
 
@@ -176,12 +210,8 @@
 
 .logoLink {
   display: inline-flex;
+  align-items: center;
   color: inherit;
-}
-
-.logoLink img {
-  width: 230px;
-  height: auto;
 }
 
 .brandColumn p {
@@ -435,7 +465,7 @@
 
 @media (max-width: 700px) {
   .section {
-    scroll-margin-top: 96px;
+    scroll-margin-top: 92px;
     padding: 58px 12px 0;
   }
 
@@ -520,10 +550,6 @@
   .brandColumn p {
     max-width: none;
     font-size: 15px;
-  }
-
-  .logoLink img {
-    width: 184px;
   }
 
   .footerBottom {

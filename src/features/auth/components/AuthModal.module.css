@@ -1,18 +1,29 @@
+.content {
+  --modal-max-height: calc(100dvh - 48px);
+  --modal-width: 1040px;
+}
+
 .shell {
   display: grid;
-  min-height: min(72vh, 620px);
-  grid-template-columns: minmax(332px, 39%) minmax(0, 1fr);
+  flex: 0 1 auto;
+  min-height: 0;
+  align-items: stretch;
+  grid-template-columns: minmax(380px, 44%) minmax(0, 1fr);
+  overflow: hidden;
 }
 
 .visual {
   position: relative;
-  min-height: 620px;
+  height: 100%;
+  min-height: 0;
+  align-self: stretch;
   overflow: hidden;
   background: #fff1ef;
 }
 
 .visual img {
   object-fit: cover;
+  object-position: center;
 }
 
 .panel {
@@ -20,7 +31,7 @@
   min-width: 0;
   flex-direction: column;
   justify-content: center;
-  padding: clamp(38px, 4.4vw, 56px) clamp(44px, 5.2vw, 72px);
+  padding: clamp(34px, 4vw, 50px) clamp(42px, 5vw, 66px);
 }
 
 .headingBlock {
@@ -109,8 +120,13 @@
   gap: 14px;
 }
 
+.socialGrid[data-layout="single"] {
+  grid-template-columns: 1fr;
+}
+
 .socialButton {
   display: inline-flex;
+  width: 100%;
   min-height: 52px;
   align-items: center;
   justify-content: center;
@@ -178,8 +194,9 @@
 
 @media (max-width: 860px) {
   .shell {
-    min-height: auto;
+    min-height: 100dvh;
     grid-template-columns: 1fr;
+    overflow: visible;
   }
 
   .visual {
@@ -187,7 +204,8 @@
   }
 
   .panel {
-    padding: 46px 24px 30px;
+    min-height: 100dvh;
+    padding: calc(64px + env(safe-area-inset-top)) 24px calc(34px + env(safe-area-inset-bottom));
   }
 
   .headingBlock {

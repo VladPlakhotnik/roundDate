@@ -1,1 +1,1 @@
-export { FacebookLogo, GoogleLogo } from "./SocialLogo";
+export { GoogleLogo } from "./SocialLogo";

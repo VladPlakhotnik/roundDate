@@ -1,0 +1,39 @@
+.root {
+  overflow: hidden;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.88);
+  box-shadow: 0 18px 54px rgba(15, 23, 42, 0.055);
+}
+
+.header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 20px 20px 0;
+}
+
+.content {
+  padding: 20px;
+}
+
+.title,
+.description {
+  margin: 0;
+}
+
+.title {
+  color: #111827;
+  font-size: 18px;
+  font-weight: 900;
+  line-height: 1.2;
+}
+
+.description {
+  margin-top: 5px;
+  color: #64748b;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.45;
+}

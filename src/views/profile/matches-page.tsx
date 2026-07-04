@@ -3,128 +3,37 @@
 import { CheckCircle2, Heart, Hourglass, MapPin, Phone } from "lucide-react";
 import Image from "next/image";
 
+import type { ProfileMatchEvent } from "@/entities/events";
+import { useI18n } from "@/shared/i18n/I18nProvider";
 import { LoadMore } from "@/shared/ui/LoadMore";
 
 import styles from "./ProfileView.module.css";
 
-type MatchPerson = {
-  age: number;
-  avatarSrc: string;
-  city: string;
-  id: string;
-  name: string;
-  phone: string;
-  phoneHref: string;
+type ProfileMatchesViewProps = {
+  matchEvents: ProfileMatchEvent[];
 };
 
-type MatchEventBase = {
-  dateLabel: string;
-  eventImageSrc: string;
-  id: string;
-  location: string;
-  timeLabel: string;
-  title: string;
-};
-
-type MatchEvent =
-  | (MatchEventBase & {
-      matches: MatchPerson[];
-      state: "matches";
-    })
-  | (MatchEventBase & {
-      state: "empty";
-    })
-  | (MatchEventBase & {
-      state: "pending";
-      unlocksAt: string;
-    });
-
-const matchEvents = [
-  {
-    dateLabel: "24 мая",
-    eventImageSrc: "/assets/atmosphere/conversation-03.png",
-    id: "speed-dating-25-35",
-    location: "Гданьск, Hotel Almond",
-    matches: [
-      {
-        age: 28,
-        avatarSrc: "/assets/profile/matches/avatar-maria.png",
-        city: "Гданьск",
-        id: "maria",
-        name: "Мария",
-        phone: "+48 512 345 678",
-        phoneHref: "tel:+48512345678",
-      },
-      {
-        age: 30,
-        avatarSrc: "/assets/profile/matches/avatar-dmitry.png",
-        city: "Гданьск",
-        id: "dmitry",
-        name: "Дмитрий",
-        phone: "+48 604 765 421",
-        phoneHref: "tel:+48604765421",
-      },
-    ],
-    state: "matches",
-    timeLabel: "сб, 19:00",
-    title: "Speed dating 25-35",
-  },
-  {
-    dateLabel: "14 мая",
-    eventImageSrc: "/assets/atmosphere/gdansk-evening.png",
-    id: "speed-dating-30-40",
-    location: "Гданьск, Loft event space",
-    state: "empty",
-    timeLabel: "ср, 19:00",
-    title: "Speed dating 30-40",
-  },
-  {
-    dateLabel: "7 мая",
-    eventImageSrc: "/assets/atmosphere/conversation-06.png",
-    id: "speed-dating-35-45",
-    location: "Гданьск, Garden lounge",
-    matches: [
-      {
-        age: 39,
-        avatarSrc: "/assets/profile/matches/avatar-olga.png",
-        city: "Гданьск",
-        id: "olga",
-        name: "Ольга",
-        phone: "+48 731 987 643",
-        phoneHref: "tel:+48731987643",
-      },
-    ],
-    state: "matches",
-    timeLabel: "ср, 19:00",
-    title: "Speed dating 35-45",
-  },
-  {
-    dateLabel: "3 мая",
-    eventImageSrc: "/assets/atmosphere/welcome-board.png",
-    id: "speed-dating-pending",
-    location: "Гданьск, Terrace View",
-    state: "pending",
-    timeLabel: "сб, 19:00",
-    title: "Speed dating 25-35",
-    unlocksAt: "24 мая после 12:00",
-  },
-] satisfies MatchEvent[];
-
-function getMatchCountLabel(count: number) {
+function getMatchCountLabel(count: number, t: (key: string, values?: Record<string, number | string>) => string) {
   if (count === 1) {
-    return "1 взаимная симпатия";
+    return t("profile.matchesPage.matchCountOne");
   }
 
-  return `${count} взаимные симпатии`;
+  if (count > 1 && count < 5) {
+    return t("profile.matchesPage.matchCountSome", { count });
+  }
+
+  return t("profile.matchesPage.matchCountMany", { count });
 }
 
-function MatchCardContent({ event }: { event: MatchEvent }) {
+function MatchCardContent({ event }: { event: ProfileMatchEvent }) {
+  const { t } = useI18n();
+
   if (event.state === "empty") {
     return (
       <div className={styles.matchStatePanel}>
         <div>
-          <h3>Совпадений нет</h3>
-          <p>На этом мероприятии взаимных симпатий не было.</p>
+          <h3>{t("profile.matchesPage.noMatchesTitle")}</h3>
+          <p>{t("profile.matchesPage.noMatchesBody")}</p>
         </div>
         <Image
           alt=""
@@ -141,8 +50,8 @@ function MatchCardContent({ event }: { event: MatchEvent }) {
     return (
       <div className={styles.matchStatePanel}>
         <div>
-          <h3>Результаты ожидаются</h3>
-          <p>Результаты будут доступны {event.unlocksAt}.</p>
+          <h3>{t("profile.matchesPage.pendingTitle")}</h3>
+          <p>{t("profile.matchesPage.pendingBody", { date: event.unlocksAt })}</p>
         </div>
         <Image
           alt=""
@@ -158,7 +67,7 @@ function MatchCardContent({ event }: { event: MatchEvent }) {
   return (
     <div className={styles.matchesPanel}>
       <h3>
-        {getMatchCountLabel(event.matches.length)}
+        {getMatchCountLabel(event.matches.length, t)}
         <Heart aria-hidden size={18} />
       </h3>
 
@@ -177,17 +86,27 @@ function MatchCardContent({ event }: { event: MatchEvent }) {
                 <Heart aria-hidden className={styles.avatarHeart} size={16} fill="currentColor" />
               </span>
               <div>
-                <h4>
-                  {match.name}, {match.age}
-                </h4>
-                <p>{match.city}</p>
+                <h4>{match.age ? `${match.name}, ${match.age}` : match.name}</h4>
+                <p>
+                  {match.city}
+                  {match.attendeeNumber ? (
+                    <span className={styles.personNumber}>№ {match.attendeeNumber}</span>
+                  ) : null}
+                </p>
               </div>
             </div>
 
-            <a className={styles.phonePill} href={match.phoneHref}>
-              <Phone aria-hidden size={17} />
-              {match.phone}
-            </a>
+            {match.phone && match.phoneHref ? (
+              <a className={styles.phonePill} href={match.phoneHref}>
+                <Phone aria-hidden size={17} />
+                {match.phone}
+              </a>
+            ) : (
+              <span className={styles.phonePillMuted}>
+                <Phone aria-hidden size={17} />
+                {t("profile.matchesPage.noContact")}
+              </span>
+            )}
           </article>
         ))}
       </div>
@@ -195,10 +114,12 @@ function MatchCardContent({ event }: { event: MatchEvent }) {
   );
 }
 
-export function ProfileMatchesView() {
+export function ProfileMatchesView({ matchEvents }: ProfileMatchesViewProps) {
+  const { t } = useI18n();
+
   return (
     <section className={styles.matchesScreen} aria-labelledby="profile-section-title">
-      <section className={styles.matchesInfoCard} aria-label="Как работают мэтчи">
+      <section className={styles.matchesInfoCard} aria-label={t("profile.matchesPage.howItWorksAria")}>
         <Image
           alt=""
           className={styles.matchesInfoLock}
@@ -208,8 +129,8 @@ export function ProfileMatchesView() {
           width={197}
         />
         <div className={styles.matchesInfoText}>
-          <h2>После мероприятия вы отмечаете симпатии.</h2>
-          <p>Если выбор совпал — вы получаете мэтч и контакты друг друга.</p>
+          <h2>{t("profile.matchesPage.infoTitle")}</h2>
+          <p>{t("profile.matchesPage.infoBody")}</p>
         </div>
         <Image
           alt=""
@@ -221,61 +142,70 @@ export function ProfileMatchesView() {
         />
       </section>
 
-      <LoadMore items={matchEvents} label="Показать еще мэтчи">
-        {(visibleMatchEvents) => (
-          <div className={styles.matchesTimeline}>
-            {visibleMatchEvents.map((event) => (
-              <article className={styles.matchTimelineRow} key={event.id}>
-                <div className={styles.matchDate}>
-                  <strong>{event.dateLabel}</strong>
-                  <span>{event.timeLabel}</span>
-                </div>
+      {matchEvents.length > 0 ? (
+        <LoadMore items={matchEvents} label={t("profile.matchesPage.loadMore")}>
+          {(visibleMatchEvents) => (
+            <div className={styles.matchesTimeline}>
+              {visibleMatchEvents.map((event) => (
+                <article className={styles.matchTimelineRow} key={event.id}>
+                  <div className={styles.matchDate}>
+                    <strong>{event.dateLabel}</strong>
+                    <span>{event.timeLabel}</span>
+                  </div>
 
-                <div className={styles.matchTimelineMarker} data-state={event.state}>
-                  <span />
-                </div>
+                  <div className={styles.matchTimelineMarker} data-state={event.state}>
+                    <span />
+                  </div>
 
-                <div className={styles.matchEventCard}>
-                  <div className={styles.matchEventInfo}>
-                    <Image
-                      alt=""
-                      className={styles.matchEventImage}
-                      height={118}
-                      src={event.eventImageSrc}
-                      width={118}
-                    />
-                    <div>
-                      <h2>{event.title}</h2>
-                      <p className={styles.matchLocation}>
-                        <MapPin aria-hidden size={18} />
-                        {event.location}
-                      </p>
-                      <p
-                        className={
-                          event.state === "pending"
-                            ? styles.matchStatusPending
-                            : styles.matchStatusDone
-                        }
-                      >
-                        {event.state === "pending" ? (
-                          <Hourglass aria-hidden size={17} />
-                        ) : (
-                          <CheckCircle2 aria-hidden size={17} />
-                        )}
-                        {event.state === "pending" ? "Ожидаем результаты" : "Мероприятие завершено"}
-                      </p>
+                  <div className={styles.matchEventCard}>
+                    <div className={styles.matchEventInfo}>
+                      <Image
+                        alt=""
+                        className={styles.matchEventImage}
+                        height={118}
+                        src={event.eventImageSrc}
+                        width={118}
+                      />
+                      <div>
+                        <h2>{event.title}</h2>
+                        <p className={styles.matchLocation}>
+                          <MapPin aria-hidden size={18} />
+                          {event.location}
+                        </p>
+                        <p
+                          className={
+                            event.state === "pending"
+                              ? styles.matchStatusPending
+                              : styles.matchStatusDone
+                          }
+                        >
+                          {event.state === "pending" ? (
+                            <Hourglass aria-hidden size={17} />
+                          ) : (
+                            <CheckCircle2 aria-hidden size={17} />
+                          )}
+                          {event.state === "pending"
+                            ? t("profile.matchesPage.pending")
+                            : t("profile.matchesPage.done")}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className={styles.matchResultArea}>
+                      <MatchCardContent event={event} />
                     </div>
                   </div>
-
-                  <div className={styles.matchResultArea}>
-                    <MatchCardContent event={event} />
-                  </div>
-                </div>
-              </article>
-            ))}
-          </div>
-        )}
-      </LoadMore>
+                </article>
+              ))}
+            </div>
+          )}
+        </LoadMore>
+      ) : (
+        <section className={styles.matchesEmptyState}>
+          <h2>{t("profile.matchesPage.emptyTitle")}</h2>
+          <p>{t("profile.matchesPage.emptyDescription")}</p>
+        </section>
+      )}
     </section>
   );
 }

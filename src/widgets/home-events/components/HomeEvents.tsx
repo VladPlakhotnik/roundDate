@@ -1,13 +1,19 @@
-import { ArrowRight, Clock, MapPin, Users } from "lucide-react";
+"use client";
+
+import { ArrowRight, MapPin, Users } from "lucide-react";
 import Image from "next/image";
 
+import { EventGenderAvailability } from "@/entities/event";
 import type { HomeEvent } from "@/entities/events";
+import { AuthModal } from "@/features/auth";
+import { useI18n } from "@/shared/i18n/I18nProvider";
 import { Badge, type BadgeTone } from "@/shared/ui/Badge";
 
 import styles from "./HomeEvents.module.css";
 
 type HomeEventsProps = {
   events: HomeEvent[];
+  isAuthenticated?: boolean;
 };
 
 const eventImages = [
@@ -36,7 +42,10 @@ function getEventTone(event: HomeEvent): BadgeTone {
   return "neutral";
 }
 
-export function HomeEvents({ events }: HomeEventsProps) {
+export function HomeEvents({ events, isAuthenticated = false }: HomeEventsProps) {
+  const { t } = useI18n();
+  const visibleEvents = events.slice(0, 3);
+
   return (
     <section className={styles.section} id="events" aria-labelledby="events-title">
       <Image
@@ -59,13 +68,13 @@ export function HomeEvents({ events }: HomeEventsProps) {
       <div className={styles.inner}>
         <header className={styles.header}>
           <h2 id="events-title" className={styles.title}>
-            Ближайшие мероприятия
+            {t("home.events.title")}
           </h2>
-          <p className={styles.subtitle}>Три ближайших вечера в Гданьске - выберите свой формат.</p>
+          <p className={styles.subtitle}>{t("home.events.subtitle")}</p>
         </header>
 
-        <div className={styles.grid}>
-          {events.slice(0, 3).map((event, index) => {
+        <div className={styles.grid} data-count={visibleEvents.length} data-home-events-grid>
+          {visibleEvents.map((event, index) => {
             const dateParts = event.dateLabel.split(" ");
             const day = dateParts[0] ?? "";
             const month = dateParts.slice(1).join(" ");
@@ -106,7 +115,7 @@ export function HomeEvents({ events }: HomeEventsProps) {
                   {event.timeLabel}
                 </p>
 
-                <div className={styles.chips} aria-label="Параметры мероприятия">
+                <div className={styles.chips} aria-label={t("home.events.paramsAria")}>
                   <span>
                     <Users aria-hidden size={19} />
                     {event.ageRange}
@@ -118,21 +127,35 @@ export function HomeEvents({ events }: HomeEventsProps) {
                 </div>
 
                 <div className={styles.infoRow}>
-                  <Badge
-                    className={styles.availability ?? ""}
-                    leftIcon={<Clock aria-hidden size={17} />}
-                    size="md"
-                    tone={getEventTone(event)}
-                  >
-                    {event.statusLabel}
-                  </Badge>
+                  <div className={styles.availabilityBlock}>
+                    <span className={styles.availabilityLabel}>
+                      {t("home.events.availability")}
+                    </span>
+                    <EventGenderAvailability
+                      femaleSpotsAvailable={event.femaleSpotsAvailable}
+                      maleSpotsAvailable={event.maleSpotsAvailable}
+                      size="md"
+                      spotsAvailable={event.spotsAvailable}
+                    />
+                  </div>
                   <span className={styles.price}>{event.priceLabel}</span>
                 </div>
 
-                <button className={styles.detailsButton} type="button">
-                  Смотреть детали
-                  <ArrowRight aria-hidden size={24} />
-                </button>
+                {isAuthenticated ? (
+                  <a className={styles.detailsButton} href="/profile/events">
+                    {t("home.events.cta")}
+                    <ArrowRight aria-hidden size={24} />
+                  </a>
+                ) : (
+                  <AuthModal
+                    trigger={
+                      <button className={styles.detailsButton} type="button">
+                        {t("home.events.cta")}
+                        <ArrowRight aria-hidden size={24} />
+                      </button>
+                    }
+                  />
+                )}
               </article>
             );
           })}

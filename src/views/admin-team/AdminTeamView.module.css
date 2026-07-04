@@ -1,0 +1,235 @@
+.teamPage {
+  display: grid;
+  gap: 18px;
+}
+
+.headerCard {
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  background:
+    radial-gradient(circle at 100% 0%, rgba(255, 226, 222, 0.86), transparent 34%),
+    rgba(255, 255, 255, 0.92);
+  box-shadow: 0 24px 70px rgba(15, 23, 42, 0.06);
+}
+
+.header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 28px;
+}
+
+.header h1,
+.header p {
+  margin: 0;
+}
+
+.header h1 {
+  margin-top: 12px;
+  color: #111827;
+  font-size: 34px;
+  font-weight: 900;
+  line-height: 1.08;
+}
+
+.header p {
+  max-width: 720px;
+  margin-top: 10px;
+  color: #64748b;
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.55;
+}
+
+.headerIcon {
+  display: inline-flex;
+  width: 56px;
+  height: 56px;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  border-radius: 19px;
+  background: #ffffff;
+  color: #f04438;
+  box-shadow: 0 16px 38px rgba(240, 68, 56, 0.13);
+}
+
+.summaryGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.summaryCard {
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr);
+  gap: 13px;
+  align-items: center;
+  padding: 16px;
+}
+
+.summaryCard > span {
+  display: inline-flex;
+  width: 44px;
+  height: 44px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 15px;
+  background: #fff1ee;
+  color: #f04438;
+}
+
+.summaryCard > span[data-tone="admin"] {
+  background: #eff6ff;
+  color: #2563eb;
+}
+
+.summaryCard > span[data-tone="manager"] {
+  background: #fffbeb;
+  color: #d97706;
+}
+
+.summaryCard small,
+.summaryCard strong {
+  display: block;
+}
+
+.summaryCard small {
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.summaryCard strong {
+  margin-top: 4px;
+  color: #111827;
+  font-size: 25px;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.inviteForm {
+  display: grid;
+  grid-template-columns: minmax(260px, 1fr) 180px auto;
+  gap: 10px;
+  align-items: end;
+}
+
+.actionMessage {
+  margin: 12px 0 0;
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: 850;
+  line-height: 1.4;
+  padding: 10px 12px;
+}
+
+.actionMessage[data-status="success"] {
+  background: #ecfdf3;
+  color: #027a48;
+}
+
+.actionMessage[data-status="error"] {
+  background: #fef2f2;
+  color: #b42318;
+}
+
+.memberCell {
+  display: grid;
+  min-width: 260px;
+  grid-template-columns: 44px minmax(0, 1fr);
+  gap: 12px;
+  align-items: center;
+}
+
+.memberCell img,
+.memberCell > span {
+  display: inline-flex;
+  width: 44px;
+  height: 44px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 14px;
+  background: #fff1ee;
+  color: #f04438;
+  font-size: 13px;
+  font-weight: 900;
+  object-fit: cover;
+}
+
+.memberCell strong,
+.memberCell small {
+  display: block;
+}
+
+.memberCell strong {
+  color: #111827;
+  font-size: 14px;
+  font-weight: 900;
+  line-height: 1.2;
+}
+
+.memberCell small,
+.dateText {
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 1.35;
+}
+
+.memberCell small {
+  margin-top: 4px;
+}
+
+.roleForm {
+  display: grid;
+  min-width: 260px;
+  grid-template-columns: minmax(150px, 1fr) 36px;
+  gap: 8px;
+  align-items: end;
+}
+
+.actionsCell {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.actionsCell form {
+  display: contents;
+}
+
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  border: 0;
+  margin: -1px;
+  clip: rect(0, 0, 0, 0);
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+@media (max-width: 940px) {
+  .inviteForm,
+  .summaryGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 760px) {
+  .header {
+    align-items: stretch;
+    flex-direction: column;
+    padding: 22px;
+  }
+
+  .header h1 {
+    font-size: 28px;
+  }
+
+  .headerIcon {
+    display: none;
+  }
+}

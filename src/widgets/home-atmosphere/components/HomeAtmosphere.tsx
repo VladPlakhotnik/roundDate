@@ -1,38 +1,42 @@
+"use client";
+
 import Image from "next/image";
+
+import { useI18n } from "@/shared/i18n/I18nProvider";
 
 import styles from "./HomeAtmosphere.module.css";
 
 const photos = [
   {
-    alt: "Участники speed dating беседуют за столиком при свечах",
+    alt: "RoundDate",
     className: styles.photoOne,
     height: 300,
     src: "/assets/atmosphere/conversation-03.png",
     width: 396,
   },
   {
-    alt: "Разговор за столиком на вечере знакомств",
+    alt: "RoundDate",
     className: styles.photoTwo,
     height: 246,
     src: "/assets/atmosphere/conversation-06.png",
     width: 364,
   },
   {
-    alt: "Приветственная зона SpeedDate в баре",
+    alt: "RoundDate",
     className: styles.photoThree,
     height: 286,
     src: "/assets/atmosphere/welcome-board.png",
     width: 438,
   },
   {
-    alt: "Пара знакомится за столиком на мероприятии",
+    alt: "RoundDate",
     className: styles.photoFour,
     height: 213,
     src: "/assets/atmosphere/conversation-02.png",
     width: 456,
   },
   {
-    alt: "Вечерний Гданьск и свеча на террасе",
+    alt: "RoundDate",
     className: styles.photoFive,
     height: 211,
     src: "/assets/atmosphere/gdansk-evening.png",
@@ -41,6 +45,8 @@ const photos = [
 ];
 
 export function HomeAtmosphere() {
+  const { t } = useI18n();
+
   return (
     <section className={styles.section} id="atmosphere" aria-labelledby="atmosphere-title">
       <Image
@@ -63,14 +69,12 @@ export function HomeAtmosphere() {
       <div className={styles.inner}>
         <header className={styles.header}>
           <h2 id="atmosphere-title" className={styles.title}>
-            Атмосфера <span>вечера</span>
+            {t("home.atmosphere.title")} <span>{t("home.atmosphere.titleAccent")}</span>
           </h2>
-          <p className={styles.subtitle}>
-            Тёплые встречи, живые разговоры и новые знакомства в уютной атмосфере.
-          </p>
+          <p className={styles.subtitle}>{t("home.atmosphere.body")}</p>
         </header>
 
-        <div className={styles.gallery} aria-label="Фотографии с мероприятий SpeedDate">
+        <div className={styles.gallery} aria-label={t("home.atmosphere.aria")}>
           {photos.map((photo) => (
             <figure className={`${styles.photoCard} ${photo.className}`} key={photo.src}>
               <Image
@@ -85,8 +89,15 @@ export function HomeAtmosphere() {
 
           <div className={styles.quoteCard}>
             <span aria-hidden>“</span>
-            <p>Легко включиться в разговор с первых минут.</p>
-            <i aria-hidden>♡</i>
+            <p>{t("home.atmosphere.caption")}</p>
+            <Image
+              aria-hidden
+              alt=""
+              className={styles.quoteHeart}
+              height={160}
+              src="/assets/waitlist-footer/heart.png"
+              width={160}
+            />
           </div>
         </div>
       </div>

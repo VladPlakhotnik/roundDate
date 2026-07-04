@@ -7,7 +7,7 @@
 
 .canvas {
   position: relative;
-  width: min(1344px, calc(100vw - 96px));
+  width: var(--sd-container-width);
   min-height: 800px;
   margin: 0 auto;
 }
@@ -18,7 +18,7 @@
   left: 50%;
   z-index: 40;
   display: flex;
-  width: min(1344px, calc(100vw - 96px));
+  width: var(--sd-container-width);
   height: 96px;
   align-items: flex-start;
   padding: 24px 24px 0;
@@ -46,6 +46,8 @@
 .logoLink {
   display: inline-flex;
   flex: 0 0 auto;
+  align-items: center;
+  color: var(--sd-ink-900);
 }
 
 .nav {
@@ -65,11 +67,23 @@
   text-decoration: none;
 }
 
-.loginButton {
-  min-width: 140px;
+.headerAction {
+  display: inline-flex;
   margin-left: auto;
-  background: rgba(255, 255, 255, 0.74);
-  border-color: rgba(255, 113, 97, 0.2);
+}
+
+.loginButton {
+  min-width: 154px;
+  border-color: rgba(255, 90, 82, 0.32);
+  background: linear-gradient(135deg, var(--sd-coral-500) 0%, var(--sd-coral-600) 100%);
+  color: var(--sd-white);
+  box-shadow: 0 16px 32px rgba(252, 66, 56, 0.22);
+}
+
+.loginButton:hover {
+  border-color: rgba(255, 90, 82, 0.42);
+  background: linear-gradient(135deg, #ff7066 0%, var(--sd-coral-600) 100%);
+  box-shadow: 0 18px 34px rgba(252, 66, 56, 0.28);
 }
 
 .profileButton {
@@ -78,7 +92,6 @@
   max-width: 270px;
   align-items: center;
   gap: 11px;
-  margin-left: auto;
   border: 1px solid rgba(255, 113, 97, 0.2);
   border-radius: var(--sd-radius-pill);
   background: rgba(255, 255, 255, 0.78);
@@ -137,12 +150,144 @@
   white-space: nowrap;
 }
 
+.menuButton {
+  display: none;
+  width: 48px;
+  height: 48px;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  margin-left: auto;
+  border: 1px solid rgba(255, 113, 97, 0.2);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.82);
+  color: var(--sd-ink-900);
+  cursor: pointer;
+  box-shadow: 0 12px 28px rgba(170, 91, 79, 0.08);
+  transition:
+    background 180ms ease,
+    border-color 180ms ease,
+    transform 180ms ease;
+}
+
+.menuButton:hover {
+  border-color: rgba(255, 90, 82, 0.32);
+  background: #fff;
+  transform: translateY(-1px);
+}
+
+.mobileMenuBackdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 38;
+  background: rgba(20, 10, 8, 0.1);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 180ms ease;
+}
+
+.mobileMenuBackdrop[data-open="true"] {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.mobileMenu {
+  position: fixed;
+  top: 82px;
+  left: 50%;
+  z-index: 39;
+  display: grid;
+  width: min(430px, calc(100vw - 24px));
+  max-height: calc(100vh - 112px);
+  gap: 16px;
+  overflow: auto;
+  padding: 18px;
+  border: 1px solid rgba(255, 113, 97, 0.16);
+  border-radius: var(--sd-radius-lg);
+  background: rgba(255, 255, 255, 0.94);
+  box-shadow: 0 24px 68px rgba(170, 91, 79, 0.14);
+  opacity: 0;
+  pointer-events: none;
+  transform: translateX(-50%) translateY(-120%);
+  transition:
+    opacity 180ms ease,
+    transform 260ms cubic-bezier(0.16, 1, 0.3, 1);
+  backdrop-filter: blur(20px);
+}
+
+.mobileMenu[data-open="true"] {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateX(-50%) translateY(0);
+}
+
+.mobileNav {
+  display: grid;
+  gap: 6px;
+}
+
+.mobileNav a {
+  display: flex;
+  min-height: 46px;
+  align-items: center;
+  border-radius: 16px;
+  color: var(--sd-ink-900);
+  font-size: 15px;
+  font-weight: 800;
+  padding: 0 14px;
+  text-decoration: none;
+  transition:
+    background 160ms ease,
+    color 160ms ease;
+}
+
+.mobileNav a:hover {
+  background: rgba(255, 232, 228, 0.68);
+  color: var(--sd-coral-600);
+}
+
+.mobileAction {
+  border-top: 1px solid rgba(255, 113, 97, 0.14);
+  padding-top: 14px;
+}
+
+.mobileProfileLink {
+  display: flex;
+  min-height: 52px;
+  align-items: center;
+  gap: 12px;
+  border: 1px solid rgba(255, 113, 97, 0.18);
+  border-radius: 999px;
+  background: rgba(255, 248, 246, 0.72);
+  color: var(--sd-ink-900);
+  font-size: 15px;
+  font-weight: 800;
+  padding: 6px 14px 6px 7px;
+  text-decoration: none;
+}
+
+.mobileProfileLink span:nth-child(2) {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mobileProfileLink svg {
+  flex: 0 0 auto;
+  margin-left: auto;
+}
+
+.mobileLoginButton {
+  box-shadow: var(--sd-shadow-cta);
+}
+
 .platformBase {
   position: absolute;
   top: 346px;
   left: 50%;
   z-index: 1;
-  width: min(1320px, calc(100vw - 96px));
+  width: min(1320px, var(--sd-container-width));
   height: 224px;
   border: 4px solid rgba(255, 113, 97, 0.25);
   border-radius: 50%;
@@ -156,7 +301,19 @@
     );
   box-shadow: inset 0 0 24px rgba(255, 113, 97, 0.04);
   pointer-events: none;
-  transform: translateX(-50%) rotate(0.35deg);
+  opacity: 0;
+  transform: translateX(-50%) translateY(18px) scale(0.985) rotate(0.35deg);
+  transition:
+    opacity 820ms ease,
+    transform 920ms cubic-bezier(0.16, 1, 0.3, 1);
+  visibility: hidden;
+  will-change: opacity, transform;
+}
+
+.canvas:has(.chairScene[data-ready="true"]) .platformBase {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0) scale(1) rotate(0.35deg);
+  visibility: visible;
 }
 
 .platformBase::before,
@@ -185,7 +342,7 @@
   top: 96px;
   left: 50%;
   z-index: 2;
-  width: min(1344px, calc(100vw - 96px));
+  width: var(--sd-container-width);
   height: 430px;
   pointer-events: none;
   transform: translateX(-50%);
@@ -318,6 +475,24 @@
   font-weight: 700;
 }
 
+.waitlistEventCard .eventHeader {
+  align-items: flex-start;
+}
+
+.waitlistEventCard .eventDate {
+  font-size: 27px;
+  line-height: 1.08;
+}
+
+.waitlistEventText {
+  min-height: 42px;
+  margin: 0 0 18px;
+  color: var(--sd-ink-700);
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.45;
+}
+
 .divider {
   height: 1px;
   margin: 22px 2px 20px;
@@ -355,7 +530,7 @@
 
 .ratingCard {
   top: 515px;
-  left: 400px;
+  left: 416px;
   width: 330px;
   height: 258px;
   padding: 22px 34px 20px;
@@ -430,8 +605,8 @@
   top: 480px;
   right: 0;
   z-index: 4;
-  width: 524px;
-  height: 300px;
+  width: 560px;
+  height: 315px;
   pointer-events: none;
 }
 
@@ -451,28 +626,42 @@
 .galleryMain {
   top: 16px;
   left: 0;
-  width: 420px;
+  width: 442px;
   transform: rotate(-3deg);
 }
 
 .galleryTop {
   top: 4px;
-  right: 18px;
-  width: 164px;
+  right: 16px;
+  width: 178px;
   transform: rotate(8deg);
 }
 
 .galleryBottom {
   right: 2px;
   bottom: 16px;
-  width: 166px;
+  width: 180px;
   transform: rotate(-6deg);
+}
+
+@media (max-width: 1360px) {
+  .gallery {
+    display: none;
+  }
+
+  .eventCard {
+    left: calc(50% - 376px);
+  }
+
+  .ratingCard {
+    left: calc(50% + 16px);
+  }
 }
 
 @media (max-width: 1200px) {
   .canvas {
     width: 100vw;
-    min-height: auto;
+    min-height: 792px;
     padding-top: 1px;
   }
 
@@ -494,6 +683,14 @@
     display: none;
   }
 
+  .headerAction {
+    display: none;
+  }
+
+  .menuButton {
+    display: inline-flex;
+  }
+
   .copy {
     top: 138px;
     width: min(720px, calc(100vw - 40px));
@@ -510,27 +707,33 @@
 
   .eventCard,
   .ratingCard {
-    position: relative;
-    top: auto;
-    left: auto;
-  }
-
-  .eventCard,
-  .ratingCard {
-    width: min(392px, calc(100vw - 40px));
-    margin: 0 auto;
+    position: absolute;
+    top: 520px;
+    left: 50%;
+    height: 226px;
+    margin: 0;
   }
 
   .eventCard {
-    margin-top: 460px;
+    width: 360px;
+    padding: 18px 20px;
+    transform: translateX(calc(-100% - 10px));
   }
 
   .ratingCard {
-    margin-top: 20px;
+    width: 314px;
+    padding: 18px 22px;
+    transform: translateX(10px);
   }
 
-  .gallery {
-    display: none;
+  .eventDate,
+  .ratingValue {
+    font-size: 30px;
+  }
+
+  .iconBubble {
+    width: 48px;
+    height: 48px;
   }
 
   .chairScene {
@@ -546,6 +749,30 @@
   }
 }
 
+@media (max-width: 1100px) {
+  .canvas {
+    min-height: 704px;
+    padding-bottom: 48px;
+  }
+
+  .chairScene,
+  .platformBase {
+    display: none;
+  }
+
+  .copy {
+    top: 130px;
+  }
+
+  .eventCard {
+    top: 426px;
+  }
+
+  .ratingCard {
+    top: 426px;
+  }
+}
+
 @media (max-width: 640px) {
   .hero {
     min-height: auto;
@@ -557,35 +784,11 @@
   }
 
   .header {
+    height: 78px;
+    align-items: center;
+    padding-top: 0;
     padding-right: 18px;
     padding-left: 18px;
-  }
-
-  .logoLink img {
-    width: 170px;
-    height: auto;
-  }
-
-  .loginButton {
-    min-height: 42px;
-    min-width: 48px;
-    padding-right: 14px;
-    padding-left: 14px;
-    font-size: 14px;
-  }
-
-  .profileButton {
-    min-height: 42px;
-    max-width: 168px;
-    gap: 8px;
-    padding: 5px 10px 5px 5px;
-    font-size: 13px;
-  }
-
-  .profileAvatar {
-    width: 32px;
-    height: 32px;
-    font-size: 11px;
   }
 
   .copy {
@@ -593,17 +796,28 @@
     top: auto;
     left: auto;
     width: auto;
-    padding: 132px 20px 0;
+    padding: 106px 18px 0;
     transform: none;
   }
 
+  .title,
+  .title span {
+    font-size: clamp(31px, 9.2vw, 38px);
+  }
+
   .subtitle {
-    font-size: 18px;
+    font-size: 15px;
+  }
+
+  .subtitle br {
+    display: none;
   }
 
   .actions {
     flex-direction: column;
     align-items: center;
+    gap: 10px;
+    margin-top: 20px;
   }
 
   .primaryAction,
@@ -612,31 +826,76 @@
     min-width: 0;
   }
 
+  .secondaryAction {
+    min-height: 50px;
+    font-size: 15px;
+  }
+
   .chairScene {
-    top: 538px;
-    display: block;
-    width: 100vw;
-    height: 230px;
-    opacity: 0.72;
+    display: none;
   }
 
   .platformBase {
-    top: 622px;
-    width: calc(100vw - 28px);
-    height: 86px;
-    border-width: 2px;
-    opacity: 0.74;
-  }
-
-  .platformBase::before,
-  .platformBase::after {
-    top: 31%;
-    width: 82px;
-    height: 18px;
-    filter: blur(3px);
+    display: none;
   }
 
   .eventCard {
-    margin-top: 320px;
+    position: relative;
+    top: auto;
+    left: auto;
+    width: calc(100vw - 24px);
+    height: auto;
+    margin: 24px auto 0;
+    padding: 18px;
+    transform: none;
+  }
+
+  .ratingCard {
+    position: relative;
+    top: auto;
+    left: auto;
+    width: calc(100vw - 24px);
+    height: auto;
+    margin: 16px auto 0;
+    padding: 18px 20px 20px;
+    transform: none;
+  }
+
+  .eventHeader {
+    gap: 12px;
+  }
+
+  .iconBubble {
+    width: 44px;
+    height: 44px;
+  }
+
+  .eventDate,
+  .ratingValue {
+    font-size: 27px;
+  }
+
+  .eventTime,
+  .locationLine,
+  .waitlistEventText,
+  .ratingText {
+    font-size: 14px;
+  }
+
+  .divider {
+    margin: 16px 2px 15px;
+  }
+
+  .detailsButton {
+    min-height: 46px;
+  }
+
+  .mobileMenu {
+    top: 78px;
+  }
+
+  .menuButton {
+    width: 44px;
+    height: 44px;
   }
 }

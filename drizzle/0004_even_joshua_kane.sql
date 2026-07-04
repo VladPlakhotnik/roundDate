@@ -1,0 +1,1 @@
+CREATE UNIQUE INDEX "bookings_user_event_unique_idx" ON "bookings" USING btree ("user_id","event_id");

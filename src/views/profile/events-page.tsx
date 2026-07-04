@@ -4,10 +4,12 @@ import {
   CalendarDays,
   ChevronDown,
   Clock3,
+  X,
   LayoutGrid,
   List,
   MapPin,
   Search,
+  SlidersHorizontal,
   Trash2,
   UsersRound,
 } from "lucide-react";
@@ -18,20 +20,29 @@ import { createPortal } from "react-dom";
 
 import {
   EventDetailsCardTrigger,
+  EventDetailsModal,
+  EventGenderAvailability,
+  type BookingParticipantDefaults,
   type EventDetailsModalEvent,
   type EventMapLocation,
 } from "@/entities/event";
 import {
   addEventMap3dBuildings,
+  bindEventAttributionControl,
   bindMissingMapStyleImages,
+  createCollapsedEventAttributionControl,
   EVENT_MAP_DEFAULT_VIEW,
   EVENT_MAP_STYLE,
 } from "@/entities/event/components/maplibre-config";
+import { useI18n } from "@/shared/i18n/I18nProvider";
 import { DatePicker, type DateRangeValue } from "@/shared/ui/DatePicker";
 import { Input } from "@/shared/ui/Input";
+import { useDebounce } from "@/shared/hooks/useDebounce";
 import { useFloatingPopover } from "@/shared/hooks/useFloatingPopover";
+import { Button } from "@/shared/ui/Button";
 import { LoadMore } from "@/shared/ui/LoadMore";
 import { RangeSlider, type RangeSliderValue } from "@/shared/ui/RangeSlider";
+import { ScrollArea } from "@/shared/ui/ScrollArea";
 import { Select } from "@/shared/ui/Select";
 
 import styles from "./ProfileView.module.css";
@@ -43,19 +54,32 @@ type ProfileEvent = {
   ageRange: string;
   badge: string;
   capacityTotal: number;
+  city?: string;
+  conversationMinutes?: number;
   dateLabel: string;
   dateValue: string;
   description: string;
   district: string;
+  durationMinutes?: number;
+  femaleSpotsAvailable?: number;
+  highlights?: string[];
   id: string;
   imageSrc: string;
+  language?: string;
   location: readonly [number, number];
+  locationLabel?: string;
+  maleSpotsAvailable?: number;
+  mapLocation?: EventMapLocation;
+  organizer?: EventDetailsModalEvent["organizer"];
   price: number;
   priceLabel: string;
   spotsAvailable: number;
+  startsAt?: string;
+  statusLabel?: string;
   tag: "all" | "closest" | "today" | "week" | "weekend";
   timeLabel: string;
   title: string;
+  venueAddress?: string;
   venueName: string;
   weekdayLabel: string;
 };
@@ -66,6 +90,8 @@ type ViewMode = "list" | "card";
 type FilterKey = "age" | "date" | "district" | "price";
 
 const INITIAL_VISIBLE_EVENTS = 5;
+const DEFAULT_AGE_RANGE = { from: 25, to: 45 } satisfies RangeSliderValue;
+const DEFAULT_PRICE_RANGE = { from: 100, to: 150 } satisfies RangeSliderValue;
 
 function createEventMapLocation(event: ProfileEvent): EventMapLocation {
   return {
@@ -82,30 +108,50 @@ function createEventMapLocation(event: ProfileEvent): EventMapLocation {
 }
 
 function getEventStartsAt(event: ProfileEvent) {
+  if (event.startsAt) {
+    return event.startsAt;
+  }
+
   return `${event.dateValue}T${event.timeLabel}:00.000+02:00`;
 }
 
-function eventToDetailsEvent(event: ProfileEvent): EventDetailsModalEvent {
+function eventToDetailsEvent(
+  event: ProfileEvent,
+  t: (key: string, values?: Record<string, number | string>) => string,
+): EventDetailsModalEvent {
+  const mapLocation = event.mapLocation ?? createEventMapLocation(event);
+
   return {
     ageRange: event.ageRange,
     capacityTotal: event.capacityTotal,
-    city: "Gdańsk",
-    conversationMinutes: 10,
+    city: event.city ?? "Gdańsk",
+    conversationMinutes: event.conversationMinutes ?? 10,
     dateLabel: event.dateLabel,
     description: event.description,
-    durationMinutes: 120,
-    highlights: [],
+    durationMinutes: event.durationMinutes ?? 120,
+    highlights: event.highlights ?? [],
     id: event.id,
-    language: "RU/PL",
-    locationLabel: `Gdańsk, ${event.district}`,
-    mapLocation: createEventMapLocation(event),
+    language: event.language ?? "PL/EN",
+    locationLabel: event.locationLabel ?? `Gdańsk, ${event.district}`,
+    mapLocation,
+    ...(event.organizer ? { organizer: event.organizer } : {}),
     priceLabel: event.priceLabel,
+    ...(event.femaleSpotsAvailable !== undefined
+      ? { femaleSpotsAvailable: event.femaleSpotsAvailable }
+      : {}),
+    ...(event.maleSpotsAvailable !== undefined
+      ? { maleSpotsAvailable: event.maleSpotsAvailable }
+      : {}),
     spotsAvailable: event.spotsAvailable,
     startsAt: getEventStartsAt(event),
-    statusLabel: event.spotsAvailable > 0 ? "Места есть" : "Мест нет",
+    statusLabel:
+      event.statusLabel ??
+      (event.spotsAvailable > 0
+        ? t("event.availability.seatsAvailable")
+        : t("event.availability.none")),
     timeLabel: event.timeLabel,
     title: event.title,
-    venueAddress: event.address,
+    venueAddress: event.venueAddress ?? event.address,
     venueName: event.venueName,
     weekdayLabel: event.weekdayLabel,
   };
@@ -117,11 +163,11 @@ const profileEvents = [
     ageMax: 35,
     ageMin: 25,
     ageRange: "25-35",
-    badge: "Ближайшее",
+    badge: "Najbliższe",
     capacityTotal: 20,
-    dateLabel: "31 мая",
+    dateLabel: "31 maja",
     dateValue: "2031-05-31",
-    description: "Стильное пространство в сердце Гданьска",
+    description: "Stylowa przestrzeń w sercu Gdańska",
     district: "Stare Miasto",
     id: "stary-spichlerz",
     imageSrc: "/assets/atmosphere/conversation-03.png",
@@ -131,20 +177,20 @@ const profileEvents = [
     spotsAvailable: 5,
     tag: "closest",
     timeLabel: "19:00",
-    title: "Speed dating 25-35",
+    title: "RoundDate 25-35",
     venueName: "Restaurant&Bar Stary Spichlerz",
-    weekdayLabel: "сб",
+    weekdayLabel: "sob.",
   },
   {
     address: "ul. Opata Jacka Rybińskiego 25, Gdańsk",
     ageMax: 40,
     ageMin: 30,
     ageRange: "30-40",
-    badge: "Популярное",
+    badge: "Popularne",
     capacityTotal: 18,
-    dateLabel: "7 июня",
+    dateLabel: "7 czerwca",
     dateValue: "2031-06-07",
-    description: "Историческое место, вдохновляющая атмосфера",
+    description: "Historyczne miejsce i inspirująca atmosfera",
     district: "Oliwa",
     id: "oliwski-ratusz",
     imageSrc: "/assets/atmosphere/gdansk-evening.png",
@@ -154,20 +200,20 @@ const profileEvents = [
     spotsAvailable: 6,
     tag: "week",
     timeLabel: "19:00",
-    title: "Speed dating 30-40",
+    title: "RoundDate 30-40",
     venueName: "Oliwski Ratusz Kultury",
-    weekdayLabel: "сб",
+    weekdayLabel: "sob.",
   },
   {
     address: "ul. Słowackiego 23, Gdańsk",
     ageMax: 35,
     ageMin: 25,
     ageRange: "25-35",
-    badge: "Новая дата",
+    badge: "Nowa data",
     capacityTotal: 20,
-    dateLabel: "14 июня",
+    dateLabel: "14 czerwca",
     dateValue: "2031-06-14",
-    description: "Уютный вечер в камерной обстановке",
+    description: "Kameralny wieczór w przytulnej przestrzeni",
     district: "Wrzeszcz",
     id: "stary-manez",
     imageSrc: "/assets/atmosphere/conversation-06.png",
@@ -177,20 +223,20 @@ const profileEvents = [
     spotsAvailable: 8,
     tag: "weekend",
     timeLabel: "19:00",
-    title: "Speed dating 25-35",
+    title: "RoundDate 25-35",
     venueName: "Restauracja Stary Maneż",
-    weekdayLabel: "сб",
+    weekdayLabel: "sob.",
   },
   {
     address: "ul. Cystersów 18, Gdańsk",
     ageMax: 45,
     ageMin: 35,
     ageRange: "35-45",
-    badge: "Последние места",
+    badge: "Ostatnie miejsca",
     capacityTotal: 16,
-    dateLabel: "21 июня",
+    dateLabel: "21 czerwca",
     dateValue: "2031-06-21",
-    description: "Романтическая классика и новые знакомства",
+    description: "Romantyczna klasyka i nowe znajomości",
     district: "Oliwa",
     id: "palac-opatow",
     imageSrc: "/assets/atmosphere/welcome-board.png",
@@ -200,20 +246,20 @@ const profileEvents = [
     spotsAvailable: 4,
     tag: "weekend",
     timeLabel: "19:00",
-    title: "Speed dating 35-45",
+    title: "RoundDate 35-45",
     venueName: "Pałac Opatów",
-    weekdayLabel: "сб",
+    weekdayLabel: "sob.",
   },
   {
     address: "ul. Toruńska 12, Gdańsk",
     ageMax: 35,
     ageMin: 25,
     ageRange: "25-35",
-    badge: "Сегодня",
+    badge: "Dzisiaj",
     capacityTotal: 24,
-    dateLabel: "Сегодня",
+    dateLabel: "Dzisiaj",
     dateValue: "2031-05-28",
-    description: "Легкий формат для первого знакомства с проектом",
+    description: "Lekki format na pierwsze spotkanie z projektem",
     district: "Śródmieście",
     id: "hotel-almond",
     imageSrc: "/assets/atmosphere/conversation-02.png",
@@ -223,20 +269,20 @@ const profileEvents = [
     spotsAvailable: 7,
     tag: "today",
     timeLabel: "20:00",
-    title: "Speed dating intro",
+    title: "RoundDate intro",
     venueName: "Hotel Almond",
-    weekdayLabel: "ср",
+    weekdayLabel: "śr.",
   },
   {
     address: "ul. Grunwaldzka 87, Gdańsk",
     ageMax: 44,
     ageMin: 32,
     ageRange: "32-44",
-    badge: "Ближайшее",
+    badge: "Najbliższe",
     capacityTotal: 22,
-    dateLabel: "28 июня",
+    dateLabel: "28 czerwca",
     dateValue: "2031-06-28",
-    description: "Вечер для тех, кто любит живые разговоры",
+    description: "Wieczór dla osób, które lubią rozmowy na żywo",
     district: "Wrzeszcz",
     id: "loft-space",
     imageSrc: "/assets/atmosphere/gdansk-evening.png",
@@ -246,40 +292,80 @@ const profileEvents = [
     spotsAvailable: 9,
     tag: "closest",
     timeLabel: "19:30",
-    title: "Speed dating 32-44",
+    title: "RoundDate 32-44",
     venueName: "Loft event space",
-    weekdayLabel: "вс",
+    weekdayLabel: "niedz.",
   },
 ] satisfies ProfileEvent[];
 
-const filterTabs = [
-  { label: "Ближайшие", value: "closest" },
-  { label: "Сегодня", value: "today" },
-  { label: "На этой неделе", value: "week" },
-  { label: "На выходных", value: "weekend" },
-  { label: "Все мероприятия", value: "all" },
-] satisfies Array<{ label: string; value: EventTag }>;
+const filterTabConfigs = [
+  { labelKey: "profile.eventsPage.filterTabs.all", value: "all" },
+  { labelKey: "profile.eventsPage.filterTabs.closest", value: "closest" },
+  { labelKey: "profile.eventsPage.filterTabs.today", value: "today" },
+  { labelKey: "profile.eventsPage.filterTabs.week", value: "week" },
+  { labelKey: "profile.eventsPage.filterTabs.weekend", value: "weekend" },
+] satisfies Array<{ labelKey: string; value: EventTag }>;
 
-const districtOptions = [
-  { label: "Любой район", value: "all" },
+const districtOptionConfigs = [
+  { labelKey: "profile.eventsPage.districtOptions.all", value: "all" },
   { label: "Stare Miasto", value: "Stare Miasto" },
   { label: "Oliwa", value: "Oliwa" },
   { label: "Wrzeszcz", value: "Wrzeszcz" },
   { label: "Śródmieście", value: "Śródmieście" },
 ];
 
-const sortOptions = [
-  { label: "По дате", value: "date" },
-  { label: "Сначала дешевле", value: "price-asc" },
-  { label: "Сначала дороже", value: "price-desc" },
-] satisfies Array<{ label: string; value: SortMode }>;
-
-function parseDateValue(value: string | undefined) {
-  return value ? new Date(`${value}T00:00:00.000+02:00`) : undefined;
-}
+const sortOptionConfigs = [
+  { labelKey: "profile.eventsPage.sortOptions.date", value: "date" },
+  { labelKey: "profile.eventsPage.sortOptions.priceAsc", value: "price-asc" },
+  { labelKey: "profile.eventsPage.sortOptions.priceDesc", value: "price-desc" },
+] satisfies Array<{ labelKey: string; value: SortMode }>;
 
 function formatPriceValue(value: number) {
   return `${value} PLN`;
+}
+
+function isSameRange(first: RangeSliderValue, second: RangeSliderValue) {
+  return first.from === second.from && first.to === second.to;
+}
+
+function createEventsApiUrl(input: {
+  ageRange: RangeSliderValue;
+  dateRange: DateRangeValue;
+  district: string;
+  priceRange: RangeSliderValue;
+  query: string;
+  sortMode: SortMode;
+  tag: EventTag;
+}) {
+  const params = new URLSearchParams({
+    status: "published",
+    sort: input.sortMode,
+    tag: input.tag,
+  });
+  const normalizedQuery = input.query.trim();
+
+  if (normalizedQuery) {
+    params.set("query", normalizedQuery);
+  }
+
+  params.set("ageFrom", String(input.ageRange.from));
+  params.set("ageTo", String(input.ageRange.to));
+  params.set("priceFrom", String(input.priceRange.from));
+  params.set("priceTo", String(input.priceRange.to));
+
+  if (input.dateRange.from) {
+    params.set("dateFrom", input.dateRange.from);
+  }
+
+  if (input.dateRange.to) {
+    params.set("dateTo", input.dateRange.to);
+  }
+
+  if (input.district !== "all") {
+    params.set("district", input.district);
+  }
+
+  return `/api/events?${params.toString()}`;
 }
 
 type FilterPopoverProps = {
@@ -301,6 +387,7 @@ function FilterPopover({
   popoverHeight = 196,
   testId,
 }: FilterPopoverProps) {
+  const { t } = useI18n();
   const id = useId();
   const rootRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
@@ -350,7 +437,7 @@ function FilterPopover({
       ? createPortal(
           <div
             ref={popoverRef}
-            aria-label={`Фильтр: ${label}`}
+            aria-label={t("profile.eventsPage.filterAria", { label })}
             className={styles.eventsFilterPopover}
             data-filter-popover
             id={id}
@@ -385,7 +472,14 @@ function FilterPopover({
   );
 }
 
-function EventMap({ events }: { events: ProfileEvent[] }) {
+function EventMap({
+  events,
+  onEventClick,
+}: {
+  events: ProfileEvent[];
+  onEventClick: (event: ProfileEvent) => void;
+}) {
+  const { t } = useI18n();
   const mapNodeRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -396,6 +490,7 @@ function EventMap({ events }: { events: ProfileEvent[] }) {
     let disposed = false;
     let map: MapLibreMap | null = null;
     let markers: Marker[] = [];
+    let unbindAttribution: (() => void) | undefined;
     let unbindMissingImages: (() => void) | undefined;
 
     async function initMap() {
@@ -407,7 +502,7 @@ function EventMap({ events }: { events: ProfileEvent[] }) {
         }
 
         map = new maplibregl.Map({
-          attributionControl: { compact: true },
+          attributionControl: false,
           bearing: EVENT_MAP_DEFAULT_VIEW.bearing,
           canvasContextAttributes: { antialias: true },
           center: [18.6483, 54.3464],
@@ -419,14 +514,38 @@ function EventMap({ events }: { events: ProfileEvent[] }) {
           minZoom: 10,
           pitch: EVENT_MAP_DEFAULT_VIEW.pitch,
           style: EVENT_MAP_STYLE,
-          zoom: 14.85,
+          zoom: 13.85,
         });
         unbindMissingImages = bindMissingMapStyleImages(map);
+        map.addControl(
+          createCollapsedEventAttributionControl(maplibregl.AttributionControl),
+          "bottom-right",
+        );
+        unbindAttribution = bindEventAttributionControl(map, mapNodeRef.current);
 
-        markers = events.map((event, index) => {
-          const markerNode = document.createElement("div");
+        markers = events.map((event) => {
+          const markerNode = document.createElement("button");
+          const markerVisual = document.createElement("span");
+          const markerIcon = document.createElement("span");
+
+          markerNode.type = "button";
           markerNode.className = styles.eventsMapMarker ?? "";
-          markerNode.textContent = String(index + 1);
+          markerNode.setAttribute(
+            "aria-label",
+            t("profile.eventsPage.openDetails", { title: event.title }),
+          );
+          markerVisual.className = styles.eventsMapMarkerVisual ?? "";
+          markerIcon.className = styles.eventsMapMarkerIcon ?? "";
+          markerVisual.append(markerIcon);
+          markerNode.append(markerVisual);
+          markerNode.addEventListener("click", (clickEvent) => {
+            clickEvent.preventDefault();
+            clickEvent.stopPropagation();
+            onEventClick(event);
+          });
+          markerNode.addEventListener("pointerdown", (pointerEvent) => {
+            pointerEvent.stopPropagation();
+          });
 
           return new maplibregl.Marker({ element: markerNode })
             .setLngLat([event.location[0], event.location[1]])
@@ -458,16 +577,17 @@ function EventMap({ events }: { events: ProfileEvent[] }) {
 
     return () => {
       disposed = true;
+      unbindAttribution?.();
       unbindMissingImages?.();
       markers.forEach((marker) => marker.remove());
       map?.remove();
     };
-  }, [events]);
+  }, [events, onEventClick, t]);
 
   return (
     <div className={styles.eventsMapSlot}>
       <section
-        aria-label="Карта мероприятий"
+        aria-label={t("profile.eventsPage.mapAria")}
         className={styles.eventsMapCard}
         data-map-layout="sticky-panel"
         data-map-size="cards-fit"
@@ -483,7 +603,9 @@ function EventMap({ events }: { events: ProfileEvent[] }) {
               data-index={index}
               key={`static-${event.id}`}
             >
-              {index + 1}
+              <span className={styles.eventsMapMarkerVisual} aria-hidden>
+                <span className={styles.eventsMapMarkerIcon} />
+              </span>
             </span>
           ))}
         </div>
@@ -492,67 +614,163 @@ function EventMap({ events }: { events: ProfileEvent[] }) {
   );
 }
 
-export function ProfileEventsView() {
+type ProfileEventsViewProps = {
+  bookingDefaults?: BookingParticipantDefaults;
+  events?: ProfileEvent[];
+};
+
+export function ProfileEventsView({
+  bookingDefaults,
+  events = profileEvents,
+}: ProfileEventsViewProps) {
+  const { t } = useI18n();
   const [query, setQuery] = useState("");
-  const [activeTag, setActiveTag] = useState<EventTag>("closest");
+  const [activeTag, setActiveTag] = useState<EventTag>("all");
   const [viewMode, setViewMode] = useState<ViewMode>("list");
-  const [listResetKey, setListResetKey] = useState(0);
-  const [ageRange, setAgeRange] = useState<RangeSliderValue>({ from: 25, to: 45 });
+  const [serverEvents, setServerEvents] = useState<ProfileEvent[]>(events);
+  const [selectedMapEvent, setSelectedMapEvent] = useState<ProfileEvent | null>(null);
+  const [ageRange, setAgeRange] = useState<RangeSliderValue>(DEFAULT_AGE_RANGE);
   const [dateRange, setDateRange] = useState<DateRangeValue>({});
   const [district, setDistrict] = useState("all");
-  const [priceRange, setPriceRange] = useState<RangeSliderValue>({ from: 100, to: 150 });
+  const [priceRange, setPriceRange] = useState<RangeSliderValue>(DEFAULT_PRICE_RANGE);
   const [sortMode, setSortMode] = useState<SortMode>("date");
   const [openFilter, setOpenFilter] = useState<FilterKey | null>(null);
+  const [isMobileFiltersOpen, setIsMobileFiltersOpen] = useState(false);
+  const debouncedQuery = useDebounce(query, 360);
+  const debouncedAgeRange = useDebounce(ageRange, 360);
+  const debouncedPriceRange = useDebounce(priceRange, 360);
+  const effectiveQuery = query.trim() ? debouncedQuery : "";
+  const effectiveAgeRange = isSameRange(ageRange, DEFAULT_AGE_RANGE) ? ageRange : debouncedAgeRange;
+  const effectivePriceRange = isSameRange(priceRange, DEFAULT_PRICE_RANGE)
+    ? priceRange
+    : debouncedPriceRange;
+  const filterTabs = useMemo(
+    () =>
+      filterTabConfigs.map((tab) => ({
+        label: t(tab.labelKey),
+        value: tab.value,
+      })),
+    [t],
+  );
+  const districtOptions = useMemo(
+    () =>
+      districtOptionConfigs.map((option) => ({
+        label: "labelKey" in option ? t(option.labelKey) : option.label,
+        value: option.value,
+      })),
+    [t],
+  );
+  const sortOptions = useMemo(
+    () =>
+      sortOptionConfigs.map((option) => ({
+        label: t(option.labelKey),
+        value: option.value,
+      })),
+    [t],
+  );
 
-  const filteredEvents = useMemo(() => {
-    const normalizedQuery = query.trim().toLowerCase();
-    const fromDate = parseDateValue(dateRange.from);
-    const toDate = parseDateValue(dateRange.to);
+  const eventsApiUrl = useMemo(
+    () =>
+      createEventsApiUrl({
+        ageRange: effectiveAgeRange,
+        dateRange,
+        district,
+        priceRange: effectivePriceRange,
+        query: effectiveQuery,
+        sortMode,
+        tag: activeTag,
+      }),
+    [
+      activeTag,
+      dateRange,
+      district,
+      effectiveAgeRange,
+      effectivePriceRange,
+      effectiveQuery,
+      sortMode,
+    ],
+  );
 
-    const nextEvents = profileEvents.filter((event) => {
-      const eventDate = parseDateValue(event.dateValue)!;
-      const matchesTag = activeTag === "all" || activeTag === "closest" || event.tag === activeTag;
-      const matchesQuery =
-        !normalizedQuery ||
-        [event.title, event.venueName, event.address, event.district]
-          .join(" ")
-          .toLowerCase()
-          .includes(normalizedQuery);
-      const matchesAge = event.ageMax >= ageRange.from && event.ageMin <= ageRange.to;
-      const matchesPrice = event.price >= priceRange.from && event.price <= priceRange.to;
-      const matchesDistrict = district === "all" || event.district === district;
-      const matchesDate = (!fromDate || eventDate >= fromDate) && (!toDate || eventDate <= toDate);
+  const activeMobileFilterCount = useMemo(
+    () =>
+      [
+        activeTag !== "all",
+        !isSameRange(ageRange, DEFAULT_AGE_RANGE),
+        Boolean(dateRange.from || dateRange.to),
+        district !== "all",
+        !isSameRange(priceRange, DEFAULT_PRICE_RANGE),
+        sortMode !== "date",
+        viewMode !== "list",
+      ].filter(Boolean).length,
+    [activeTag, ageRange, dateRange, district, priceRange, sortMode, viewMode],
+  );
 
-      return (
-        matchesTag && matchesQuery && matchesAge && matchesPrice && matchesDistrict && matchesDate
-      );
-    });
+  useEffect(() => {
+    const controller = new AbortController();
 
-    return nextEvents.sort((first, second) => {
-      if (sortMode === "price-asc") {
-        return first.price - second.price;
+    async function loadEvents() {
+      try {
+        const response = await fetch(eventsApiUrl, { signal: controller.signal });
+        const payload = (await response.json()) as { events?: ProfileEvent[] };
+
+        if (!response.ok) {
+          throw new Error("Failed to load events");
+        }
+
+        setServerEvents(Array.isArray(payload.events) ? payload.events : []);
+      } catch (error) {
+        if (!controller.signal.aborted) {
+          console.error("Failed to load filtered events", error);
+          setServerEvents([]);
+        }
       }
+    }
 
-      if (sortMode === "price-desc") {
-        return second.price - first.price;
+    void loadEvents();
+
+    return () => {
+      controller.abort();
+    };
+  }, [eventsApiUrl]);
+
+  useEffect(() => {
+    if (!isMobileFiltersOpen) {
+      return;
+    }
+
+    const previousHtmlOverflow = document.documentElement.style.overflow;
+    const previousBodyOverflow = document.body.style.overflow;
+
+    document.documentElement.style.overflow = "hidden";
+    document.body.style.overflow = "hidden";
+
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        setIsMobileFiltersOpen(false);
       }
+    }
 
-      return first.dateValue.localeCompare(second.dateValue);
-    });
-  }, [activeTag, ageRange, dateRange, district, priceRange, query, sortMode]);
-  function resetList() {
-    setListResetKey((current) => current + 1);
-  }
+    document.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown);
+      document.documentElement.style.overflow = previousHtmlOverflow;
+      document.body.style.overflow = previousBodyOverflow;
+    };
+  }, [isMobileFiltersOpen]);
 
   function resetFilters() {
     setQuery("");
-    setActiveTag("closest");
-    setAgeRange({ from: 25, to: 45 });
+    setActiveTag("all");
+    setAgeRange(DEFAULT_AGE_RANGE);
     setDateRange({});
     setDistrict("all");
-    setPriceRange({ from: 100, to: 150 });
+    setPriceRange(DEFAULT_PRICE_RANGE);
+    setSortMode("date");
+    setViewMode("list");
     setOpenFilter(null);
-    resetList();
+    setIsMobileFiltersOpen(false);
+    setServerEvents(events);
   }
 
   return (
@@ -566,18 +784,32 @@ export function ProfileEventsView() {
         <Input
           className={styles.eventsSearch}
           leftIcon={<Search aria-hidden size={19} />}
-          placeholder="Поиск по названию или месту"
+          placeholder={t("profile.eventsPage.searchPlaceholder")}
+          size="sm"
           value={query}
-          onChange={(event) => {
-            setQuery(event.currentTarget.value);
-            setActiveTag("all");
-            resetList();
-          }}
+          onChange={(event) => setQuery(event.currentTarget.value)}
         />
+
+        <button
+          aria-expanded={isMobileFiltersOpen}
+          aria-haspopup="dialog"
+          className={styles.eventsMobileFilterButton}
+          data-active={activeMobileFilterCount > 0 ? "true" : undefined}
+          data-testid="events-mobile-filter-trigger"
+          type="button"
+          onClick={() => {
+            setOpenFilter(null);
+            setIsMobileFiltersOpen((value) => !value);
+          }}
+        >
+          <SlidersHorizontal aria-hidden size={18} />
+          <span>{t("profile.eventsPage.filters")}</span>
+          {activeMobileFilterCount > 0 ? <strong>{activeMobileFilterCount}</strong> : null}
+        </button>
 
         <div
           className={styles.eventsFilterBar}
-          aria-label="Фильтры мероприятий"
+          aria-label={t("profile.eventsPage.filtersAria")}
           data-align="right"
           data-separators="rounded"
           data-size="wide"
@@ -585,28 +817,25 @@ export function ProfileEventsView() {
           data-testid="events-filter-bar"
         >
           <FilterPopover
-            active={ageRange.from !== 25 || ageRange.to !== 45}
-            label="Возраст"
+            active={!isSameRange(ageRange, DEFAULT_AGE_RANGE)}
+            label={t("profile.eventsPage.age")}
             open={openFilter === "age"}
             testId="events-filter-age"
             onOpenChange={(open) => setOpenFilter(open ? "age" : null)}
           >
             <RangeSlider
               formatValue={(value) => String(value)}
-              label="Возраст"
+              label={t("profile.eventsPage.age")}
               max={50}
               min={18}
               value={ageRange}
-              onChange={(value) => {
-                setAgeRange(value);
-                resetList();
-              }}
+              onChange={setAgeRange}
             />
           </FilterPopover>
 
           <FilterPopover
             active={Boolean(dateRange.from || dateRange.to)}
-            label="Дата"
+            label={t("profile.eventsPage.date")}
             open={openFilter === "date"}
             popoverHeight={440}
             testId="events-filter-date"
@@ -616,39 +845,33 @@ export function ProfileEventsView() {
               className={styles.eventsAnyDateButton}
               data-active={!dateRange.from && !dateRange.to}
               type="button"
-              onClick={() => {
-                setDateRange({});
-                resetList();
-              }}
+              onClick={() => setDateRange({})}
             >
-              Любая дата
+              {t("profile.eventsPage.allDate")}
             </button>
             <DatePicker
-              label="Дата"
+              label={t("profile.eventsPage.date")}
               max="2031-06-30"
               maxYear={2031}
               min="2031-05-01"
               minYear={2031}
               mode="range"
-              placeholder="Любая дата"
+              placeholder={t("profile.eventsPage.allDate")}
               rangeValue={dateRange}
               size="sm"
-              onRangeChange={(value) => {
-                setDateRange(value);
-                resetList();
-              }}
+              onRangeChange={setDateRange}
             />
           </FilterPopover>
 
           <FilterPopover
             active={district !== "all"}
-            label="Район"
+            label={t("profile.eventsPage.district")}
             open={openFilter === "district"}
             testId="events-filter-district"
             onOpenChange={(open) => setOpenFilter(open ? "district" : null)}
           >
             <div className={styles.eventsDistrictDraft}>
-              <p>Настройки района можно будет расширить позже</p>
+              <p>{t("profile.eventsPage.districtHint")}</p>
               <div className={styles.eventsDistrictOptions}>
                 {districtOptions.map((option) => (
                   <button
@@ -658,10 +881,7 @@ export function ProfileEventsView() {
                     }
                     key={option.value}
                     type="button"
-                    onClick={() => {
-                      setDistrict(option.value);
-                      resetList();
-                    }}
+                    onClick={() => setDistrict(option.value)}
                   >
                     {option.label}
                   </button>
@@ -671,28 +891,25 @@ export function ProfileEventsView() {
           </FilterPopover>
 
           <FilterPopover
-            active={priceRange.from !== 100 || priceRange.to !== 150}
-            label="Цена"
+            active={!isSameRange(priceRange, DEFAULT_PRICE_RANGE)}
+            label={t("profile.eventsPage.price")}
             open={openFilter === "price"}
             testId="events-filter-price"
             onOpenChange={(open) => setOpenFilter(open ? "price" : null)}
           >
             <RangeSlider
               formatValue={formatPriceValue}
-              label="Цена"
+              label={t("profile.eventsPage.price")}
               max={150}
               min={90}
               step={5}
               value={priceRange}
-              onChange={(value) => {
-                setPriceRange(value);
-                resetList();
-              }}
+              onChange={setPriceRange}
             />
           </FilterPopover>
 
           <button
-            aria-label="Сбросить фильтры"
+            aria-label={t("profile.eventsPage.resetFilters")}
             className={styles.eventsFiltersReset}
             type="button"
             onClick={resetFilters}
@@ -702,6 +919,162 @@ export function ProfileEventsView() {
         </div>
       </div>
 
+      {isMobileFiltersOpen ? (
+        <div className={styles.eventsMobileFilterOverlay}>
+          <section
+            className={styles.eventsMobileFilterPanel}
+            aria-label={t("profile.eventsPage.filtersAria")}
+            aria-modal="true"
+            role="dialog"
+          >
+            <div className={styles.eventsMobileFilterHeader}>
+              <div>
+                <h2>{t("profile.eventsPage.filters")}</h2>
+                <p>{t("profile.eventsPage.filterSubtitle")}</p>
+              </div>
+              <button
+                aria-label={t("common.actions.close")}
+                className={styles.eventsMobileFilterClose}
+                type="button"
+                onClick={() => setIsMobileFiltersOpen(false)}
+              >
+                <X aria-hidden size={18} />
+              </button>
+            </div>
+
+            <div className={styles.eventsMobileFilterContent}>
+              <section className={styles.eventsMobileFilterSection}>
+                <h3>{t("profile.eventsPage.selection")}</h3>
+                <div className={styles.eventsMobileFilterChips}>
+                  {filterTabs.map((tab) => (
+                    <button
+                      aria-pressed={activeTag === tab.value}
+                      className={
+                        activeTag === tab.value ? styles.eventsMobileFilterChipActive : undefined
+                      }
+                      key={tab.value}
+                      type="button"
+                      onClick={() => setActiveTag(tab.value)}
+                    >
+                      {tab.label}
+                    </button>
+                  ))}
+                </div>
+              </section>
+
+              <section className={styles.eventsMobileFilterSection}>
+                <RangeSlider
+                  formatValue={(value) => String(value)}
+                  label={t("profile.eventsPage.age")}
+                  max={50}
+                  min={18}
+                  value={ageRange}
+                  onChange={setAgeRange}
+                />
+              </section>
+
+              <section className={styles.eventsMobileFilterSection}>
+                <div className={styles.eventsMobileDateControls}>
+                  <DatePicker
+                    label={t("profile.eventsPage.date")}
+                    max="2031-06-30"
+                    maxYear={2031}
+                    min="2031-05-01"
+                    minYear={2031}
+                    mode="range"
+                    placeholder={t("profile.eventsPage.allDate")}
+                    rangeValue={dateRange}
+                    size="sm"
+                    onRangeChange={setDateRange}
+                  />
+                </div>
+              </section>
+
+              <section className={styles.eventsMobileFilterSection}>
+                <h3>{t("profile.eventsPage.district")}</h3>
+                <div className={styles.eventsDistrictOptions}>
+                  {districtOptions.map((option) => (
+                    <button
+                      aria-pressed={district === option.value}
+                      className={
+                        district === option.value ? styles.eventsDistrictOptionActive : undefined
+                      }
+                      key={option.value}
+                      type="button"
+                      onClick={() => setDistrict(option.value)}
+                    >
+                      {option.label}
+                    </button>
+                  ))}
+                </div>
+              </section>
+
+              <section className={styles.eventsMobileFilterSection}>
+                <RangeSlider
+                  formatValue={formatPriceValue}
+                  label={t("profile.eventsPage.price")}
+                  max={150}
+                  min={90}
+                  step={5}
+                  value={priceRange}
+                  onChange={setPriceRange}
+                />
+              </section>
+
+              <section className={styles.eventsMobileFilterSection}>
+                <h3>{t("profile.eventsPage.sort")}</h3>
+                <div className={styles.eventsMobileSortSelect}>
+                  <Select
+                    options={sortOptions}
+                    size="sm"
+                    value={sortMode}
+                    onChange={(value) => setSortMode(value as SortMode)}
+                  />
+                </div>
+              </section>
+
+              <section className={styles.eventsMobileFilterSection}>
+                <h3>{t("profile.eventsPage.view")}</h3>
+                <div className={styles.eventsMobileViewMode}>
+                  <button
+                    aria-pressed={viewMode === "list"}
+                    className={viewMode === "list" ? styles.eventsMobileViewModeActive : undefined}
+                    type="button"
+                    onClick={() => setViewMode("list")}
+                  >
+                    <List aria-hidden size={18} />
+                    {t("profile.eventsPage.list")}
+                  </button>
+                  <button
+                    aria-pressed={viewMode === "card"}
+                    className={viewMode === "card" ? styles.eventsMobileViewModeActive : undefined}
+                    type="button"
+                    onClick={() => setViewMode("card")}
+                  >
+                    <LayoutGrid aria-hidden size={18} />
+                    {t("profile.eventsPage.cards")}
+                  </button>
+                </div>
+              </section>
+            </div>
+
+            <div className={styles.eventsMobileFilterFooter}>
+              <button
+                className={styles.eventsMobileResetButton}
+                type="button"
+                onClick={resetFilters}
+              >
+                <Trash2 aria-hidden size={17} />
+                {t("profile.eventsPage.resetFilters")}
+              </button>
+              <Button size="sm" onClick={() => setIsMobileFiltersOpen(false)}>
+                {t("profile.eventsPage.done")}
+              </Button>
+            </div>
+          </section>
+        </div>
+      ) : null}
+
       <div
         className={styles.eventsQuickBar}
         data-layout="tabs-left-controls-right"
@@ -709,7 +1082,7 @@ export function ProfileEventsView() {
       >
         <div
           className={styles.eventsQuickFilters}
-          aria-label="Быстрые фильтры"
+          aria-label={t("profile.eventsPage.quickFiltersAria")}
           data-testid="events-quick-filters"
         >
           {filterTabs.map((tab) => (
@@ -718,10 +1091,7 @@ export function ProfileEventsView() {
               className={activeTag === tab.value ? styles.eventsQuickFilterActive : undefined}
               key={tab.value}
               type="button"
-              onClick={() => {
-                setActiveTag(tab.value);
-                resetList();
-              }}
+              onClick={() => setActiveTag(tab.value)}
             >
               {tab.label}
             </button>
@@ -737,21 +1107,18 @@ export function ProfileEventsView() {
               options={sortOptions}
               size="sm"
               value={sortMode}
-              onChange={(value) => {
-                setSortMode(value as SortMode);
-                resetList();
-              }}
+              onChange={(value) => setSortMode(value as SortMode)}
             />
           </div>
 
           <div
             className={styles.eventsViewToggle}
-            aria-label="Режим отображения"
+            aria-label={t("profile.eventsPage.viewModeAria")}
             data-placement="right"
             data-testid="events-view-toggle"
           >
             <button
-              aria-label="Список"
+              aria-label={t("profile.eventsPage.list")}
               aria-pressed={viewMode === "list"}
               className={viewMode === "list" ? styles.eventsViewToggleActive : undefined}
               type="button"
@@ -760,7 +1127,7 @@ export function ProfileEventsView() {
               <List aria-hidden size={19} />
             </button>
             <button
-              aria-label="Карточки"
+              aria-label={t("profile.eventsPage.cards")}
               aria-pressed={viewMode === "card"}
               className={viewMode === "card" ? styles.eventsViewToggleActive : undefined}
               type="button"
@@ -773,73 +1140,116 @@ export function ProfileEventsView() {
       </div>
 
       <div className={styles.eventsLayout}>
-        <div className={styles.eventsListColumn} data-testid="events-list-column">
-          <LoadMore
-            increment={2}
-            initialCount={INITIAL_VISIBLE_EVENTS}
-            items={filteredEvents}
-            label="Показать еще мероприятия"
-            resetKey={listResetKey}
-          >
-            {(visibleEvents) => (
-              <div className={styles.eventsList} data-view={viewMode}>
-                {visibleEvents.map((event) => {
-                  const detailsEvent = eventToDetailsEvent(event);
+        <ScrollArea className={styles.eventsListColumn} data-testid="events-list-column">
+          {serverEvents.length > 0 ? (
+            <LoadMore
+              increment={2}
+              initialCount={INITIAL_VISIBLE_EVENTS}
+              items={serverEvents}
+              label={t("profile.eventsPage.loadMore")}
+              resetKey={eventsApiUrl}
+            >
+              {(visibleEvents) => (
+                <div
+                  className={styles.eventsList}
+                  data-mobile-layout={viewMode === "list" ? "compact-list" : "card-grid"}
+                  data-testid="events-list"
+                  data-view={viewMode}
+                >
+                  {visibleEvents.map((event) => {
+                    const detailsEvent = eventToDetailsEvent(event, t);
 
-                  return (
-                    <EventDetailsCardTrigger
-                      ariaLabel={`Открыть детали ${event.title}`}
-                      className={styles.eventListCard}
-                      event={detailsEvent}
-                      key={event.id}
-                      testId="event-card"
-                    >
-                      <Image
-                        alt=""
-                        className={styles.eventListImage}
-                        height={142}
-                        src={event.imageSrc}
-                        width={220}
-                      />
-                      <div className={styles.eventListMain}>
-                        <span className={styles.eventListBadge}>{event.badge}</span>
-                        <h2>{event.title}</h2>
-                        <p>
-                          <MapPin aria-hidden size={16} />
-                          {event.venueName}
-                        </p>
-                        <p className={styles.eventListAddress}>{event.address}</p>
-                        <p className={styles.eventListDescription}>{event.description}</p>
-                      </div>
+                    return (
+                      <EventDetailsCardTrigger
+                        ariaLabel={t("profile.eventsPage.openDetails", { title: event.title })}
+                        {...(bookingDefaults ? { bookingDefaults } : {})}
+                        className={styles.eventListCard}
+                        event={detailsEvent}
+                        key={event.id}
+                        testId="event-card"
+                      >
+                        <Image
+                          alt=""
+                          className={styles.eventListImage}
+                          height={142}
+                          key="event-image"
+                          src={event.imageSrc}
+                          width={220}
+                        />
+                        <div className={styles.eventListMain} key="event-main">
+                          <span className={styles.eventListBadge}>{event.badge}</span>
+                          <h2>{event.title}</h2>
+                          <p>
+                            <MapPin aria-hidden size={16} />
+                            {event.venueName}
+                          </p>
+                          <p className={styles.eventListAddress}>{event.address}</p>
+                          <p className={styles.eventListDescription}>{event.description}</p>
+                        </div>
 
-                      <div className={styles.eventListDetails}>
-                        <span>
-                          <CalendarDays aria-hidden size={19} />
-                          {event.dateLabel}, {event.weekdayLabel}
-                        </span>
-                        <span>
-                          <Clock3 aria-hidden size={19} />
-                          {event.timeLabel}
-                        </span>
-                        <span>
-                          <UsersRound aria-hidden size={19} />
-                          Возраст: <strong>{event.ageRange}</strong>
-                        </span>
-                      </div>
+                        <div className={styles.eventListDetails} key="event-details">
+                          <span>
+                            <CalendarDays aria-hidden size={19} />
+                            {event.dateLabel}, {event.weekdayLabel}
+                          </span>
+                          <span>
+                            <Clock3 aria-hidden size={19} />
+                            {event.timeLabel}
+                          </span>
+                          <span>
+                            <UsersRound aria-hidden size={19} />
+                            {t("profile.eventsPage.age")}: <strong>{event.ageRange}</strong>
+                          </span>
+                        </div>
 
-                      <div className={styles.eventListActions}>
-                        <strong>{event.priceLabel}</strong>
-                      </div>
-                    </EventDetailsCardTrigger>
-                  );
-                })}
-              </div>
-            )}
-          </LoadMore>
-        </div>
+                        <div className={styles.eventListActions} key="event-actions">
+                          <EventGenderAvailability
+                            className={styles.eventListAvailability}
+                            size="sm"
+                            spotsAvailable={event.spotsAvailable}
+                          />
+                          <strong>{event.priceLabel}</strong>
+                        </div>
+                      </EventDetailsCardTrigger>
+                    );
+                  })}
+                </div>
+              )}
+            </LoadMore>
+          ) : (
+            <div
+              className={styles.eventsEmptyState}
+              aria-live="polite"
+              data-testid="events-empty-state"
+            >
+              <span className={styles.eventsEmptyIcon} aria-hidden>
+                <Search size={28} />
+              </span>
+              <h2>{t("profile.eventsPage.emptyTitle")}</h2>
+              <p>{t("profile.eventsPage.emptyDescription")}</p>
+              <Button leftIcon={<Trash2 aria-hidden size={17} />} size="md" onClick={resetFilters}>
+                {t("profile.eventsPage.resetFilters")}
+              </Button>
+            </div>
+          )}
+        </ScrollArea>
 
-        <EventMap events={filteredEvents.length ? filteredEvents : profileEvents} />
+        <EventMap events={serverEvents} onEventClick={setSelectedMapEvent} />
       </div>
+
+      {selectedMapEvent ? (
+        <EventDetailsModal
+          {...(bookingDefaults ? { bookingDefaults } : {})}
+          context="available"
+          event={eventToDetailsEvent(selectedMapEvent, t)}
+          open
+          onOpenChange={(open) => {
+            if (!open) {
+              setSelectedMapEvent(null);
+            }
+          }}
+        />
+      ) : null}
     </section>
   );
 }

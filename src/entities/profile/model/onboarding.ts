@@ -13,7 +13,7 @@ export const onboardingDiscoverySourceValues = [
 export const onboardingDayValues = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"] as const;
 export const onboardingTimeValues = ["day", "evening", "late"] as const;
 
-export type OnboardingAuthProvider = "email" | "facebook" | "google";
+export type OnboardingAuthProvider = "email" | "google";
 export type OnboardingGender = (typeof onboardingGenderValues)[number];
 export type OnboardingInterest = (typeof onboardingInterestValues)[number];
 export type OnboardingDiscoverySource = (typeof onboardingDiscoverySourceValues)[number];
@@ -26,15 +26,15 @@ export type OnboardingOption<TValue extends string = string> = {
 };
 
 export const onboardingGenderOptions: OnboardingOption<OnboardingGender>[] = [
-  { label: "Женщина", value: "female" },
-  { label: "Мужчина", value: "male" },
-  { label: "Другое", value: "other" },
+  { label: "Kobieta", value: "female" },
+  { label: "Mężczyzna", value: "male" },
+  { label: "Inna opcja", value: "other" },
 ];
 
 export const onboardingInterestOptions: OnboardingOption<OnboardingInterest>[] = [
-  { label: "Женщину", value: "female" },
-  { label: "Мужчину", value: "male" },
-  { label: "Любой формат", value: "any" },
+  { label: "Kobietę", value: "female" },
+  { label: "Mężczyznę", value: "male" },
+  { label: "Dowolny format", value: "any" },
 ];
 
 export const onboardingDiscoverySourceOptions: OnboardingOption<OnboardingDiscoverySource>[] = [
@@ -42,26 +42,26 @@ export const onboardingDiscoverySourceOptions: OnboardingOption<OnboardingDiscov
   { label: "TikTok", value: "tiktok" },
   { label: "Facebook", value: "facebook" },
   { label: "Google", value: "google" },
-  { label: "Рекомендация друга", value: "friend" },
-  { label: "Афиша / партнер", value: "poster" },
-  { label: "Проходил мимо площадки", value: "venue" },
-  { label: "Другое", value: "other" },
+  { label: "Polecenie znajomego", value: "friend" },
+  { label: "Plakat / partner", value: "poster" },
+  { label: "Przechodziłem/am obok miejsca", value: "venue" },
+  { label: "Inne", value: "other" },
 ];
 
 export const onboardingDayOptions: OnboardingOption<OnboardingDay>[] = [
-  { label: "Пн", value: "mon" },
-  { label: "Вт", value: "tue" },
-  { label: "Ср", value: "wed" },
-  { label: "Чт", value: "thu" },
-  { label: "Пт", value: "fri" },
-  { label: "Сб", value: "sat" },
-  { label: "Вс", value: "sun" },
+  { label: "Pon", value: "mon" },
+  { label: "Wt", value: "tue" },
+  { label: "Śr", value: "wed" },
+  { label: "Czw", value: "thu" },
+  { label: "Pt", value: "fri" },
+  { label: "Sob", value: "sat" },
+  { label: "Niedz", value: "sun" },
 ];
 
 export const onboardingTimeOptions: OnboardingOption<OnboardingTime>[] = [
-  { label: "День", value: "day" },
-  { label: "Вечер", value: "evening" },
-  { label: "Поздний вечер", value: "late" },
+  { label: "Dzień", value: "day" },
+  { label: "Wieczór", value: "evening" },
+  { label: "Późny wieczór", value: "late" },
 ];
 
 export type OnboardingFormData = {
@@ -93,5 +93,6 @@ export type ProfileOnboardingState = {
     email: string;
     image: string | null;
     name: string;
+    role: "admin" | "manager" | "user";
   };
 };

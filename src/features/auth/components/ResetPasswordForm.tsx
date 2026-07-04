@@ -4,6 +4,7 @@ import type { FormEvent } from "react";
 import { useEffect, useTransition } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
+import { useI18n } from "@/shared/i18n/I18nProvider";
 import { authClient } from "@/shared/lib/auth-client";
 import { Button } from "@/shared/ui/Button";
 import { Input } from "@/shared/ui/Input";
@@ -12,7 +13,7 @@ import { useToast } from "@/shared/ui/Toast";
 import { resetPasswordSchema } from "../lib/auth-schemas";
 import styles from "./ResetPasswordForm.module.css";
 
-function getAuthErrorMessage(error: unknown) {
+function getAuthErrorMessage(error: unknown, fallback: string) {
   if (error && typeof error === "object" && "message" in error) {
     const message = String(error.message);
 
@@ -21,7 +22,7 @@ function getAuthErrorMessage(error: unknown) {
     }
   }
 
-  return "Не удалось обновить пароль. Попробуйте запросить новую ссылку.";
+  return fallback;
 }
 
 export function ResetPasswordForm() {
@@ -31,18 +32,22 @@ export function ResetPasswordForm() {
   const urlError = searchParams.get("error");
   const [isPending, startTransition] = useTransition();
   const toast = useToast();
+  const { t } = useI18n();
 
   useEffect(() => {
     if (urlError) {
-      toast.error("Ссылка устарела или недействительна.");
+      toast.error(t("auth.resetPassword.expired"));
     }
-  }, [toast, urlError]);
+  }, [t, toast, urlError]);
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
     if (!token) {
-      toast.error("Не найден токен восстановления.", "Запросите новую ссылку.");
+      toast.error(
+        t("auth.resetPassword.missingToken"),
+        t("auth.resetPassword.missingTokenDescription"),
+      );
       return;
     }
 
@@ -53,7 +58,7 @@ export function ResetPasswordForm() {
     });
 
     if (!parsed.success) {
-      toast.error(parsed.error.issues[0]?.message ?? "Проверьте поля формы.");
+      toast.error(parsed.error.issues[0]?.message ?? t("auth.resetPassword.formError"));
       return;
     }
 
@@ -64,11 +69,11 @@ export function ResetPasswordForm() {
       });
 
       if (result.error) {
-        toast.error(getAuthErrorMessage(result.error));
+        toast.error(getAuthErrorMessage(result.error, t("auth.resetPassword.updateError")));
         return;
       }
 
-      toast.success("Пароль обновлен.", "Сейчас вернем вас на главную страницу.");
+      toast.success(t("auth.resetPassword.success"), t("auth.resetPassword.successDescription"));
       window.setTimeout(() => router.push("/"), 1200);
     });
   }
@@ -77,26 +82,24 @@ export function ResetPasswordForm() {
     <main className={styles.page}>
       <section className={styles.card} aria-labelledby="reset-password-title">
         <h1 className={styles.title} id="reset-password-title">
-          Новый пароль
+          {t("auth.resetPassword.title")}
         </h1>
-        <p className={styles.subtitle}>
-          Придумайте новый пароль для аккаунта SpeedDate. Ссылка работает ограниченное время.
-        </p>
+        <p className={styles.subtitle}>{t("auth.resetPassword.subtitle")}</p>
 
         <form className={styles.form} onSubmit={handleSubmit} noValidate>
           <Input
             autoComplete="new-password"
-            label="Новый пароль"
+            label={t("profile.settingsPage.account.passwordNew")}
             name="password"
-            placeholder="Минимум 8 символов"
+            placeholder={t("auth.resetPassword.passwordPlaceholder")}
             type="password"
           />
 
           <Input
             autoComplete="new-password"
-            label="Повторите пароль"
+            label={t("profile.settingsPage.account.passwordRepeat")}
             name="passwordConfirm"
-            placeholder="Введите пароль еще раз"
+            placeholder={t("auth.resetPassword.repeatPlaceholder")}
             type="password"
           />
 
@@ -107,7 +110,7 @@ export function ResetPasswordForm() {
             type="submit"
             fullWidth
           >
-            Обновить пароль
+            {t("auth.resetPassword.submit")}
           </Button>
         </form>
       </section>

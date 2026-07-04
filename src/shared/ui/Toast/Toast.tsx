@@ -12,6 +12,8 @@ import {
   type ReactNode,
 } from "react";
 
+import { useI18n } from "@/shared/i18n/I18nProvider";
+
 import styles from "./Toast.module.css";
 
 export type ToastType = "error" | "info" | "success" | "warning";
@@ -56,6 +58,7 @@ function createToastInput(type: ToastType, title: string, description?: string):
 export function ToastProvider({ children }: { children: ReactNode }) {
   const [toasts, setToasts] = useState<ToastItem[]>([]);
   const timers = useRef(new Map<string, number>());
+  const { t } = useI18n();
 
   const dismiss = useCallback((id: string) => {
     const timer = timers.current.get(id);
@@ -110,7 +113,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   return (
     <ToastContext.Provider value={value}>
       {children}
-      <div aria-label="Уведомления" className={styles.viewport}>
+      <div aria-label={t("common.ui.toastViewport")} className={styles.viewport}>
         {toasts.map((toast) => {
           const Icon = iconByType[toast.type];
 
@@ -132,7 +135,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
                 ) : null}
               </div>
               <button
-                aria-label="Закрыть уведомление"
+                aria-label={t("common.ui.toastClose")}
                 className={styles.close}
                 onClick={() => dismiss(toast.id)}
                 type="button"

@@ -11,6 +11,7 @@ import {
 } from "react";
 import { createPortal } from "react-dom";
 
+import { useI18n } from "@/shared/i18n/I18nProvider";
 import { cn } from "@/shared/lib/cn";
 import { useFloatingPopover } from "@/shared/hooks/useFloatingPopover";
 
@@ -60,13 +61,14 @@ export function Select({
   name,
   onChange,
   options,
-  placeholder = "Выберите",
+  placeholder,
   required,
   size = "md",
   triggerClassName,
   value,
   variant = "default",
 }: SelectProps) {
+  const { t } = useI18n();
   const generatedId = useId();
   const inputId = id ?? generatedId;
   const listboxId = `${inputId}-listbox`;
@@ -78,11 +80,17 @@ export function Select({
   const popoverRef = useRef<HTMLDivElement>(null);
   const [open, setOpen] = useState(false);
   const [activeIndex, setActiveIndex] = useState(-1);
+  const [modalPopoverRoot, setModalPopoverRoot] = useState<HTMLElement | null>(null);
   const selectedOption = options.find((option) => option.value === value);
+  const resolvedPlaceholder = placeholder ?? t("common.ui.selectPlaceholder");
+  const portalContainer =
+    modalPopoverRoot ?? (typeof document !== "undefined" ? document.body : null);
   const popoverStyle = useFloatingPopover(open, triggerRef, {
+    container: modalPopoverRoot,
     estimatedHeight: Math.min(320, options.length * 50 + 16),
     matchTriggerWidth: true,
     minWidth: 220,
+    strategy: modalPopoverRoot ? "absolute" : "fixed",
   });
 
   function getFirstEnabledIndex() {
@@ -106,6 +114,9 @@ export function Select({
   }
 
   function openListbox() {
+    setModalPopoverRoot(
+      rootRef.current?.closest("[data-floating-popover-root]") as HTMLElement | null,
+    );
     setActiveIndex(getInitialActiveIndex());
     setOpen(true);
   }
@@ -240,7 +251,7 @@ export function Select({
   }
 
   const listbox =
-    open && typeof document !== "undefined"
+    open && portalContainer
       ? createPortal(
           <div
             ref={popoverRef}
@@ -274,7 +285,7 @@ export function Select({
               );
             })}
           </div>,
-          document.body,
+          portalContainer,
         )
       : null;
 
@@ -319,7 +330,7 @@ export function Select({
       >
         {leftIcon ? <span className={styles.leadingIcon}>{leftIcon}</span> : null}
         <span className={cn(styles.value, !selectedOption && styles.placeholder)} id={valueId}>
-          {selectedOption?.label ?? placeholder}
+          {selectedOption?.label ?? resolvedPlaceholder}
         </span>
         <ChevronDown
           aria-hidden

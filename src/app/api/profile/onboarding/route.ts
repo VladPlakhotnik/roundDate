@@ -9,6 +9,8 @@ import {
   onboardingInterestValues,
   onboardingTimeValues,
 } from "@/entities/profile/model/onboarding";
+import { optionalPolishPhoneSchema } from "@/shared/lib/validation/contact";
+import { getRequestTranslatorFromRequest } from "@/shared/i18n/server";
 import { getAuth } from "@/shared/server/auth/auth";
 import { getDb } from "@/shared/server/db/client";
 import { profiles } from "@/shared/server/db/schema";
@@ -31,7 +33,7 @@ const onboardingPayloadSchema = z.object({
   lastName: z.string().trim().max(80),
   marketingConsent: z.boolean(),
   newDateNotifications: z.boolean().optional(),
-  phone: z.string().trim().max(40),
+  phone: optionalPolishPhoneSchema,
   preferredDays: z.array(z.enum(onboardingDayValues)).max(7),
   preferredTimes: z.array(z.enum(onboardingTimeValues)).max(3),
 });
@@ -59,16 +61,17 @@ async function readJson(request: Request) {
 }
 
 export async function POST(request: Request) {
+  const t = getRequestTranslatorFromRequest(request);
   const session = await getSession(request);
 
   if (!session?.user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json({ error: t("api.common.unauthorized") }, { status: 401 });
   }
 
   const parsed = onboardingPayloadSchema.safeParse(await readJson(request));
 
   if (!parsed.success) {
-    return NextResponse.json({ error: "Invalid onboarding payload" }, { status: 400 });
+    return NextResponse.json({ error: t("api.onboarding.invalidPayload") }, { status: 400 });
   }
 
   const db = getDb();
@@ -111,16 +114,17 @@ export async function POST(request: Request) {
 }
 
 export async function PATCH(request: Request) {
+  const t = getRequestTranslatorFromRequest(request);
   const session = await getSession(request);
 
   if (!session?.user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json({ error: t("api.common.unauthorized") }, { status: 401 });
   }
 
   const parsed = dismissPayloadSchema.safeParse(await readJson(request));
 
   if (!parsed.success) {
-    return NextResponse.json({ error: "Invalid onboarding action" }, { status: 400 });
+    return NextResponse.json({ error: t("api.onboarding.invalidAction") }, { status: 400 });
   }
 
   const db = getDb();

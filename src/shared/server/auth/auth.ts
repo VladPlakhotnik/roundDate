@@ -2,6 +2,7 @@ import "server-only";
 
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
+import { admin } from "better-auth/plugins";
 
 import { getDb } from "@/shared/server/db/client";
 import {
@@ -9,17 +10,19 @@ import {
   authSessions,
   authUsers,
   authVerifications,
+  profiles,
 } from "@/shared/server/db/schema";
-import { sendEmail } from "@/shared/server/email/send-email";
+import { eq } from "drizzle-orm";
+import { resolveLocale } from "@/shared/i18n/locales";
+import { getRequestLocaleFromRequest } from "@/shared/i18n/server";
+import { createEmailIdempotencyKey, sendEmail } from "@/shared/server/email/send-email";
 import { accountVerificationEmail, passwordResetEmail } from "@/shared/server/email/templates";
 
-import { getAuthBaseUrl, getAuthSecret } from "./config";
+import { getAuthBaseUrl, getAuthSecret, getAuthTrustedOrigins } from "./config";
 
 function getSocialProviders() {
   const googleClientId = process.env.GOOGLE_CLIENT_ID;
   const googleClientSecret = process.env.GOOGLE_CLIENT_SECRET;
-  const facebookClientId = process.env.FACEBOOK_CLIENT_ID;
-  const facebookClientSecret = process.env.FACEBOOK_CLIENT_SECRET;
 
   return {
     ...(googleClientId && googleClientSecret
@@ -27,18 +30,27 @@ function getSocialProviders() {
           google: {
             clientId: googleClientId,
             clientSecret: googleClientSecret,
-          },
-        }
-      : {}),
-    ...(facebookClientId && facebookClientSecret
-      ? {
-          facebook: {
-            clientId: facebookClientId,
-            clientSecret: facebookClientSecret,
+            prompt: "select_account" as const,
           },
         }
       : {}),
   };
+}
+
+async function getUserEmailLocale(userId: string, request?: Request | undefined) {
+  const [profile] = await getDb()
+    .select({
+      locale: profiles.locale,
+    })
+    .from(profiles)
+    .where(eq(profiles.userId, userId))
+    .limit(1);
+
+  if (profile?.locale) {
+    return resolveLocale(profile.locale);
+  }
+
+  return request ? getRequestLocaleFromRequest(request) : resolveLocale(undefined);
 }
 
 function createAuth() {
@@ -54,7 +66,7 @@ function createAuth() {
         verification: authVerifications,
       },
     }),
-    trustedOrigins: [getAuthBaseUrl()],
+    trustedOrigins: getAuthTrustedOrigins(),
     user: {
       additionalFields: {
         role: {
@@ -78,11 +90,16 @@ function createAuth() {
       maxPasswordLength: 128,
       resetPasswordTokenExpiresIn: 60 * 60,
       revokeSessionsOnPasswordReset: true,
-      sendResetPassword: async ({ user, url }) => {
-        const template = passwordResetEmail({ resetUrl: url });
+      sendResetPassword: async ({ user, url }, request) => {
+        const template = passwordResetEmail({
+          locale: await getUserEmailLocale(user.id, request),
+          name: user.name,
+          resetUrl: url,
+        });
 
         await sendEmail({
           ...template,
+          idempotencyKey: createEmailIdempotencyKey("password-reset", url),
           template: "password-reset",
           to: user.email,
           userId: user.id,
@@ -92,14 +109,16 @@ function createAuth() {
     emailVerification: {
       sendOnSignUp: true,
       autoSignInAfterVerification: true,
-      sendVerificationEmail: async ({ user, url }) => {
+      sendVerificationEmail: async ({ user, url }, request) => {
         const template = accountVerificationEmail({
+          locale: await getUserEmailLocale(user.id, request),
           name: user.name,
           verificationUrl: url,
         });
 
         await sendEmail({
           ...template,
+          idempotencyKey: createEmailIdempotencyKey("account-verification", url),
           template: "account-verification",
           to: user.email,
           userId: user.id,
@@ -107,6 +126,14 @@ function createAuth() {
       },
     },
     socialProviders: getSocialProviders(),
+    plugins: [
+      admin({
+        adminRoles: ["admin"],
+        bannedUserMessage:
+          "Twoje konto zostało zablokowane. Jeśli uważasz, że to błąd, napisz do wsparcia.",
+        defaultRole: "user",
+      }),
+    ],
   });
 }
 

@@ -1,27 +1,29 @@
 import { z } from "zod";
 
+import { emailSchema } from "@/shared/lib/validation/contact";
+
 export const loginSchema = z.object({
-  email: z.email("Введите корректный email"),
-  password: z.string().min(1, "Введите пароль"),
+  email: emailSchema,
+  password: z.string().min(1, "Wpisz hasło."),
 });
 
 export const registerSchema = z.object({
-  name: z.string().min(2, "Введите имя"),
-  email: z.email("Введите корректный email"),
-  password: z.string().min(8, "Минимум 8 символов"),
+  name: z.string().min(2, "Wpisz imię."),
+  email: emailSchema,
+  password: z.string().min(8, "Minimum 8 znaków."),
 });
 
 export const forgotPasswordSchema = z.object({
-  email: z.email("Введите корректный email"),
+  email: emailSchema,
 });
 
 export const resetPasswordSchema = z
   .object({
-    password: z.string().min(8, "Минимум 8 символов"),
-    passwordConfirm: z.string().min(1, "Повторите пароль"),
+    password: z.string().min(8, "Minimum 8 znaków."),
+    passwordConfirm: z.string().min(1, "Powtórz hasło."),
   })
   .refine((data) => data.password === data.passwordConfirm, {
-    message: "Пароли не совпадают",
+    message: "Hasła nie są takie same.",
     path: ["passwordConfirm"],
   });
 

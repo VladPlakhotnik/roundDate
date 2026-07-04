@@ -1,6 +1,6 @@
 .section {
   position: relative;
-  scroll-margin-top: 24px;
+  scroll-margin-top: 118px;
   overflow: hidden;
   background: transparent;
   padding: 94px 0 88px;
@@ -9,7 +9,7 @@
 .inner {
   position: relative;
   z-index: 2;
-  width: min(1344px, calc(100vw - 96px));
+  width: var(--sd-container-width);
   margin: 0 auto;
 }
 
@@ -138,12 +138,12 @@
   line-height: 1.45;
 }
 
-.quoteCard i {
-  margin-top: 28px;
-  color: var(--sd-coral-500);
-  font-style: normal;
-  font-size: 32px;
-  line-height: 1;
+.quoteHeart {
+  width: 54px;
+  height: auto;
+  margin-top: 24px;
+  object-fit: contain;
+  filter: drop-shadow(0 12px 20px rgba(255, 90, 82, 0.18));
 }
 
 .sparkle {
@@ -225,7 +225,7 @@
 
 @media (max-width: 700px) {
   .section {
-    scroll-margin-top: 96px;
+    scroll-margin-top: 92px;
     padding: 58px 12px 50px;
   }
 
@@ -272,9 +272,9 @@
     font-size: 17px;
   }
 
-  .quoteCard i {
-    margin-top: 20px;
-    font-size: 28px;
+  .quoteHeart {
+    width: 46px;
+    margin-top: 18px;
   }
 
   .sparkle {

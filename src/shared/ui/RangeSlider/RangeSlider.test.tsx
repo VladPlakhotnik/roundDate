@@ -9,7 +9,7 @@ describe("RangeSlider", () => {
 
     render(
       <RangeSlider
-        label="Возраст"
+        label="Wiek"
         max={65}
         min={18}
         onChange={onChange}
@@ -17,8 +17,8 @@ describe("RangeSlider", () => {
       />,
     );
 
-    const from = screen.getByLabelText("Возраст от");
-    const to = screen.getByLabelText("Возраст до");
+    const from = screen.getByLabelText("Wiek od");
+    const to = screen.getByLabelText("Wiek do");
 
     expect(from).toHaveAttribute("type", "range");
     expect(to).toHaveAttribute("type", "range");
@@ -33,7 +33,7 @@ describe("RangeSlider", () => {
   it("centers native range inputs inside the visual slider track", () => {
     render(
       <RangeSlider
-        label="Время"
+        label="Czas"
         max={24}
         min={10}
         onChange={vi.fn()}
@@ -41,11 +41,11 @@ describe("RangeSlider", () => {
       />,
     );
 
-    expect(screen.getByLabelText("Время от")).toHaveStyle({
+    expect(screen.getByLabelText("Czas od")).toHaveStyle({
       top: "50%",
       transform: "translateY(-50%)",
     });
-    expect(screen.getByLabelText("Время до")).toHaveStyle({
+    expect(screen.getByLabelText("Czas do")).toHaveStyle({
       top: "50%",
       transform: "translateY(-50%)",
     });

@@ -218,8 +218,7 @@
     position: relative;
     inset: auto;
     width: 100%;
-    overflow-x: auto;
-    overflow-y: hidden;
+    overflow: visible;
     padding: 0 18px 8px;
     scrollbar-width: none;
   }
@@ -229,8 +228,9 @@
   }
 
   .flowImage {
-    width: 720px;
-    max-width: none;
+    width: 100%;
+    max-width: 720px;
+    margin: 0 auto;
   }
 
   .steps {
@@ -274,5 +274,77 @@
 
   .stepCard p {
     font-size: 13px;
+  }
+}
+
+@media (max-width: 520px) {
+  .section {
+    padding: 18px 0 34px;
+  }
+
+  .panel {
+    width: calc(100vw - 24px);
+    padding: 22px 12px 18px;
+  }
+
+  .title {
+    font-size: clamp(30px, 9vw, 34px);
+  }
+
+  .subtitle {
+    max-width: 280px;
+    font-size: 14px;
+  }
+
+  .stage {
+    margin-top: 16px;
+  }
+
+  .visualFrame {
+    overflow: visible;
+    padding: 0;
+  }
+
+  .flowImage {
+    width: 100%;
+    max-width: none;
+  }
+
+  .steps {
+    grid-auto-flow: row;
+    grid-template-columns: 1fr;
+    gap: 10px;
+    overflow: visible;
+    padding: 14px 0 0;
+    scroll-snap-type: none;
+  }
+
+  .stepCard,
+  .stepOne,
+  .stepTwo,
+  .stepThree,
+  .stepFour,
+  .stepFive {
+    min-height: 0;
+    padding: 14px;
+  }
+
+  .stepTitleRow {
+    align-items: center;
+  }
+
+  .stepNumber {
+    width: 28px;
+    height: 28px;
+    font-size: 14px;
+  }
+
+  .stepCard h3 {
+    font-size: 14px;
+  }
+
+  .stepCard p {
+    margin-top: 8px;
+    font-size: 12px;
   }
 }

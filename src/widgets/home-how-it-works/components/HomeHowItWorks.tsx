@@ -1,43 +1,57 @@
+"use client";
+
 import Image from "next/image";
+
+import { useI18n } from "@/shared/i18n/I18nProvider";
 
 import styles from "./HomeHowItWorks.module.css";
 
-const steps = [
+const stepKeys = [
   {
     className: styles.stepOne,
     number: "1",
-    text: "Подберите удобную дату и возрастную категорию.",
-    title: "Выберите дату и группу",
+    textKey: "home.howItWorks.steps.choose.text",
+    titleKey: "home.howItWorks.steps.choose.title",
   },
   {
     className: styles.stepTwo,
     number: "2",
-    text: "Заполните короткую форму и получите подтверждение участия.",
-    title: "Оставьте заявку",
+    textKey: "home.howItWorks.steps.request.text",
+    titleKey: "home.howItWorks.steps.request.title",
   },
   {
     className: styles.stepThree,
     number: "3",
-    text: "Ждём вас в уютном публичном месте.",
-    title: "Приходите на встречу",
+    textKey: "home.howItWorks.steps.arrive.text",
+    titleKey: "home.howItWorks.steps.arrive.title",
   },
   {
     className: styles.stepFour,
     number: "4",
-    text: "Познакомьтесь с несколькими людьми за один вечер.",
-    title: "Общайтесь",
+    textKey: "home.howItWorks.steps.talk.text",
+    titleKey: "home.howItWorks.steps.talk.title",
   },
   {
     className: styles.stepFive,
     number: "5",
-    text: "После события откроем контакты только при взаимной симпатии.",
-    title: "Получите мэтчи",
+    textKey: "home.howItWorks.steps.matches.text",
+    titleKey: "home.howItWorks.steps.matches.title",
   },
 ];
 
-function StepCard({ className, number, text, title }: (typeof steps)[number]) {
+function StepCard({
+  className,
+  number,
+  text,
+  title,
+}: {
+  className?: string | undefined;
+  number: string;
+  text: string;
+  title: string;
+}) {
   return (
-    <article className={`${styles.stepCard} ${className}`}>
+    <article className={[styles.stepCard, className].filter(Boolean).join(" ")}>
       <div className={styles.stepTitleRow}>
         <span className={styles.stepNumber}>{number}</span>
         <h3>{title}</h3>
@@ -48,14 +62,16 @@ function StepCard({ className, number, text, title }: (typeof steps)[number]) {
 }
 
 export function HomeHowItWorks() {
+  const { t } = useI18n();
+
   return (
     <section className={styles.section} id="how-it-works" aria-labelledby="how-it-works-title">
       <div className={styles.panel}>
         <header className={styles.header}>
           <h2 id="how-it-works-title" className={styles.title}>
-            Как это <span>работает</span>
+            {t("home.howItWorks.title")} <span>{t("home.howItWorks.titleAccent")}</span>
           </h2>
-          <p className={styles.subtitle}>Всего 5 шагов — и вы уже ближе к настоящей встрече</p>
+          <p className={styles.subtitle}>{t("home.howItWorks.subtitle")}</p>
         </header>
 
         <div className={styles.stage}>
@@ -70,9 +86,15 @@ export function HomeHowItWorks() {
             />
           </div>
 
-          <div className={styles.steps} aria-label="Шаги участия">
-            {steps.map((step) => (
-              <StepCard key={step.number} {...step} />
+          <div className={styles.steps} aria-label={t("home.howItWorks.aria")}>
+            {stepKeys.map((step) => (
+              <StepCard
+                className={step.className}
+                key={step.number}
+                number={step.number}
+                text={t(step.textKey)}
+                title={t(step.titleKey)}
+              />
             ))}
           </div>
         </div>

@@ -8,23 +8,29 @@ import {
   CreditCard,
   Heart,
   Hourglass,
-  IdCard,
   Lock,
   MapPin,
   MessageCircle,
   Phone,
   ShieldCheck,
-  Shirt,
   Sparkles,
   UsersRound,
-  X,
 } from "lucide-react";
-import type { ReactNode } from "react";
+import { useState, type FormEvent, type ReactNode } from "react";
 
+import { useI18n } from "@/shared/i18n/I18nProvider";
 import { cn } from "@/shared/lib/cn";
+import {
+  EMAIL_VALIDATION_MESSAGE,
+  POLISH_PHONE_VALIDATION_MESSAGE,
+  emailSchema,
+  polishPhoneSchema,
+} from "@/shared/lib/validation/contact";
 import { Badge, type BadgeStatus } from "@/shared/ui/Badge";
 import { Button } from "@/shared/ui/Button";
-import { Modal, ModalClose } from "@/shared/ui/Modal";
+import { Input } from "@/shared/ui/Input";
+import { Modal } from "@/shared/ui/Modal";
+import { Select } from "@/shared/ui/Select";
 
 import { EventDetailsMap } from "./EventDetailsMap";
 import type { EventMapLocation } from "./EventDetailsMap";
@@ -35,6 +41,7 @@ import {
   type EventOrganizer,
 } from "./OrganizerModal";
 import styles from "./EventDetailsModal.module.css";
+import { EventGenderAvailability } from "./EventGenderAvailability";
 
 export type EventDetailsModalContext = "available" | "booking" | "past";
 
@@ -53,6 +60,8 @@ export type EventDetailsModalEvent = {
   mapLocation: EventMapLocation;
   organizer?: EventOrganizer;
   priceLabel: string;
+  femaleSpotsAvailable?: number;
+  maleSpotsAvailable?: number;
   spotsAvailable: number;
   startsAt: string;
   statusLabel: string;
@@ -63,35 +72,38 @@ export type EventDetailsModalEvent = {
   weekdayLabel: string;
 };
 
-type EventDetailsModalProps = {
-  context?: EventDetailsModalContext;
-  event: EventDetailsModalEvent;
-  status?: BadgeStatus;
-  trigger: ReactNode;
+export type BookingParticipantDefaults = {
+  email?: string;
+  firstName?: string;
+  gender?: string;
+  lastName?: string;
+  phone?: string;
 };
 
-const importantItems = [
-  {
-    icon: IdCard,
-    text: "Возьмите документ, удостоверяющий личность",
-  },
-  {
-    icon: Shirt,
-    text: "Дресс-код Smart Casual",
-  },
-  {
-    icon: Clock3,
-    text: "Опоздания не гарантируют полного участия",
-  },
-  {
-    icon: ShieldCheck,
-    text: "Возврат возможен не позднее чем за 24 часа",
-  },
-];
+type BookingParticipant = {
+  email: string;
+  firstName: string;
+  gender: string;
+  lastName: string;
+  phone: string;
+};
 
-function formatEventDate(event: EventDetailsModalEvent) {
+type BookingStatus = "error" | "idle" | "loading" | "success";
+type BookingParticipantErrors = Partial<Record<"email" | "phone", string>>;
+
+type EventDetailsModalProps = {
+  bookingDefaults?: BookingParticipantDefaults;
+  context?: EventDetailsModalContext;
+  event: EventDetailsModalEvent;
+  onOpenChange?: (open: boolean) => void;
+  open?: boolean;
+  status?: BadgeStatus;
+  trigger?: ReactNode;
+};
+
+function formatEventDate(event: EventDetailsModalEvent, locale: string) {
   const startsAt = new Date(event.startsAt);
-  const date = new Intl.DateTimeFormat("ru-RU", {
+  const date = new Intl.DateTimeFormat(locale, {
     day: "numeric",
     month: "long",
     timeZone: "Europe/Warsaw",
@@ -101,37 +113,43 @@ function formatEventDate(event: EventDetailsModalEvent) {
   return `${date}, ${event.weekdayLabel.toLowerCase()}`;
 }
 
-function formatTime(startsAt: Date, offsetMinutes = 0) {
-  return new Intl.DateTimeFormat("ru-RU", {
+function formatTime(startsAt: Date, locale: string, offsetMinutes = 0) {
+  return new Intl.DateTimeFormat(locale, {
     hour: "2-digit",
     minute: "2-digit",
     timeZone: "Europe/Warsaw",
   }).format(new Date(startsAt.getTime() + offsetMinutes * 60_000));
 }
 
-function getSchedule(event: EventDetailsModalEvent) {
+function getSchedule(event: EventDetailsModalEvent, locale: string, t: (key: string) => string) {
   const startsAt = new Date(event.startsAt);
   const finalOffset = Math.max(event.durationMinutes, 110);
 
   return [
-    { label: "Сбор гостей", time: formatTime(startsAt, -30) },
-    { label: "Знакомства", time: formatTime(startsAt) },
-    { label: "Кофе-брейк", time: formatTime(startsAt, Math.round(finalOffset * 0.55)) },
-    { label: "Продолжение", time: formatTime(startsAt, Math.round(finalOffset * 0.72)) },
-    { label: "Финал вечера", time: formatTime(startsAt, finalOffset) },
+    { label: t("event.schedule.arrival"), time: formatTime(startsAt, locale, -30) },
+    { label: t("event.schedule.conversations"), time: formatTime(startsAt, locale) },
+    {
+      label: t("event.schedule.break"),
+      time: formatTime(startsAt, locale, Math.round(finalOffset * 0.55)),
+    },
+    {
+      label: t("event.schedule.continuation"),
+      time: formatTime(startsAt, locale, Math.round(finalOffset * 0.72)),
+    },
+    { label: t("event.schedule.finale"), time: formatTime(startsAt, locale, finalOffset) },
   ];
 }
 
-function getAudienceCopy(event: EventDetailsModalEvent) {
-  return `Мужчинам и женщинам от ${event.ageRange.replace("-", " до ")} лет, которые хотят познакомиться для серьезных отношений в комфортной и уважительной атмосфере.`;
-}
-
-function getPrimaryAction(context: EventDetailsModalContext, status: BadgeStatus | undefined) {
+function getPrimaryAction(
+  context: EventDetailsModalContext,
+  status: BadgeStatus | undefined,
+  t: (key: string) => string,
+) {
   if (context === "past") {
     return {
       disabled: true,
       icon: CheckCircle2,
-      label: "Событие завершено",
+      label: t("event.status.ended"),
       variant: "secondary" as const,
     };
   }
@@ -140,7 +158,7 @@ function getPrimaryAction(context: EventDetailsModalContext, status: BadgeStatus
     return {
       disabled: false,
       icon: Heart,
-      label: "Записаться",
+      label: t("event.status.join"),
       variant: "primary" as const,
     };
   }
@@ -149,7 +167,7 @@ function getPrimaryAction(context: EventDetailsModalContext, status: BadgeStatus
     return {
       disabled: false,
       icon: CreditCard,
-      label: "Оплатить участие",
+      label: t("event.status.pay"),
       variant: "primary" as const,
     };
   }
@@ -158,7 +176,7 @@ function getPrimaryAction(context: EventDetailsModalContext, status: BadgeStatus
     return {
       disabled: true,
       icon: Hourglass,
-      label: "В листе ожидания",
+      label: t("event.status.waitlist"),
       variant: "secondary" as const,
     };
   }
@@ -166,57 +184,321 @@ function getPrimaryAction(context: EventDetailsModalContext, status: BadgeStatus
   return {
     disabled: true,
     icon: CheckCircle2,
-    label: "Запись подтверждена",
+    label: t("event.status.booked"),
     variant: "secondary" as const,
   };
 }
 
-function getSummaryBadge(event: EventDetailsModalEvent) {
-  if (event.statusLabel.toLowerCase().includes("нет")) {
-    return { label: "Мест нет", tone: "neutral" as const };
+function getSummaryBadge(event: EventDetailsModalEvent, t: (key: string) => string) {
+  const normalizedStatus = event.statusLabel.toLowerCase();
+
+  if (
+    event.spotsAvailable <= 0 ||
+    normalizedStatus.includes(t("event.availability.none").toLowerCase()) ||
+    normalizedStatus.includes("brak") ||
+    normalizedStatus.includes("sold")
+  ) {
+    return { label: t("event.availability.none"), tone: "neutral" as const };
   }
 
-  return { label: "Места есть", tone: "success" as const };
+  return { label: t("event.availability.seatsAvailable"), tone: "success" as const };
+}
+
+function createBookingParticipant(defaults?: BookingParticipantDefaults): BookingParticipant {
+  return {
+    email: defaults?.email ?? "",
+    firstName: defaults?.firstName ?? "",
+    gender: defaults?.gender ?? "",
+    lastName: defaults?.lastName ?? "",
+    phone: defaults?.phone ?? "",
+  };
+}
+
+function isBookingParticipantComplete(participant: BookingParticipant) {
+  return Boolean(
+    participant.email.trim() &&
+    participant.firstName.trim() &&
+    participant.gender.trim() &&
+    participant.lastName.trim() &&
+    participant.phone.trim(),
+  );
+}
+
+function getBookingTimeRange(event: EventDetailsModalEvent, locale: string) {
+  return `${event.timeLabel} - ${formatTime(new Date(event.startsAt), locale, event.durationMinutes)}`;
+}
+
+function getFormatHighlights(
+  event: EventDetailsModalEvent,
+  t: (key: string, values?: Record<string, number | string>) => string,
+) {
+  const defaultHighlights = [
+    t("event.participation.age", { ageRange: event.ageRange }),
+    event.language,
+    t("event.participation.conversation", { minutes: event.conversationMinutes }),
+    t("event.participation.capacity", { capacityTotal: event.capacityTotal }),
+  ];
+
+  if (event.highlights.length === 0) {
+    return defaultHighlights;
+  }
+
+  return [
+    ...event.highlights,
+    ...defaultHighlights.filter((highlight) => !event.highlights.includes(highlight)),
+  ];
 }
 
 export function EventDetailsModal({
+  bookingDefaults,
   context = "available",
   event,
+  onOpenChange,
+  open,
   status,
   trigger,
 }: EventDetailsModalProps) {
-  const schedule = getSchedule(event);
-  const primaryAction = getPrimaryAction(context, status);
+  const { locale, t } = useI18n();
+  const dateLocale = locale === "en" ? "en-US" : "pl-PL";
+  const genderOptions = [
+    { label: t("common.gender.female"), value: "female" },
+    { label: t("common.gender.male"), value: "male" },
+    { label: t("common.gender.other"), value: "other" },
+  ];
+  const schedule = getSchedule(event, dateLocale, t);
+  const primaryAction = getPrimaryAction(context, status, t);
   const PrimaryIcon = primaryAction.icon;
-  const summaryBadge = getSummaryBadge(event);
+  const summaryBadge = getSummaryBadge(event, t);
   const organizer = event.organizer ?? DEFAULT_EVENT_ORGANIZER;
   const organizerName = getOrganizerName(organizer);
+  const formatHighlights = getFormatHighlights(event, t);
+  const [bookingOpen, setBookingOpen] = useState(false);
+  const [bookingStep, setBookingStep] = useState<1 | 2>(1);
+  const [bookingStatus, setBookingStatus] = useState<BookingStatus>("idle");
+  const [bookingMessage, setBookingMessage] = useState("");
+  const [participantErrors, setParticipantErrors] = useState<BookingParticipantErrors>({});
+  const [participant, setParticipant] = useState<BookingParticipant>(() =>
+    createBookingParticipant(bookingDefaults),
+  );
+  const [promoCode, setPromoCode] = useState("");
+  const bookingProgress = bookingStep === 1 ? 50 : 100;
+  const participantComplete = isBookingParticipantComplete(participant);
+
+  function updateParticipant(field: keyof BookingParticipant, value: string) {
+    setParticipant((currentParticipant) => ({ ...currentParticipant, [field]: value }));
+
+    if (field === "email" || field === "phone") {
+      setParticipantErrors((currentErrors) => {
+        const nextErrors = { ...currentErrors };
+
+        delete nextErrors[field];
+
+        return nextErrors;
+      });
+    }
+  }
+
+  function openBookingFlow(initialStep: 1 | 2 = 1) {
+    setParticipant(createBookingParticipant(bookingDefaults));
+    setParticipantErrors({});
+    setPromoCode("");
+    setBookingStep(initialStep);
+    setBookingStatus("idle");
+    setBookingMessage("");
+    setBookingOpen(true);
+  }
+
+  function handleBookingOpenChange(nextOpen: boolean) {
+    setBookingOpen(nextOpen);
+
+    if (!nextOpen) {
+      setParticipantErrors({});
+      setBookingStatus("idle");
+      setBookingMessage("");
+    }
+  }
+
+  function validateParticipantContacts() {
+    const parsedEmail = emailSchema.safeParse(participant.email);
+    const parsedPhone = polishPhoneSchema.safeParse(participant.phone);
+    const errors: BookingParticipantErrors = {};
+
+    if (!parsedEmail.success) {
+      errors.email = EMAIL_VALIDATION_MESSAGE;
+    }
+
+    if (!parsedPhone.success) {
+      errors.phone = POLISH_PHONE_VALIDATION_MESSAGE;
+    }
+
+    setParticipantErrors(errors);
+
+    if (!parsedEmail.success || !parsedPhone.success) {
+      return false;
+    }
+
+    setParticipant((currentParticipant) => ({
+      ...currentParticipant,
+      email: parsedEmail.data,
+      phone: parsedPhone.data,
+    }));
+
+    return true;
+  }
+
+  function handlePrimaryActionClick() {
+    if (primaryAction.disabled) {
+      return;
+    }
+
+    if (context === "available") {
+      openBookingFlow(1);
+      return;
+    }
+
+    if (context === "booking" && status === "payment-pending") {
+      openBookingFlow(2);
+    }
+  }
+
+  async function createBooking() {
+    setBookingStatus("loading");
+    setBookingMessage("");
+
+    try {
+      const response = await fetch("/api/profile/bookings", {
+        body: JSON.stringify({ eventId: event.id }),
+        credentials: "same-origin",
+        headers: { "Content-Type": "application/json" },
+        method: "POST",
+      });
+      const payload = (await response.json().catch(() => ({}))) as {
+        booking?: { bookingStatus?: string; status?: string };
+        checkout?: { url?: string };
+        error?: string;
+      };
+
+      if (!response.ok) {
+        throw new Error(payload.error ?? t("event.booking.createError"));
+      }
+
+      const waitlisted =
+        payload.booking?.bookingStatus === "waitlisted" || payload.booking?.status === "waitlist";
+
+      setBookingStatus("success");
+
+      if (payload.checkout?.url) {
+        setBookingMessage(t("event.booking.redirecting"));
+        window.location.assign(payload.checkout.url);
+        return;
+      }
+
+      setBookingMessage(waitlisted ? t("event.booking.waitlist") : t("event.booking.created"));
+    } catch (error) {
+      setBookingStatus("error");
+      setBookingMessage(error instanceof Error ? error.message : t("event.booking.createError"));
+    }
+  }
+
+  function handleBookingSubmit(formEvent: FormEvent<HTMLFormElement>) {
+    formEvent.preventDefault();
+
+    if (bookingStep === 1) {
+      if (participantComplete && validateParticipantContacts()) {
+        setBookingStep(2);
+      }
+
+      return;
+    }
+
+    if (bookingStatus !== "success") {
+      void createBooking();
+    }
+  }
 
   return (
     <Modal
       className={styles.modalBody}
       contentClassName={styles.modalContent}
+      {...(onOpenChange ? { onOpenChange } : {})}
+      {...(open !== undefined ? { open } : {})}
       showCloseButton
       size="xl"
-      title={`Детали мероприятия ${event.title}`}
+      title={t("event.detailsTitle", { title: event.title })}
       trigger={trigger}
       visuallyHiddenTitle
     >
-      <div className={styles.shell}>
+      <div
+        className={styles.shell}
+        data-mobile-layout="compact-modal"
+        data-testid="event-details-shell"
+      >
         <EventDetailsMap location={event.mapLocation} />
 
-        <div className={styles.bodyGrid}>
-          <div className={styles.mainColumn}>
+        <div
+          className={styles.bodyGrid}
+          data-mobile-scroll="details"
+          data-testid="event-details-body"
+        >
+          <div
+            className={styles.mainColumn}
+            data-mobile-priority="secondary"
+            data-testid="event-details-main"
+          >
+            <section
+              className={styles.overviewBlock}
+              data-density="compact"
+              data-testid="event-details-overview"
+            >
+              <div className={styles.overviewHeader}>
+                <h2 data-testid="event-details-overview-title">{event.title}</h2>
+              </div>
+
+              <div
+                className={styles.overviewMeta}
+                data-layout="split"
+                data-testid="event-details-overview-meta"
+              >
+                <div
+                  className={styles.overviewSchedule}
+                  data-testid="event-details-overview-schedule"
+                >
+                  <span>
+                    <CalendarDays aria-hidden size={20} />
+                    <strong>{formatEventDate(event, dateLocale)}</strong>
+                  </span>
+                  <span>
+                    <Clock3 aria-hidden size={20} />
+                    <strong>{getBookingTimeRange(event, dateLocale)}</strong>
+                  </span>
+                </div>
+
+                <div className={styles.overviewVenue} data-testid="event-details-overview-venue">
+                  <MapPin aria-hidden size={21} />
+                  <span>
+                    <strong>{event.venueName}</strong>
+                    <em>{event.venueAddress}</em>
+                    <a
+                      href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
+                        `${event.venueName}, ${event.city}, ${event.venueAddress}`,
+                      )}`}
+                      rel="noreferrer"
+                      target="_blank"
+                    >
+                      {t("event.directions")}
+                    </a>
+                  </span>
+                </div>
+              </div>
+            </section>
+
             <section className={styles.infoBlock}>
               <span className={styles.sectionIcon}>
                 <Heart aria-hidden size={26} />
               </span>
               <div>
-                <h2>О событии</h2>
+                <h2>{t("event.overview")}</h2>
                 <p>{event.description}</p>
-                <p>
-                  Легкое общение, искренние эмоции и шанс встретить того самого человека офлайн.
-                </p>
               </div>
             </section>
 
@@ -225,8 +507,16 @@ export function EventDetailsModal({
                 <UsersRound aria-hidden size={26} />
               </span>
               <div>
-                <h2>Кому подходит</h2>
-                <p>{getAudienceCopy(event)}</p>
+                <h2>{t("event.participation.heading")}</h2>
+                <ul
+                  className={styles.highlightList}
+                  data-columns="2"
+                  data-testid="event-details-format-list"
+                >
+                  {formatHighlights.map((highlight) => (
+                    <li key={highlight}>{highlight}</li>
+                  ))}
+                </ul>
               </div>
             </section>
 
@@ -235,8 +525,12 @@ export function EventDetailsModal({
                 <Coffee aria-hidden size={26} />
               </span>
               <div>
-                <h2>Программа вечера</h2>
-                <div className={styles.timeline}>
+                <h2>{t("event.schedule.heading")}</h2>
+                <div
+                  className={styles.timeline}
+                  data-line-align="dot-center"
+                  data-testid="event-details-timeline"
+                >
                   {schedule.map((item) => (
                     <div className={styles.timelineItem} key={`${item.time}-${item.label}`}>
                       <span className={styles.timelineDot} />
@@ -247,82 +541,41 @@ export function EventDetailsModal({
                 </div>
               </div>
             </section>
-
-            <section className={styles.importantBlock}>
-              <span className={styles.sectionIcon}>
-                <ShieldCheck aria-hidden size={26} />
-              </span>
-              <div>
-                <h2>Важно знать</h2>
-                <div className={styles.importantGrid}>
-                  {importantItems.map((item) => {
-                    const Icon = item.icon;
-
-                    return (
-                      <div className={styles.importantItem} key={item.text}>
-                        <Icon aria-hidden size={21} />
-                        <span>{item.text}</span>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            </section>
           </div>
 
-          <aside className={styles.summaryCard} aria-label="Краткая информация о мероприятии">
+          <aside
+            className={styles.summaryCard}
+            aria-label={t("event.summaryAria")}
+            data-mobile-priority="primary"
+            data-testid="event-details-summary"
+          >
             <div className={styles.summaryHeader}>
-              <h2>{event.title}</h2>
+              <h2>{t("event.booking.paymentStep")}</h2>
               <Sparkles aria-hidden size={28} />
             </div>
 
-            <div className={styles.summaryList}>
-              <div>
-                <CalendarDays aria-hidden size={22} />
-                <span>{formatEventDate(event)}</span>
-              </div>
-              <div>
-                <Clock3 aria-hidden size={22} />
-                <span>
-                  {event.timeLabel} – {formatTime(new Date(event.startsAt), event.durationMinutes)}
-                </span>
-              </div>
-              <div>
-                <MapPin aria-hidden size={22} />
-                <span>
-                  <strong>{event.venueName}</strong>
-                  {event.venueAddress}
-                  <a
-                    href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
-                      `${event.venueName}, ${event.city}, ${event.venueAddress}`,
-                    )}`}
-                    rel="noreferrer"
-                    target="_blank"
-                  >
-                    Как добраться?
-                  </a>
-                </span>
-              </div>
-            </div>
-
-            <div className={styles.statusStack}>
-              <Badge tone={summaryBadge.tone}>{summaryBadge.label}</Badge>
+            <div
+              className={styles.summaryStatus}
+              data-testid="event-details-summary-status"
+              data-tone={summaryBadge.tone}
+            >
+              <span aria-hidden />
+              <strong>{summaryBadge.label}</strong>
               {context === "booking" && status ? <Badge status={status} /> : null}
             </div>
 
-            <div className={styles.spotsLine}>
-              <UsersRound aria-hidden size={22} />
-              <span>
-                Осталось мест: <strong>{event.spotsAvailable}</strong> из {event.capacityTotal}
-              </span>
-            </div>
+            <EventGenderAvailability
+              className={styles.summaryAvailability}
+              femaleSpotsAvailable={event.femaleSpotsAvailable}
+              maleSpotsAvailable={event.maleSpotsAvailable}
+              spotsAvailable={event.spotsAvailable}
+            />
 
             <div className={styles.priceBlock}>
               <CreditCard aria-hidden size={22} />
               <span>
-                Стоимость участия
+                {t("event.labels.price")}
                 <strong>{event.priceLabel}</strong>
-                <small>Включен welcome drink</small>
               </span>
             </div>
 
@@ -331,9 +584,9 @@ export function EventDetailsModal({
                 {organizer.firstName[0]}
               </div>
               <div>
-                <small>Организатор</small>
+                <small>{t("event.labels.organizer")}</small>
                 <strong>{organizerName}</strong>
-                <span>Организатор SpeedDate</span>
+                <span>{organizer.role ?? t("event.organizer.defaultRole")}</span>
                 <a href={`tel:${organizer.phone.replace(/[^\d+]/g, "")}`}>
                   <Phone aria-hidden size={15} />
                   {organizer.phone}
@@ -343,13 +596,12 @@ export function EventDetailsModal({
           </aside>
         </div>
 
-        <div className={styles.footerBar}>
+        <div
+          className={styles.footerBar}
+          data-mobile-sticky="actions"
+          data-testid="event-details-footer"
+        >
           <footer className={styles.footerActions}>
-            <ModalClose asChild>
-              <Button leftIcon={<X aria-hidden size={18} />} size="lg" variant="outline">
-                Закрыть
-              </Button>
-            </ModalClose>
             <OrganizerModal
               eventTitle={event.title}
               organizer={organizer}
@@ -359,7 +611,7 @@ export function EventDetailsModal({
                   size="lg"
                   variant="outline"
                 >
-                  Связаться с организатором
+                  {t("event.contactOrganizer")}
                 </Button>
               }
             />
@@ -369,6 +621,7 @@ export function EventDetailsModal({
               leftIcon={<PrimaryIcon aria-hidden size={22} />}
               size="lg"
               variant={primaryAction.variant}
+              onClick={handlePrimaryActionClick}
             >
               {primaryAction.label}
             </Button>
@@ -376,10 +629,202 @@ export function EventDetailsModal({
 
           <p className={styles.securityNote}>
             <Lock aria-hidden size={16} />
-            Ваши данные под защитой
+            {t("event.trust")}
           </p>
         </div>
       </div>
+
+      <Modal
+        className={styles.bookingBody}
+        contentClassName={styles.bookingContent}
+        layer="nested"
+        open={bookingOpen}
+        showCloseButton
+        size="lg"
+        title={t("event.booking.title")}
+        onOpenChange={handleBookingOpenChange}
+      >
+        <form
+          className={styles.bookingFlow}
+          data-mobile-layout="compact-booking"
+          data-testid="event-booking-flow"
+          noValidate
+          onSubmit={handleBookingSubmit}
+        >
+          <div
+            aria-label={t("event.booking.title")}
+            aria-valuemax={100}
+            aria-valuemin={0}
+            aria-valuenow={bookingProgress}
+            className={styles.bookingProgress}
+            role="progressbar"
+          >
+            <span style={{ width: `${bookingProgress}%` }} />
+          </div>
+
+          <header className={styles.bookingHeader}>
+            <span>
+              {bookingStep === 1 ? t("event.booking.dataStep") : t("event.booking.paymentStep")}
+            </span>
+            <h2>{event.title}</h2>
+            <p>
+              {bookingStep === 1 ? t("event.booking.dataIntro") : t("event.booking.paymentIntro")}
+            </p>
+          </header>
+
+          <div
+            className={styles.bookingEventSummary}
+            data-mobile-density="compact"
+            data-testid="event-booking-summary"
+          >
+            <div>
+              <CalendarDays aria-hidden size={19} />
+              <span>
+                <small>{t("event.labels.date")}</small>
+                <strong>{formatEventDate(event, dateLocale)}</strong>
+              </span>
+            </div>
+            <div>
+              <Clock3 aria-hidden size={19} />
+              <span>
+                <small>{t("event.labels.time")}</small>
+                <strong>{getBookingTimeRange(event, dateLocale)}</strong>
+              </span>
+            </div>
+            <div>
+              <MapPin aria-hidden size={19} />
+              <span>
+                <small>{t("event.booking.location")}</small>
+                <strong>{event.venueName}</strong>
+                <em>{event.venueAddress}</em>
+              </span>
+            </div>
+          </div>
+
+          {bookingStep === 1 ? (
+            <div className={styles.bookingFormGrid}>
+              <Input
+                autoComplete="given-name"
+                label={t("common.form.firstName")}
+                required
+                value={participant.firstName}
+                onChange={(inputEvent) =>
+                  updateParticipant("firstName", inputEvent.currentTarget.value)
+                }
+              />
+              <Input
+                autoComplete="family-name"
+                label={t("common.form.lastName")}
+                required
+                value={participant.lastName}
+                onChange={(inputEvent) =>
+                  updateParticipant("lastName", inputEvent.currentTarget.value)
+                }
+              />
+              <Input
+                autoComplete="tel"
+                error={participantErrors.phone}
+                label={t("common.form.phone")}
+                required
+                type="tel"
+                value={participant.phone}
+                onChange={(inputEvent) =>
+                  updateParticipant("phone", inputEvent.currentTarget.value)
+                }
+              />
+              <Input
+                autoComplete="email"
+                error={participantErrors.email}
+                label="Email"
+                required
+                type="email"
+                value={participant.email}
+                onChange={(inputEvent) =>
+                  updateParticipant("email", inputEvent.currentTarget.value)
+                }
+              />
+              <Select
+                className={styles.bookingGenderField ?? ""}
+                label={t("home.waitlist.gender")}
+                options={genderOptions}
+                placeholder={t("home.waitlist.gender")}
+                required
+                value={participant.gender}
+                onChange={(value) => updateParticipant("gender", value)}
+              />
+            </div>
+          ) : (
+            <div className={styles.bookingPaymentGrid}>
+              <section className={styles.bookingPaymentCard}>
+                <div className={styles.bookingPriceLine}>
+                  <span>{t("event.booking.price")}</span>
+                  <strong>{event.priceLabel}</strong>
+                </div>
+                <div className={styles.bookingPriceMeta}>
+                  <span>{t("event.booking.welcomeDrink")}</span>
+                  <span>{t("event.booking.confirmedAfterPayment")}</span>
+                </div>
+              </section>
+
+              <Input
+                label={t("event.booking.promoCode")}
+                placeholder={t("event.booking.promoPlaceholder")}
+                value={promoCode}
+                onChange={(inputEvent) => setPromoCode(inputEvent.currentTarget.value)}
+              />
+
+              <div className={styles.bookingPaymentNote}>
+                <ShieldCheck aria-hidden size={19} />
+                <span>{t("event.booking.paymentNote")}</span>
+              </div>
+
+              {bookingMessage ? (
+                <p className={styles.bookingStatus} data-status={bookingStatus} role="status">
+                  {bookingMessage}
+                </p>
+              ) : null}
+            </div>
+          )}
+
+          <footer
+            className={styles.bookingFooter}
+            data-mobile-sticky="actions"
+            data-testid="event-booking-footer"
+          >
+            {bookingStep === 2 ? (
+              <Button
+                disabled={bookingStatus === "loading"}
+                size="md"
+                type="button"
+                variant="outline"
+                onClick={() => {
+                  setBookingStep(1);
+                  setBookingMessage("");
+                  setBookingStatus("idle");
+                }}
+              >
+                {t("common.actions.back")}
+              </Button>
+            ) : null}
+            <Button
+              className={styles.bookingSubmitButton}
+              disabled={(bookingStep === 1 && !participantComplete) || bookingStatus === "success"}
+              isLoading={bookingStatus === "loading"}
+              leftIcon={
+                bookingStep === 1 ? (
+                  <CreditCard aria-hidden size={18} />
+                ) : (
+                  <Lock aria-hidden size={18} />
+                )
+              }
+              size="md"
+              type="submit"
+            >
+              {bookingStep === 1 ? t("event.booking.toPayment") : t("event.booking.submit")}
+            </Button>
+          </footer>
+        </form>
+      </Modal>
     </Modal>
   );
 }

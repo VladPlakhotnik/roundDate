@@ -169,17 +169,93 @@
 
 @media (max-width: 560px) {
   .body {
-    padding: 14px 18px 18px;
+    gap: 12px;
+    padding: 10px 14px 14px;
   }
 
-  .profile,
-  .actions {
-    grid-template-columns: 1fr;
+  .profile {
+    grid-template-columns: 58px minmax(0, 1fr);
+    gap: 12px;
+    border-radius: 18px;
+    padding: 12px;
   }
 
   .avatar {
-    width: 78px;
-    height: 78px;
-    border-radius: 22px;
+    width: 58px;
+    height: 58px;
+    border-width: 3px;
+    border-radius: 18px;
+    font-size: 20px;
+  }
+
+  .eyebrow {
+    font-size: 10.5px;
+  }
+
+  .profile h3 {
+    margin-top: 4px;
+    font-size: 17px;
+  }
+
+  .profile p {
+    margin-top: 3px;
+    font-size: 12px;
+  }
+
+  .contacts {
+    gap: 8px;
+  }
+
+  .contactRow {
+    grid-template-columns: minmax(0, 1fr) 38px;
+    gap: 8px;
+  }
+
+  .contactLink {
+    grid-template-columns: 38px minmax(0, 1fr);
+    gap: 9px;
+    border-radius: 14px;
+    padding: 9px 10px;
+  }
+
+  .contactIcon,
+  .copyButton {
+    width: 38px;
+    height: 38px;
+    border-radius: 12px;
+  }
+
+  .contactLink small {
+    font-size: 11px;
+  }
+
+  .contactLink strong {
+    font-size: 13px;
+  }
+
+  .actions {
+    position: sticky;
+    bottom: 0;
+    grid-template-columns: 1fr;
+    gap: 8px;
+    margin: 0 -14px -14px;
+    border-top: 1px solid rgba(255, 113, 97, 0.12);
+    background:
+      linear-gradient(180deg, rgba(255, 255, 255, 0.86), var(--sd-white) 30%),
+      var(--sd-white);
+    padding: 8px 14px calc(10px + env(safe-area-inset-bottom));
+  }
+
+  .actions a {
+    min-height: 42px;
+    font-size: 13px;
+  }
+}
+
+@media (max-width: 360px) {
+  .profile {
+    grid-template-columns: 1fr;
+    justify-items: center;
+    text-align: center;
   }
 }

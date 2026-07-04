@@ -6,10 +6,11 @@ import type { FormEvent, ReactNode } from "react";
 import { useState, useTransition } from "react";
 
 import { authClient } from "@/shared/lib/auth-client";
+import { useI18n } from "@/shared/i18n/I18nProvider";
 import { Button } from "@/shared/ui/Button";
 import { Input } from "@/shared/ui/Input";
 import { Modal } from "@/shared/ui/Modal";
-import { FacebookLogo, GoogleLogo } from "@/shared/ui/SocialLogo";
+import { GoogleLogo } from "@/shared/ui/SocialLogo";
 import { useToast } from "@/shared/ui/Toast";
 
 import { forgotPasswordSchema, loginSchema, registerSchema } from "../lib/auth-schemas";
@@ -20,22 +21,7 @@ type AuthModalProps = {
   trigger?: ReactNode;
 };
 
-const modeCopy: Record<AuthMode, { title: string; subtitle: string }> = {
-  login: {
-    title: "Вход в SpeedDate",
-    subtitle: "Живые знакомства офлайн",
-  },
-  register: {
-    title: "Регистрация в SpeedDate",
-    subtitle: "Создайте аккаунт, чтобы записаться на событие",
-  },
-  "forgot-password": {
-    title: "Восстановление пароля",
-    subtitle: "Отправим ссылку для сброса пароля на email",
-  },
-};
-
-function getAuthErrorMessage(error: unknown) {
+function getAuthErrorMessage(error: unknown, fallback: string) {
   if (error && typeof error === "object" && "message" in error) {
     const message = String(error.message);
 
@@ -44,17 +30,32 @@ function getAuthErrorMessage(error: unknown) {
     }
   }
 
-  return "Что-то пошло не так. Попробуйте еще раз.";
+  return fallback;
 }
 
 export function AuthModal({ trigger }: AuthModalProps) {
+  const { t } = useI18n();
   const [mode, setMode] = useState<AuthMode>("login");
   const [isOpen, setIsOpen] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [isPending, startTransition] = useTransition();
   const toast = useToast();
 
-  const copy = modeCopy[mode];
+  const copy =
+    mode === "login"
+      ? {
+          subtitle: t("auth.login.subtitle"),
+          title: t("auth.login.title"),
+        }
+      : mode === "register"
+        ? {
+            subtitle: t("auth.register.subtitle"),
+            title: t("auth.register.title"),
+          }
+        : {
+            subtitle: t("auth.forgotPassword.subtitle"),
+            title: t("auth.forgotPassword.title"),
+          };
 
   function switchMode(nextMode: AuthMode) {
     setMode(nextMode);
@@ -68,7 +69,7 @@ export function AuthModal({ trigger }: AuthModalProps) {
     });
 
     if (!parsed.success) {
-      toast.error(parsed.error.issues[0]?.message ?? "Проверьте поля формы.");
+      toast.error(parsed.error.issues[0]?.message ?? t("auth.errors.form"));
       return;
     }
 
@@ -80,11 +81,11 @@ export function AuthModal({ trigger }: AuthModalProps) {
       });
 
       if (result.error) {
-        toast.error(getAuthErrorMessage(result.error));
+        toast.error(getAuthErrorMessage(result.error, t("auth.errors.default")));
         return;
       }
 
-      toast.success("Вы вошли в аккаунт.");
+      toast.success(t("auth.toasts.loginSuccess"));
       setIsOpen(false);
     });
   }
@@ -97,7 +98,7 @@ export function AuthModal({ trigger }: AuthModalProps) {
     });
 
     if (!parsed.success) {
-      toast.error(parsed.error.issues[0]?.message ?? "Проверьте поля формы.");
+      toast.error(parsed.error.issues[0]?.message ?? t("auth.errors.form"));
       return;
     }
 
@@ -110,11 +111,11 @@ export function AuthModal({ trigger }: AuthModalProps) {
       });
 
       if (result.error) {
-        toast.error(getAuthErrorMessage(result.error));
+        toast.error(getAuthErrorMessage(result.error, t("auth.errors.default")));
         return;
       }
 
-      toast.success("Аккаунт создан.", "Проверьте email, чтобы подтвердить регистрацию.");
+      toast.success(t("auth.toasts.registerSuccess"), t("auth.toasts.registerSuccessDescription"));
     });
   }
 
@@ -124,7 +125,7 @@ export function AuthModal({ trigger }: AuthModalProps) {
     });
 
     if (!parsed.success) {
-      toast.error(parsed.error.issues[0]?.message ?? "Введите email.");
+      toast.error(parsed.error.issues[0]?.message ?? t("auth.errors.emailRequired"));
       return;
     }
 
@@ -135,11 +136,11 @@ export function AuthModal({ trigger }: AuthModalProps) {
       });
 
       if (result.error) {
-        toast.error(getAuthErrorMessage(result.error));
+        toast.error(getAuthErrorMessage(result.error, t("auth.errors.default")));
         return;
       }
 
-      toast.success("Проверьте почту.", "Если такой email есть в системе, мы отправили ссылку.");
+      toast.success(t("auth.toasts.forgotPasswordTitle"), t("auth.toasts.forgotPassword"));
     });
   }
 
@@ -160,7 +161,7 @@ export function AuthModal({ trigger }: AuthModalProps) {
     handleForgotPassword(formData);
   }
 
-  function handleSocialLogin(provider: "google" | "facebook") {
+  function handleSocialLogin(provider: "google") {
     startTransition(async () => {
       const result = await authClient.signIn.social({
         provider,
@@ -169,7 +170,7 @@ export function AuthModal({ trigger }: AuthModalProps) {
       });
 
       if (result.error) {
-        toast.error(getAuthErrorMessage(result.error));
+        toast.error(getAuthErrorMessage(result.error, t("auth.errors.default")));
       }
     });
   }
@@ -182,15 +183,17 @@ export function AuthModal({ trigger }: AuthModalProps) {
       title={copy.title}
       trigger={trigger}
       visuallyHiddenTitle
+      contentClassName={styles.content}
+      mobileFullscreen
     >
-      <div className={styles.shell}>
+      <div className={styles.shell} data-auth-modal-shell data-scroll="off">
         <div className={styles.visual} aria-hidden>
           <Image
-            src="/assets/auth/auth-visual.png"
+            src="/assets/auth/auth-visual-v3.png"
             alt=""
             fill
             priority
-            sizes="(max-width: 760px) 0px, 448px"
+            sizes="(max-width: 860px) 0px, 460px"
           />
         </div>
 
@@ -204,18 +207,18 @@ export function AuthModal({ trigger }: AuthModalProps) {
             {mode === "register" ? (
               <Input
                 autoComplete="given-name"
-                label="Имя"
+                label={t("common.form.firstName")}
                 name="name"
-                placeholder="Введите ваше имя"
+                placeholder={t("auth.fields.namePlaceholder")}
                 size="lg"
               />
             ) : null}
 
             <Input
               autoComplete="email"
-              label="Email"
+              label={t("common.form.email")}
               name="email"
-              placeholder="Введите ваш email"
+              placeholder={t("auth.fields.emailPlaceholder")}
               size="lg"
               type="email"
             />
@@ -223,7 +226,7 @@ export function AuthModal({ trigger }: AuthModalProps) {
             {mode !== "forgot-password" ? (
               <Input
                 autoComplete={mode === "login" ? "current-password" : "new-password"}
-                label="Пароль"
+                label={t("common.form.password")}
                 labelAction={
                   mode === "login" ? (
                     <button
@@ -231,15 +234,17 @@ export function AuthModal({ trigger }: AuthModalProps) {
                       onClick={() => switchMode("forgot-password")}
                       type="button"
                     >
-                      Забыли пароль?
+                      {t("auth.forgotPasswordLink")}
                     </button>
                   ) : null
                 }
                 name="password"
-                placeholder="Введите пароль"
+                placeholder={t("auth.fields.passwordPlaceholder")}
                 rightIcon={
                   <button
-                    aria-label={showPassword ? "Скрыть пароль" : "Показать пароль"}
+                    aria-label={
+                      showPassword ? t("auth.togglePassword.hide") : t("auth.togglePassword.show")
+                    }
                     className={styles.passwordToggle}
                     onClick={() => setShowPassword((value) => !value)}
                     type="button"
@@ -263,17 +268,17 @@ export function AuthModal({ trigger }: AuthModalProps) {
               type="submit"
             >
               {mode === "login"
-                ? "Войти"
+                ? t("auth.submit.login")
                 : mode === "register"
-                  ? "Зарегистрироваться"
-                  : "Отправить ссылку"}
+                  ? t("auth.submit.register")
+                  : t("auth.submit.forgotPassword")}
             </Button>
           </form>
 
           {mode !== "forgot-password" ? (
             <>
-              <div className={styles.divider}>или продолжить с</div>
-              <div className={styles.socialGrid}>
+              <div className={styles.divider}>{t("auth.socialDivider")}</div>
+              <div className={styles.socialGrid} data-layout="single">
                 <button
                   className={styles.socialButton}
                   disabled={isPending}
@@ -283,31 +288,22 @@ export function AuthModal({ trigger }: AuthModalProps) {
                   <GoogleLogo className={styles.socialIcon} />
                   Google
                 </button>
-                <button
-                  className={styles.socialButton}
-                  disabled={isPending}
-                  onClick={() => handleSocialLogin("facebook")}
-                  type="button"
-                >
-                  <FacebookLogo className={styles.socialIcon} />
-                  Facebook
-                </button>
               </div>
             </>
           ) : null}
 
           <p className={styles.switchText}>
             {mode === "login"
-              ? "Нет аккаунта?"
+              ? t("auth.switch.login")
               : mode === "register"
-                ? "Уже есть аккаунт?"
-                : "Вспомнили пароль?"}
+                ? t("auth.switch.register")
+                : t("auth.switch.forgotPassword")}
             <button
               className={styles.linkButton}
               onClick={() => switchMode(mode === "login" ? "register" : "login")}
               type="button"
             >
-              {mode === "login" ? "Зарегистрироваться" : "Войти"}
+              {mode === "login" ? t("auth.submit.register") : t("auth.submit.login")}
             </button>
           </p>
         </section>

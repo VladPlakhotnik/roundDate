@@ -16,8 +16,10 @@ import {
   type OnboardingTime,
   type ProfileOnboardingState,
 } from "@/entities/profile/model/onboarding";
+import { useI18n } from "@/shared/i18n/I18nProvider";
 import { cn } from "@/shared/lib/cn";
 import { Button } from "@/shared/ui/Button";
+import { BrandLogo } from "@/shared/ui/BrandLogo";
 import { DatePicker } from "@/shared/ui/DatePicker";
 import { Input } from "@/shared/ui/Input";
 import { Select } from "@/shared/ui/Select";
@@ -31,23 +33,22 @@ type OnboardingFlowProps = {
 
 const stepCopy = [
   {
-    subtitle: "Базовая информация помогает подобрать подходящие знакомства.",
-    title: "Создайте профиль",
+    subtitleKey: "onboarding.steps.profile.subtitle",
+    titleKey: "onboarding.steps.profile.title",
   },
   {
-    subtitle: "Это помогает нам понимать, какие каналы работают лучше.",
-    title: "Откуда вы о нас узнали?",
+    subtitleKey: "onboarding.steps.source.subtitle",
+    titleKey: "onboarding.steps.source.title",
   },
   {
-    subtitle: "Выберите дни и время, чтобы мы предлагали подходящие вечера.",
-    title: "Когда вам удобно?",
+    subtitleKey: "onboarding.steps.preferences.subtitle",
+    titleKey: "onboarding.steps.preferences.title",
   },
 ];
 
 const providerCopy = {
-  email: "Вы вошли через email.",
-  facebook: "Вы вошли через Facebook.",
-  google: "Вы вошли через Google.",
+  email: "onboarding.provider.email",
+  google: "onboarding.provider.google",
 };
 
 function GoogleMark() {
@@ -73,28 +74,9 @@ function GoogleMark() {
   );
 }
 
-function FacebookMark() {
-  return (
-    <svg className={styles.providerMark} viewBox="0 0 24 24" aria-hidden>
-      <path
-        fill="#1877F2"
-        d="M24 12a12 12 0 1 0-13.88 11.86v-8.39H7.08V12h3.04V9.36c0-3 1.79-4.66 4.52-4.66 1.31 0 2.68.23 2.68.23v2.95h-1.51c-1.49 0-1.95.92-1.95 1.87V12h3.32l-.53 3.47h-2.79v8.39A12 12 0 0 0 24 12Z"
-      />
-      <path
-        fill="#fff"
-        d="m16.65 15.47.53-3.47h-3.32V9.75c0-.95.46-1.87 1.95-1.87h1.51V4.93s-1.37-.23-2.68-.23c-2.73 0-4.52 1.66-4.52 4.66V12H7.08v3.47h3.04v8.39a12.2 12.2 0 0 0 3.74 0v-8.39h2.79Z"
-      />
-    </svg>
-  );
-}
-
 function ProviderMark({ provider }: Pick<ProfileOnboardingState, "provider">) {
   if (provider === "google") {
     return <GoogleMark />;
-  }
-
-  if (provider === "facebook") {
-    return <FacebookMark />;
   }
 
   return <Mail aria-hidden className={styles.providerMark} size={20} />;
@@ -134,6 +116,7 @@ function getInitialFormData(initialState: ProfileOnboardingState): OnboardingFor
 
 export function OnboardingFlow({ initialState }: OnboardingFlowProps) {
   const router = useRouter();
+  const { t } = useI18n();
   const [step, setStep] = useState(0);
   const [formData, setFormData] = useState<OnboardingFormData>(() =>
     getInitialFormData(initialState),
@@ -144,6 +127,26 @@ export function OnboardingFlow({ initialState }: OnboardingFlowProps) {
   const maxBirthDate = useMemo(() => getMaxBirthDate(), []);
   const copy = stepCopy[step] ?? stepCopy[0]!;
   const progress = `${((step + 1) / stepCopy.length) * 100}%`;
+  const genderOptions = onboardingGenderOptions.map((option) => ({
+    label: t(`onboarding.options.gender.${option.value}`),
+    value: option.value,
+  }));
+  const interestOptions = onboardingInterestOptions.map((option) => ({
+    label: t(`onboarding.options.interest.${option.value}`),
+    value: option.value,
+  }));
+  const discoverySourceOptions = onboardingDiscoverySourceOptions.map((option) => ({
+    label: t(`onboarding.options.discovery.${option.value}`),
+    value: option.value,
+  }));
+  const dayOptions = onboardingDayOptions.map((option) => ({
+    label: t(`onboarding.options.weekdays.${option.value}`),
+    value: option.value,
+  }));
+  const timeOptions = onboardingTimeOptions.map((option) => ({
+    label: t(`onboarding.options.time.${option.value}`),
+    value: option.value,
+  }));
 
   function updateField<TKey extends keyof OnboardingFormData>(
     field: TKey,
@@ -186,7 +189,7 @@ export function OnboardingFlow({ initialState }: OnboardingFlowProps) {
 
   function goNext() {
     if (step === 1 && !formData.discoverySource) {
-      showError("Выберите один вариант, чтобы продолжить.");
+      showError(t("onboarding.errors.source"));
       return;
     }
 
@@ -196,7 +199,7 @@ export function OnboardingFlow({ initialState }: OnboardingFlowProps) {
 
   function finish() {
     if (!formData.preferredDays.length || !formData.preferredTimes.length) {
-      showError("Выберите хотя бы один день и одно время.");
+      showError(t("onboarding.errors.preferences"));
       return;
     }
 
@@ -210,11 +213,11 @@ export function OnboardingFlow({ initialState }: OnboardingFlowProps) {
       });
 
       if (!response.ok) {
-        showError("Не удалось сохранить профиль. Попробуйте еще раз.");
+        showError(t("onboarding.errors.save"));
         return;
       }
 
-      toast.success("Профиль настроен.", "Теперь можно перейти в личный кабинет.");
+      toast.success(t("onboarding.success.title"), t("onboarding.success.description"));
       router.push("/profile");
       router.refresh();
     });
@@ -224,14 +227,14 @@ export function OnboardingFlow({ initialState }: OnboardingFlowProps) {
     <main className={styles.page}>
       <section className={styles.card} aria-labelledby="onboarding-title">
         <header className={styles.header}>
-          <span className={styles.logo}>SpeedDate</span>
+          <BrandLogo className={styles.logo} size="sm" />
           <div className={styles.progressTrack} aria-hidden>
             <span className={styles.progressBar} style={{ width: progress }} />
           </div>
           <h1 className={styles.title} id="onboarding-title">
-            {copy.title}
+            {t(copy.titleKey)}
           </h1>
-          <p className={styles.subtitle}>{copy.subtitle}</p>
+          <p className={styles.subtitle}>{t(copy.subtitleKey)}</p>
         </header>
 
         <div className={styles.body}>
@@ -241,7 +244,7 @@ export function OnboardingFlow({ initialState }: OnboardingFlowProps) {
                 <div className={styles.avatarWrap}>
                   {initialState.user.image ? (
                     <span
-                      aria-label="Фото профиля"
+                      aria-label={t("onboarding.fields.profilePhotoAria")}
                       className={styles.avatarImage}
                       role="img"
                       style={{ backgroundImage: `url("${initialState.user.image}")` }}
@@ -256,51 +259,49 @@ export function OnboardingFlow({ initialState }: OnboardingFlowProps) {
                   </span>
                 </div>
                 <div>
-                  <p className={styles.providerTitle}>{providerCopy[initialState.provider]}</p>
-                  <p className={styles.providerText}>
-                    Имя и фото можно изменить перед тем, как перейти дальше.
-                  </p>
+                  <p className={styles.providerTitle}>{t(providerCopy[initialState.provider])}</p>
+                  <p className={styles.providerText}>{t("onboarding.provider.text")}</p>
                 </div>
               </div>
 
               <div className={styles.formGrid}>
                 <Input
-                  label="Имя"
+                  label={t("common.form.firstName")}
                   onChange={(event) => updateField("firstName", event.target.value)}
-                  placeholder="Введите имя"
+                  placeholder={t("onboarding.fields.firstNamePlaceholder")}
                   size="md"
                   value={formData.firstName}
                 />
                 <Input
-                  label="Фамилия"
+                  label={t("common.form.lastName")}
                   onChange={(event) => updateField("lastName", event.target.value)}
-                  placeholder="Введите фамилию"
+                  placeholder={t("onboarding.fields.lastNamePlaceholder")}
                   size="md"
                   value={formData.lastName}
                 />
                 <DatePicker
-                  label="Дата рождения"
+                  label={t("onboarding.fields.birthDate")}
                   max={maxBirthDate}
                   maxYear={new Date(maxBirthDate).getFullYear()}
                   onChange={(value) => updateField("birthDate", value)}
                   value={formData.birthDate}
                 />
                 <Select
-                  label="Пол"
+                  label={t("onboarding.fields.gender")}
                   onChange={(value) => updateField("gender", value as OnboardingFormData["gender"])}
-                  options={onboardingGenderOptions}
+                  options={genderOptions}
                   value={formData.gender}
                 />
                 <Select
-                  label="Кого хотите встретить"
+                  label={t("onboarding.fields.interestedIn")}
                   onChange={(value) =>
                     updateField("interestedIn", value as OnboardingFormData["interestedIn"])
                   }
-                  options={onboardingInterestOptions}
+                  options={interestOptions}
                   value={formData.interestedIn}
                 />
                 <Input
-                  label="Телефон (необязательно)"
+                  label={t("onboarding.fields.phoneOptional")}
                   onChange={(event) => updateField("phone", event.target.value)}
                   placeholder="+48 500 123 456"
                   size="md"
@@ -313,7 +314,7 @@ export function OnboardingFlow({ initialState }: OnboardingFlowProps) {
 
           {step === 1 ? (
             <div className={styles.sourceList}>
-              {onboardingDiscoverySourceOptions.map((option) => {
+              {discoverySourceOptions.map((option) => {
                 const selected = formData.discoverySource === option.value;
 
                 return (
@@ -339,9 +340,9 @@ export function OnboardingFlow({ initialState }: OnboardingFlowProps) {
           {step === 2 ? (
             <div className={styles.preferencesStep}>
               <div className={styles.choiceGroup}>
-                <p className={styles.groupLabel}>Предпочитаемые дни</p>
+                <p className={styles.groupLabel}>{t("onboarding.preferences.days")}</p>
                 <div className={styles.chipGrid}>
-                  {onboardingDayOptions.map((option) => {
+                  {dayOptions.map((option) => {
                     const selected = formData.preferredDays.includes(option.value);
 
                     return (
@@ -360,9 +361,9 @@ export function OnboardingFlow({ initialState }: OnboardingFlowProps) {
               </div>
 
               <div className={styles.choiceGroup}>
-                <p className={styles.groupLabel}>Удобное время</p>
+                <p className={styles.groupLabel}>{t("onboarding.preferences.time")}</p>
                 <div className={styles.timeGrid}>
-                  {onboardingTimeOptions.map((option) => {
+                  {timeOptions.map((option) => {
                     const selected = formData.preferredTimes.includes(option.value);
 
                     return (
@@ -383,8 +384,8 @@ export function OnboardingFlow({ initialState }: OnboardingFlowProps) {
               <div className={styles.settingsBox}>
                 <label className={styles.switchRow}>
                   <span>
-                    <strong>Получать email-уведомления</strong>
-                    <small>Напомним о новых вечерах и подтверждениях записи.</small>
+                    <strong>{t("onboarding.notifications.emailTitle")}</strong>
+                    <small>{t("onboarding.notifications.emailDescription")}</small>
                   </span>
                   <input
                     checked={formData.emailNotifications}
@@ -401,7 +402,7 @@ export function OnboardingFlow({ initialState }: OnboardingFlowProps) {
                     type="checkbox"
                   />
                   <span className={styles.checkboxControl} aria-hidden />
-                  <span>Согласие на маркетинговые рассылки</span>
+                  <span>{t("onboarding.notifications.marketing")}</span>
                 </label>
               </div>
             </div>
@@ -418,7 +419,7 @@ export function OnboardingFlow({ initialState }: OnboardingFlowProps) {
               size="sm"
               variant="link"
             >
-              Пропустить этот шаг
+              {t("onboarding.actions.skip")}
             </Button>
           ) : (
             <Button
@@ -427,17 +428,17 @@ export function OnboardingFlow({ initialState }: OnboardingFlowProps) {
               size="sm"
               variant="secondary"
             >
-              Назад
+              {t("onboarding.actions.back")}
             </Button>
           )}
 
           {step < 2 ? (
             <Button rightIcon={<ChevronRight aria-hidden size={17} />} onClick={goNext} size="md">
-              Далее
+              {t("onboarding.actions.next")}
             </Button>
           ) : (
             <Button disabled={isPending} isLoading={isPending} onClick={finish} size="md">
-              Завершить
+              {t("onboarding.actions.finish")}
             </Button>
           )}
         </footer>

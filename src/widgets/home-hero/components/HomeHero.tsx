@@ -1,7 +1,11 @@
-import { ArrowRight, CalendarDays, Heart, MapPin } from "lucide-react";
+"use client";
+
+import { ArrowRight, Bell, CalendarDays, Heart, MapPin } from "lucide-react";
 import Image from "next/image";
 
 import type { HomeEvent } from "@/entities/events";
+import { AuthModal } from "@/features/auth";
+import { useI18n } from "@/shared/i18n/I18nProvider";
 import { Button } from "@/shared/ui/Button";
 
 import { HomeHeader } from "./HomeHeader";
@@ -10,6 +14,7 @@ import styles from "./HomeHero.module.css";
 
 type HomeHeroProps = {
   featuredEvent?: HomeEvent;
+  hasEvents?: boolean;
   viewer?: HomeViewer | null;
 };
 
@@ -19,19 +24,18 @@ export type HomeViewer = {
   image: string | null;
 };
 
-const fallbackFeaturedEvent = {
-  dateLabel: "27 июня",
-  locationLabel: "Гданьск, Stare Miasto",
-  timeLabel: "17:00",
-  weekdayLabel: "Суббота",
-};
-
-export function HomeHero({ featuredEvent, viewer }: HomeHeroProps) {
-  const heroEvent = featuredEvent ?? fallbackFeaturedEvent;
+export function HomeHero({
+  featuredEvent,
+  hasEvents = Boolean(featuredEvent),
+  viewer,
+}: HomeHeroProps) {
+  const { t } = useI18n();
+  const heroEvent = featuredEvent;
+  const primaryHref = viewer ? "/profile/events" : heroEvent ? "#events" : "#waitlist";
 
   return (
     <section className={styles.hero} aria-labelledby="home-hero-title">
-      <HomeHeader viewer={viewer} />
+      <HomeHeader hasEvents={hasEvents} viewer={viewer} />
 
       <div className={styles.canvas}>
         <div className={styles.platformBase} aria-hidden="true" />
@@ -39,74 +43,125 @@ export function HomeHero({ featuredEvent, viewer }: HomeHeroProps) {
 
         <div className={styles.copy}>
           <h1 id="home-hero-title" className={styles.title}>
-            Быстрые встречи.
-            <span>Настоящая химия.</span>
+            {t("home.hero.title")}
+            <span>{t("home.hero.titleAccent")}</span>
           </h1>
-          <p className={styles.subtitle}>
-            10 минут, чтобы почувствовать
-            <br />
-            больше, чем в переписке за неделю.
-          </p>
+          <p className={styles.subtitle}>{t("home.hero.subtitle")}</p>
 
           <div className={styles.actions}>
             <Button
+              as="link"
               className={styles.primaryAction}
+              href={primaryHref}
               size="hero"
               rightIcon={<ArrowRight aria-hidden size={24} strokeWidth={2.1} />}
             >
-              Найти своё событие
+              {t("home.hero.ctaPrimary")}
             </Button>
             <a className={styles.secondaryAction} href="#how-it-works">
-              Как это работает
+              {t("home.hero.ctaSecondary")}
             </a>
           </div>
         </div>
 
-        <article
-          className={`${styles.glassCard} ${styles.eventCard}`}
-          aria-label="Ближайшее событие"
-        >
-          <div className={styles.eventHeader}>
-            <span className={styles.iconBubble}>
-              <CalendarDays aria-hidden size={26} />
-            </span>
-            <div>
-              <p className={styles.eventDate}>{heroEvent.dateLabel}</p>
-              <p className={styles.eventTime}>
-                {heroEvent.weekdayLabel.toLowerCase()}, {heroEvent.timeLabel}
-              </p>
-            </div>
-          </div>
-          <div className={styles.divider} />
-          <p className={styles.locationLine}>
-            <MapPin aria-hidden size={21} />
-            {heroEvent.locationLabel}
-          </p>
-          <Button
-            className={styles.detailsButton}
-            variant="secondary"
-            size="lg"
-            rightIcon={<ArrowRight aria-hidden size={22} strokeWidth={2.1} />}
-            fullWidth
+        {heroEvent ? (
+          <article
+            className={`${styles.glassCard} ${styles.eventCard}`}
+            aria-label={t("home.hero.eventAria")}
           >
-            Смотреть детали события
-          </Button>
-        </article>
+            <div className={styles.eventHeader}>
+              <span className={styles.iconBubble}>
+                <CalendarDays aria-hidden size={26} />
+              </span>
+              <div>
+                <p className={styles.eventDate}>{heroEvent.dateLabel}</p>
+                <p className={styles.eventTime}>
+                  {heroEvent.weekdayLabel.toLowerCase()}, {heroEvent.timeLabel}
+                </p>
+              </div>
+            </div>
+            <div className={styles.divider} />
+            <p className={styles.locationLine}>
+              <MapPin aria-hidden size={21} />
+              {heroEvent.locationLabel}
+            </p>
+            {viewer ? (
+              <Button
+                as="link"
+                className={styles.detailsButton}
+                href="/profile/events"
+                variant="secondary"
+                size="lg"
+                rightIcon={<ArrowRight aria-hidden size={22} strokeWidth={2.1} />}
+                fullWidth
+              >
+                {t("home.header.cta")}
+              </Button>
+            ) : (
+              <AuthModal
+                trigger={
+                  <Button
+                    className={styles.detailsButton}
+                    variant="secondary"
+                    size="lg"
+                    rightIcon={<ArrowRight aria-hidden size={22} strokeWidth={2.1} />}
+                    fullWidth
+                  >
+                    {t("home.header.cta")}
+                  </Button>
+                }
+              />
+            )}
+          </article>
+        ) : (
+          <article
+            className={`${styles.glassCard} ${styles.eventCard} ${styles.waitlistEventCard}`}
+            aria-label={t("home.hero.noEventsAria")}
+          >
+            <div className={styles.eventHeader}>
+              <span className={styles.iconBubble}>
+                <Bell aria-hidden size={26} />
+              </span>
+              <div>
+                <p className={styles.eventDate}>{t("home.hero.noEventsTitle")}</p>
+                <p className={styles.eventTime}>{t("home.hero.noEventsEyebrow")}</p>
+              </div>
+            </div>
+            <div className={styles.divider} />
+            <p className={styles.waitlistEventText}>{t("home.hero.noEventsBody")}</p>
+            <Button
+              as="link"
+              className={styles.detailsButton}
+              href="#waitlist"
+              variant="secondary"
+              size="lg"
+              rightIcon={<ArrowRight aria-hidden size={22} strokeWidth={2.1} />}
+              fullWidth
+            >
+              {t("home.waitlist.cta")}
+            </Button>
+          </article>
+        )}
 
         <article
           className={`${styles.glassCard} ${styles.ratingCard}`}
-          aria-label="Рекомендации участников"
+          aria-label={t("home.hero.ratingAria")}
         >
           <div className={styles.ratingHead}>
             <span className={styles.iconBubble}>
               <Heart aria-hidden size={28} fill="currentColor" strokeWidth={1.8} />
             </span>
-            <p className={styles.ratingValue}>9 из 10</p>
+            <p className={styles.ratingValue}>{t("home.hero.ratingValue")}</p>
           </div>
           <p className={styles.ratingText}>
-            участников рекомендуют
-            <br />
-            SpeedDate друзьям
+            {t("home.hero.ratingText")
+              .split("\n")
+              .map((line) => (
+                <span key={line}>
+                  {line}
+                  <br />
+                </span>
+              ))}
           </p>
           <div className={styles.avatarRow}>
             <Image
@@ -132,7 +187,7 @@ export function HomeHero({ featuredEvent, viewer }: HomeHeroProps) {
             />
             <span className={styles.storyPill}>10K+</span>
           </div>
-          <p className={styles.storyText}>счастливых историй</p>
+          <p className={styles.storyText}>{t("home.hero.stories")}</p>
         </article>
 
         <div className={styles.gallery} aria-hidden="true">

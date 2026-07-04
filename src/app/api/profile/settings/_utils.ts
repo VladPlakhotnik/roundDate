@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 
+import { getRequestTranslatorFromRequest } from "@/shared/i18n/server";
 import { getAuth } from "@/shared/server/auth/auth";
 
 export async function getSettingsSession(request: Request) {
@@ -18,18 +19,18 @@ export function jsonError(message: string, status = 400) {
   return NextResponse.json({ error: message }, { status });
 }
 
+export function getSettingsTranslator(request: Request) {
+  return getRequestTranslatorFromRequest(request);
+}
+
 export function nullableText(value: string) {
   const trimmed = value.trim();
 
   return trimmed || null;
 }
 
-export function getApiErrorMessage(error: unknown) {
-  if (error && typeof error === "object" && "message" in error) {
-    return String(error.message);
-  }
-
-  return "Что-то пошло не так. Попробуйте еще раз.";
+export function getApiErrorMessage(_error: unknown, fallbackMessage: string) {
+  return fallbackMessage;
 }
 
 export function expireAuthCookies(response: NextResponse) {

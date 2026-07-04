@@ -7,139 +7,149 @@ import {
   IdCard,
   MapPin,
   Phone,
-  X,
 } from "lucide-react";
 import Image from "next/image";
+import { headers } from "next/headers";
 
-import { EventDetailsModal, type EventMapLocation } from "@/entities/event";
-import { getHomeEvents, type HomeEvent } from "@/entities/events";
-import { Badge, type BadgeStatus } from "@/shared/ui/Badge";
+import {
+  EventDetailsModal,
+  type EventDetailsModalEvent,
+  type EventMapLocation,
+} from "@/entities/event";
+import { getUserBookings, type UserBookingEvent } from "@/entities/events";
+import { getRequestTranslator } from "@/shared/i18n/server";
+import { syncCheckoutSessionForCurrentUser } from "@/shared/server/payments/stripe-return";
+import { Badge } from "@/shared/ui/Badge";
 import { Button } from "@/shared/ui/Button";
 
+import { ProfilePaymentToast, type ProfilePaymentToastNotice } from "./ProfilePaymentToast";
+import { CancelBookingButton } from "./CancelBookingButton";
 import { ProfileBookingsTabs, type ProfileBookingItem } from "./ProfileBookingsTabs";
 import styles from "./ProfileView.module.css";
 
-const eventImages = [
-  "/assets/atmosphere/conversation-03.png",
-  "/assets/atmosphere/gdansk-evening.png",
-  "/assets/atmosphere/conversation-06.png",
-  "/assets/atmosphere/welcome-board.png",
-];
+type ProfileBookingsViewProps = {
+  checkoutSessionId?: string | null | undefined;
+  paymentState?: string | null | undefined;
+};
 
-const bookingStatusSequence = ["confirmed", "payment-pending", "waitlist"] satisfies BadgeStatus[];
-
-const eventMapLocations = [
-  {
-    bearing: -18,
-    center: [18.6533, 54.3464],
-    cityLabel: "Гданьск",
-    districtLabel: "Старый город",
-    marker: [18.6533, 54.3464],
-    pitch: 58,
-    venueAddress: "ul. Toruńska 12, Gdańsk",
-    venueLabel: "Hotel Almond",
-    zoom: 16,
-  },
-  {
-    bearing: -18,
-    center: [18.6046, 54.381],
-    cityLabel: "Гданьск",
-    districtLabel: "Wrzeszcz",
-    marker: [18.6046, 54.381],
-    pitch: 58,
-    venueAddress: "ul. Grunwaldzka 87, Gdańsk",
-    venueLabel: "Loft event space",
-    zoom: 15.8,
-  },
-  {
-    bearing: -18,
-    center: [18.5605, 54.4104],
-    cityLabel: "Гданьск",
-    districtLabel: "Oliwa",
-    marker: [18.5605, 54.4104],
-    pitch: 58,
-    venueAddress: "ul. Opacka 12, Gdańsk",
-    venueLabel: "Garden lounge",
-    zoom: 15.7,
-  },
-] satisfies EventMapLocation[];
-
-function getBookingPaymentLabel(status: BadgeStatus, priceLabel: string) {
-  if (status === "confirmed") {
-    return `Оплачено: ${priceLabel}`;
-  }
-
-  if (status === "payment-pending") {
-    return `Оплата: ${priceLabel}`;
-  }
-
-  return "Лист ожидания";
-}
-
-function eventToBooking(event: HomeEvent, index: number): ProfileBookingItem {
-  const status = bookingStatusSequence[index] ?? "confirmed";
-  const mapLocation = eventMapLocations[index] ?? eventMapLocations[0]!;
-
+function bookingToDetailsEvent(booking: UserBookingEvent): EventDetailsModalEvent {
   return {
-    ageRange: event.ageRange,
-    capacityTotal: event.capacityTotal,
-    city: event.city,
-    conversationMinutes: event.conversationMinutes,
-    dateLabel: event.dateLabel,
-    description: event.description,
-    durationMinutes: event.durationMinutes,
-    highlights: event.highlights,
-    id: event.id,
-    imageSrc: eventImages[index] ?? eventImages[0]!,
-    language: event.language,
-    locationLabel: `${mapLocation.cityLabel}, ${mapLocation.districtLabel}`,
-    mapLocation,
-    paymentLabel: getBookingPaymentLabel(status, event.priceLabel),
-    priceLabel: event.priceLabel,
-    spotsAvailable: event.spotsAvailable,
-    startsAt: event.startsAt,
-    status,
-    statusLabel: event.statusLabel,
-    timeLabel: event.timeLabel,
-    title: event.title,
-    venueAddress: mapLocation.venueAddress,
-    venueName: mapLocation.venueLabel,
-    weekdayLabel: event.weekdayLabel,
-    weekdayShort: event.weekdayLabel.slice(0, 2).toLowerCase(),
+    ageRange: booking.ageRange,
+    capacityTotal: booking.capacityTotal,
+    city: booking.city,
+    conversationMinutes: booking.conversationMinutes,
+    dateLabel: booking.dateLabel,
+    description: booking.description,
+    durationMinutes: booking.durationMinutes,
+    femaleSpotsAvailable: booking.femaleSpotsAvailable,
+    highlights: booking.highlights,
+    id: booking.id,
+    language: booking.language,
+    locationLabel: booking.locationLabel,
+    maleSpotsAvailable: booking.maleSpotsAvailable,
+    mapLocation: booking.mapLocation as EventMapLocation,
+    organizer: booking.organizer,
+    priceLabel: booking.priceLabel,
+    spotsAvailable: booking.spotsAvailable,
+    startsAt: booking.startsAt,
+    statusLabel: booking.statusLabel,
+    timeLabel: booking.timeLabel,
+    title: booking.title,
+    venueAddress: booking.venueAddress,
+    venueName: booking.venueName,
+    weekdayLabel: booking.weekdayLabel,
   };
 }
 
-function eventToPastBooking(event: HomeEvent, index: number): ProfileBookingItem {
-  const pastDates = ["12 апреля", "29 марта"];
-  const pastStartsAt = ["2026-04-12T19:00:00.000+02:00", "2026-03-29T19:00:00.000+02:00"];
-  const pastWeekdays = ["сб", "пт"];
-
+function bookingToItem(booking: UserBookingEvent): ProfileBookingItem {
   return {
-    ...eventToBooking(event, index),
-    dateLabel: pastDates[index] ?? event.dateLabel,
-    id: `past-${event.id}`,
-    imageSrc: eventImages[index + 1] ?? eventImages[1]!,
-    paymentLabel: "Событие завершено",
-    startsAt: pastStartsAt[index] ?? event.startsAt,
-    status: "confirmed",
-    weekdayLabel: pastWeekdays[index] ?? event.weekdayLabel,
-    weekdayShort: pastWeekdays[index] ?? event.weekdayLabel.slice(0, 2).toLowerCase(),
+    ...bookingToDetailsEvent(booking),
+    attendeeNumber: booking.attendeeNumber,
+    bookingId: booking.bookingId,
+    imageSrc: booking.imageSrc,
+    paymentLabel: booking.paymentLabel,
+    priceLabel: booking.priceLabel,
+    status: booking.status,
+    weekdayShort: booking.weekdayShort,
   };
 }
 
-export async function ProfileBookingsView() {
-  const events = await getHomeEvents();
-  const bookingItems = events.slice(0, 3).map(eventToBooking);
+function getPaymentNotice(input: {
+  paymentState?: string | null | undefined;
+  syncStatus?: null | string | undefined;
+  t: (key: string) => string;
+}): ProfilePaymentToastNotice | null {
+  if (input.paymentState === "cancelled") {
+    return {
+      description: input.t("profile.bookings.cancelPaymentDescription"),
+      title: input.t("profile.bookings.cancelPaymentTitle"),
+      type: "warning",
+    };
+  }
+
+  if (input.paymentState !== "success") {
+    return null;
+  }
+
+  if (input.syncStatus === "processed") {
+    return {
+      description: input.t("profile.bookings.paymentSuccessDescription"),
+      title: input.t("profile.bookings.paymentSuccessTitle"),
+      type: "success",
+    };
+  }
+
+  if (input.syncStatus === "not_paid") {
+    return {
+      description: input.t("profile.bookings.paymentConfirmingDescription"),
+      title: input.t("profile.bookings.paymentConfirmingTitle"),
+      type: "warning",
+    };
+  }
+
+  return {
+    description: input.t("profile.bookings.paymentErrorDescription"),
+    title: input.t("profile.bookings.paymentErrorTitle"),
+    type: "error",
+  };
+}
+
+export async function ProfileBookingsView({
+  checkoutSessionId,
+  paymentState,
+}: ProfileBookingsViewProps = {}) {
+  const requestHeaders = await headers();
+  const normalizedHeaders = new Headers(requestHeaders);
+  const t = await getRequestTranslator();
+  const syncResult =
+    paymentState === "success" && checkoutSessionId
+      ? await syncCheckoutSessionForCurrentUser({
+          headers: normalizedHeaders,
+          sessionId: checkoutSessionId,
+        })
+      : null;
+  const paymentNotice = getPaymentNotice({
+    paymentState,
+    syncStatus: syncResult?.status ?? null,
+    t,
+  });
+  const [upcomingBookings, pastBookings] = await Promise.all([
+    getUserBookings({ headers: normalizedHeaders, scope: "upcoming" }),
+    getUserBookings({ headers: normalizedHeaders, scope: "past" }),
+  ]);
+  const bookingItems = upcomingBookings.map(bookingToItem);
   const primaryBooking = bookingItems[0];
   const otherUpcomingBookings = bookingItems.slice(1);
-  const pastBookings = events.slice(0, 2).map(eventToPastBooking);
+  const pastBookingItems = pastBookings.map(bookingToItem);
 
   return (
     <section className={styles.bookingsScreen} id="bookings">
+      {paymentNotice ? <ProfilePaymentToast notice={paymentNotice} /> : null}
+
       {primaryBooking ? (
         <section className={styles.primaryBookingCard} aria-labelledby="primary-booking-title">
           <div className={styles.primaryBookingMedia}>
-            <span className={styles.featuredBadge}>Ближайшее мероприятие</span>
+            <span className={styles.featuredBadge}>{t("profile.bookings.featured")}</span>
             <Image
               alt=""
               className={styles.primaryBookingImage}
@@ -170,14 +180,14 @@ export async function ProfileBookingsView() {
                   <strong>
                     {primaryBooking.dateLabel}, {primaryBooking.weekdayShort}
                   </strong>
-                  <small>Дата</small>
+                  <small>{t("event.labels.date")}</small>
                 </span>
               </div>
               <div className={styles.detailItem}>
                 <Clock3 aria-hidden size={23} />
                 <span>
                   <strong>{primaryBooking.timeLabel}</strong>
-                  <small>Время начала</small>
+                  <small>{t("profile.home.startTime")}</small>
                 </span>
               </div>
               <div className={styles.detailItem}>
@@ -190,11 +200,20 @@ export async function ProfileBookingsView() {
             </div>
 
             <div className={styles.primaryBookingFooter}>
-              <span>{primaryBooking.paymentLabel}</span>
+              <span>
+                {primaryBooking.paymentLabel}
+                {primaryBooking.attendeeNumber ? (
+                  <strong className={styles.primaryBookingNumber}>
+                    № {primaryBooking.attendeeNumber}
+                  </strong>
+                ) : null}
+              </span>
               <div className={styles.bookingRowActions}>
-                <Button leftIcon={<X aria-hidden size={16} />} size="sm" variant="outline">
-                  Отменить участие
-                </Button>
+                <CancelBookingButton
+                  bookingId={primaryBooking.bookingId}
+                  eventTitle={primaryBooking.title}
+                  startsAt={primaryBooking.startsAt}
+                />
                 <EventDetailsModal
                   context="booking"
                   event={primaryBooking}
@@ -205,7 +224,7 @@ export async function ProfileBookingsView() {
                       size="sm"
                       variant="secondary"
                     >
-                      Детали
+                      {t("profile.bookings.details")}
                     </Button>
                   }
                 />
@@ -213,44 +232,70 @@ export async function ProfileBookingsView() {
             </div>
           </div>
         </section>
-      ) : null}
+      ) : (
+        <section className={styles.emptyState}>
+          <h2>{t("profile.bookings.emptyTitle")}</h2>
+          <p>{t("profile.bookings.emptyDescription")}</p>
+        </section>
+      )}
 
-      <ProfileBookingsTabs pastBookings={pastBookings} upcomingBookings={otherUpcomingBookings} />
+      <ProfileBookingsTabs
+        pastBookings={pastBookingItems}
+        upcomingBookings={otherUpcomingBookings}
+      />
 
-      <section className={styles.instructionsCard} aria-labelledby="instructions-title">
-        <div className={styles.instructionsVisual} aria-hidden>
+      <section
+        className={styles.instructionsCard}
+        aria-labelledby="instructions-title"
+        data-layout="visual-left-notes-right"
+        data-testid="booking-instructions-card"
+      >
+        <div
+          className={styles.instructionsVisual}
+          aria-hidden
+          data-art="calendar"
+          data-decoration="none"
+          data-testid="booking-instructions-visual"
+        >
           <Image
             alt=""
             className={styles.instructionsCalendar}
-            height={128}
-            src="/assets/how-it-works/calendar.png"
-            width={166}
+            height={1254}
+            loading="eager"
+            src="/assets/profile/bookings-notes.png"
+            width={1254}
           />
         </div>
-        <div className={styles.instructionsIntro}>
-          <h2 id="instructions-title">Инструкции перед мероприятием</h2>
-          <p>Мы хотим, чтобы ваш опыт был максимально комфортным и приятным.</p>
-        </div>
-        <div className={styles.instructionsGrid}>
-          <div>
-            <Clock3 aria-hidden size={24} />
-            <strong>Приходите вовремя</strong>
-            <span>Рекомендуем прибыть за 15-20 минут до начала.</span>
+        <div className={styles.instructionsContent} data-testid="booking-instructions-content">
+          <div className={styles.instructionsIntro} data-testid="booking-instructions-header">
+            <h2 id="instructions-title">{t("profile.bookings.instructions.title")}</h2>
+            <p>{t("profile.bookings.instructions.intro")}</p>
           </div>
-          <div>
-            <IdCard aria-hidden size={24} />
-            <strong>Возьмите документ</strong>
-            <span>На входе может потребоваться удостоверение личности.</span>
-          </div>
-          <div>
-            <Phone aria-hidden size={24} />
-            <strong>Выключите телефон</strong>
-            <span>Это поможет сосредоточиться на общении.</span>
-          </div>
-          <div>
-            <Heart aria-hidden size={24} />
-            <strong>Будьте собой</strong>
-            <span>Искренность помогает быстрее найти подходящего человека.</span>
+          <div
+            className={styles.instructionsGrid}
+            data-columns="4"
+            data-testid="booking-instructions-list"
+          >
+            <div data-testid="booking-instructions-item">
+              <Clock3 aria-hidden size={24} />
+              <strong>{t("profile.bookings.instructions.time.title")}</strong>
+              <span>{t("profile.bookings.instructions.time.text")}</span>
+            </div>
+            <div data-testid="booking-instructions-item">
+              <IdCard aria-hidden size={24} />
+              <strong>{t("profile.bookings.instructions.document.title")}</strong>
+              <span>{t("profile.bookings.instructions.document.text")}</span>
+            </div>
+            <div data-testid="booking-instructions-item">
+              <Phone aria-hidden size={24} />
+              <strong>{t("profile.bookings.instructions.phone.title")}</strong>
+              <span>{t("profile.bookings.instructions.phone.text")}</span>
+            </div>
+            <div data-testid="booking-instructions-item">
+              <Heart aria-hidden size={24} />
+              <strong>{t("profile.bookings.instructions.self.title")}</strong>
+              <span>{t("profile.bookings.instructions.self.text")}</span>
+            </div>
           </div>
         </div>
       </section>
