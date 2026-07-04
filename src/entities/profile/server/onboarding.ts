@@ -113,9 +113,26 @@ export async function getProfileOnboardingState(input: {
       insertProfile.onboardingStartedAt = now;
     }
 
-    const [createdProfile] = await db.insert(profiles).values(insertProfile).returning();
-    profile = createdProfile;
-  } else if (input.markStarted && !profile.onboardingStartedAt && !profile.onboardingCompletedAt) {
+    const [createdProfile] = await db
+      .insert(profiles)
+      .values(insertProfile)
+      .onConflictDoNothing({ target: profiles.userId })
+      .returning();
+
+    if (createdProfile) {
+      profile = createdProfile;
+    } else {
+      const [existingProfile] = await db
+        .select()
+        .from(profiles)
+        .where(eq(profiles.userId, user.id))
+        .limit(1);
+
+      profile = existingProfile;
+    }
+  }
+
+  if (input.markStarted && profile && !profile.onboardingStartedAt && !profile.onboardingCompletedAt) {
     const [updatedProfile] = await db
       .update(profiles)
       .set({ onboardingStartedAt: now, updatedAt: now })
