@@ -1,0 +1,8 @@
+▲ Next.js 16.2.9 (Turbopack)
+- Local:         http://localhost:6670
+- Network:       http://192.168.18.61:6670
+- Environments: .env
+✓ Ready in 761ms
+
+ GET / 200 in 1117ms (next.js: 384ms, proxy.ts: 182ms, application-code: 551ms)
+ GET / 200 in 139ms (next.js: 1722µs, proxy.ts: 2ms, application-code: 135ms)

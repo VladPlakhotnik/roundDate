@@ -19,6 +19,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
+  verification: {
+    google: "fEUHZkjHhQrQpTTF0NDGV8prWKHJ9ed4zZX5gBdrDsU",
+  },
   title: "RoundDate Gdańsk",
   description: "Spotkania offline RoundDate w Gdańsku.",
 };
