@@ -23,14 +23,35 @@ function getFirstName(input: { email: string; fallback: string; firstName: strin
   return input.email.split("@")[0] ?? input.fallback;
 }
 
+function toLogError(error: unknown) {
+  if (error instanceof Error) {
+    return {
+      message: error.message,
+      name: error.name,
+      stack: error.stack,
+    };
+  }
+
+  return { message: String(error) };
+}
+
 export default async function ProfileLayout({ children }: { children: ReactNode }) {
   const requestHeaders = await headers();
-  const [onboardingState, t] = await Promise.all([
-    getProfileOnboardingState({
-      headers: new Headers(requestHeaders),
-    }),
-    getRequestTranslator(),
-  ]);
+  let onboardingState: Awaited<ReturnType<typeof getProfileOnboardingState>>;
+  let t: Awaited<ReturnType<typeof getRequestTranslator>>;
+
+  try {
+    [onboardingState, t] = await Promise.all([
+      getProfileOnboardingState({
+        headers: new Headers(requestHeaders),
+      }),
+      getRequestTranslator(),
+    ]);
+  } catch (error) {
+    console.error("[profile/layout] Failed to load profile shell.", toLogError(error));
+
+    throw error;
+  }
 
   if (!onboardingState) {
     redirect("/");

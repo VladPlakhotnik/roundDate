@@ -10,6 +10,7 @@ vi.mock("server-only", () => ({}));
 
 vi.mock("next/headers", () => ({
   cookies: vi.fn(() => Promise.resolve(new Map())),
+  headers: vi.fn(() => Promise.resolve(new Headers())),
 }));
 
 const mockEvents = [

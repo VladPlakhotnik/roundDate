@@ -130,4 +130,19 @@ describe("getProfileOnboardingState", () => {
       },
     });
   });
+
+  it("does not create a profile when creation is disabled", async () => {
+    const db = createDb();
+    mocks.getDb.mockReturnValue(db);
+    mocks.selectRows.push([]);
+
+    await expect(
+      getProfileOnboardingState({
+        createIfMissing: false,
+        headers: new Headers(),
+      }),
+    ).resolves.toBeNull();
+
+    expect(db.insert).not.toHaveBeenCalled();
+  });
 });

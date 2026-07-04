@@ -80,6 +80,7 @@ function profileToFormData(profile: ProfileRow, fallbackName: string): Onboardin
 }
 
 export async function getProfileOnboardingState(input: {
+  createIfMissing?: boolean;
   headers: Headers;
   markStarted?: boolean;
 }): Promise<ProfileOnboardingState | null> {
@@ -102,7 +103,7 @@ export async function getProfileOnboardingState(input: {
 
   let profile = profileRow;
 
-  if (!profile) {
+  if (!profile && input.createIfMissing !== false) {
     const insertProfile: typeof profiles.$inferInsert = {
       firstName: fallback.firstName || null,
       lastName: fallback.lastName || null,

@@ -98,15 +98,41 @@ function getBookingDefaults(
   };
 }
 
+function toLogError(error: unknown) {
+  if (error instanceof Error) {
+    return {
+      message: error.message,
+      name: error.name,
+      stack: error.stack,
+    };
+  }
+
+  return { message: String(error) };
+}
+
+async function getSafeBookingDefaults(headers: Headers) {
+  try {
+    return getBookingDefaults(
+      await getProfileOnboardingState({
+        createIfMissing: false,
+        headers,
+      }),
+    );
+  } catch (error) {
+    console.error("[profile] Failed to load booking defaults.", toLogError(error));
+
+    return undefined;
+  }
+}
+
 export async function ProfileView() {
   const requestHeaders = await getRequestHeaders();
-  const [bookings, events, onboardingState, t] = await Promise.all([
-    getUserBookings({ headers: requestHeaders, scope: "upcoming" }),
+  const [bookings, events, bookingDefaults, t] = await Promise.all([
+    getUserBookings({ headers: new Headers(requestHeaders), scope: "upcoming" }),
     getHomeEvents(),
-    getProfileOnboardingState({ headers: requestHeaders }),
+    getSafeBookingDefaults(new Headers(requestHeaders)),
     getRequestTranslator(),
   ]);
-  const bookingDefaults = getBookingDefaults(onboardingState);
   const featuredEvent = bookings[0];
   const recommendedEvents = events.slice(0, 3);
   const featuredDetailsEvent = featuredEvent ? eventToDetailsEvent(featuredEvent) : undefined;
