@@ -20,6 +20,7 @@ import { Button } from "@/shared/ui/Button";
 import { Input } from "@/shared/ui/Input";
 import { Select } from "@/shared/ui/Select";
 import { useToast } from "@/shared/ui/Toast";
+import { trackAnalyticsEvent } from "@/shared/analytics/track";
 
 import styles from "./HomeWaitlistFooter.module.css";
 
@@ -72,56 +73,56 @@ const floatingAssets = [
     className: styles.floatChatBubble,
     height: 927,
     id: "chat-bubble",
-    src: "/assets/waitlist-footer/chat-bubble.png",
+    src: "/assets/waitlist-footer/chat-bubble.webp",
     width: 928,
   },
   {
     className: styles.floatEnvelope,
     height: 862,
     id: "envelope",
-    src: "/assets/waitlist-footer/envelope.png",
+    src: "/assets/waitlist-footer/envelope.webp",
     width: 970,
   },
   {
     className: styles.floatHeartPedestal,
     height: 875,
     id: "heart-pedestal",
-    src: "/assets/waitlist-footer/heart-pedestal.png",
+    src: "/assets/waitlist-footer/heart-pedestal.webp",
     width: 830,
   },
   {
     className: styles.floatHeart,
     height: 950,
     id: "heart",
-    src: "/assets/waitlist-footer/heart.png",
+    src: "/assets/waitlist-footer/heart.webp",
     width: 930,
   },
   {
     className: styles.floatPearlLeft,
     height: 867,
     id: "pearl-left",
-    src: "/assets/waitlist-footer/pearl.png",
+    src: "/assets/waitlist-footer/pearl.webp",
     width: 771,
   },
   {
     className: styles.floatPearlRight,
     height: 867,
     id: "pearl-right",
-    src: "/assets/waitlist-footer/pearl.png",
+    src: "/assets/waitlist-footer/pearl.webp",
     width: 771,
   },
   {
     className: styles.floatSparkleLeft,
     height: 933,
     id: "sparkle-left",
-    src: "/assets/waitlist-footer/sparkle.png",
+    src: "/assets/waitlist-footer/sparkle.webp",
     width: 890,
   },
   {
     className: styles.floatSparkleRight,
     height: 933,
     id: "sparkle-right",
-    src: "/assets/waitlist-footer/sparkle.png",
+    src: "/assets/waitlist-footer/sparkle.webp",
     width: 890,
   },
 ];
@@ -187,6 +188,11 @@ export function HomeWaitlistFooter() {
       setGender("");
       setSubmitted(true);
       setSubmittedEmail(email);
+      trackAnalyticsEvent("newsletter_signup", {
+        age,
+        gender,
+        source: "home_waitlist",
+      });
       toast.success(t("home.waitlist.successToast"), t("home.waitlist.successToastDescription"));
     } catch {
       toast.error(t("home.waitlist.submitError"));
@@ -302,7 +308,7 @@ export function HomeWaitlistFooter() {
         <div className={styles.waitlistDivider} aria-hidden="true">
           <Image
             alt=""
-            src="/assets/waitlist-footer/waitlist-divider-orbit.png"
+            src="/assets/waitlist-footer/waitlist-divider-orbit.webp"
             width={520}
             height={190}
             sizes="(max-width: 700px) 138px, 220px"

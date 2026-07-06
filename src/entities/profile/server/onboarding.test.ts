@@ -145,4 +145,25 @@ describe("getProfileOnboardingState", () => {
 
     expect(db.insert).not.toHaveBeenCalled();
   });
+
+  it("does not expose profile state for an explicitly unverified email session", async () => {
+    mocks.getSession.mockResolvedValue({
+      user: {
+        email: "anna@example.com",
+        emailVerified: false,
+        id: "user-1",
+        image: null,
+        name: "Anna Nowak",
+        role: "user",
+      },
+    });
+
+    await expect(
+      getProfileOnboardingState({
+        headers: new Headers(),
+      }),
+    ).resolves.toBeNull();
+
+    expect(mocks.getDb).not.toHaveBeenCalled();
+  });
 });

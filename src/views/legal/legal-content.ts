@@ -164,7 +164,7 @@ export const legalPages = {
       {
         body: [
           "Serwis używa plików cookies i podobnych technologii potrzebnych do działania strony, logowania, bezpieczeństwa i zapamiętania podstawowych ustawień.",
-          "Aktualnie nie opisujemy cookies reklamowych ani analitycznych jako podstawy działania serwisu. Jeżeli takie narzędzia zostaną dodane, polityka zostanie zaktualizowana przed ich wykorzystaniem.",
+          "Jeżeli włączone są narzędzia analityczne Google, uruchamiamy je w trybie ograniczonym z domyślnie wyłączonym przechowywaniem danych reklamowych i analitycznych do czasu uzyskania właściwej zgody.",
         ],
         id: "cookies",
         title: "Pliki cookies i podobne technologie",

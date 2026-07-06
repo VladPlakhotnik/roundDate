@@ -262,7 +262,7 @@ export async function ProfileBookingsView({
             className={styles.instructionsCalendar}
             height={1254}
             loading="eager"
-            src="/assets/profile/bookings-notes.png"
+            src="/assets/profile/bookings-notes.webp"
             width={1254}
           />
         </div>

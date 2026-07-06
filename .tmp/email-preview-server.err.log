@@ -1,4 +1,0 @@
-127.0.0.1 - - [02/Jul/2026 17:34:11] "GET /email-preview-event-result.html HTTP/1.1" 200 -
-127.0.0.1 - - [02/Jul/2026 17:34:11] code 404, message File not found
-127.0.0.1 - - [02/Jul/2026 17:34:11] "GET /favicon.ico HTTP/1.1" 404 -
-127.0.0.1 - - [02/Jul/2026 17:34:30] "GET /email-preview-all.html HTTP/1.1" 200 -

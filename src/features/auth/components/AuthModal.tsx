@@ -1,6 +1,6 @@
 "use client";
 
-import { Eye, EyeOff } from "lucide-react";
+import { Check, Eye, EyeOff } from "lucide-react";
 import Image from "next/image";
 import type { FormEvent, ReactNode } from "react";
 import { useState, useTransition } from "react";
@@ -12,6 +12,7 @@ import { Input } from "@/shared/ui/Input";
 import { Modal } from "@/shared/ui/Modal";
 import { GoogleLogo } from "@/shared/ui/SocialLogo";
 import { useToast } from "@/shared/ui/Toast";
+import { trackAnalyticsEvent } from "@/shared/analytics/track";
 
 import { forgotPasswordSchema, loginSchema, registerSchema } from "../lib/auth-schemas";
 import type { AuthMode } from "../types/auth-mode";
@@ -21,9 +22,27 @@ type AuthModalProps = {
   trigger?: ReactNode;
 };
 
-function getAuthErrorMessage(error: unknown, fallback: string) {
+type AuthFeedback = {
+  email: string;
+  type: "forgot-password" | "register";
+};
+
+function getAuthErrorMessage(error: unknown, fallback: string, t: (key: string) => string) {
   if (error && typeof error === "object" && "message" in error) {
     const message = String(error.message);
+    const normalized = message.toLowerCase();
+
+    if (normalized.includes("email not verified")) {
+      return t("auth.errors.emailNotVerified");
+    }
+
+    if (
+      normalized.includes("invalid email or password") ||
+      normalized.includes("invalid password") ||
+      normalized.includes("invalid credentials")
+    ) {
+      return t("auth.errors.invalidCredentials");
+    }
 
     if (message) {
       return message;
@@ -38,6 +57,7 @@ export function AuthModal({ trigger }: AuthModalProps) {
   const [mode, setMode] = useState<AuthMode>("login");
   const [isOpen, setIsOpen] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [feedback, setFeedback] = useState<AuthFeedback | null>(null);
   const [isPending, startTransition] = useTransition();
   const toast = useToast();
 
@@ -59,6 +79,7 @@ export function AuthModal({ trigger }: AuthModalProps) {
 
   function switchMode(nextMode: AuthMode) {
     setMode(nextMode);
+    setFeedback(null);
     setShowPassword(false);
   }
 
@@ -74,6 +95,10 @@ export function AuthModal({ trigger }: AuthModalProps) {
     }
 
     startTransition(async () => {
+      trackAnalyticsEvent("auth_email_submit", {
+        mode: "login",
+      });
+
       const result = await authClient.signIn.email({
         email: parsed.data.email,
         password: parsed.data.password,
@@ -81,7 +106,7 @@ export function AuthModal({ trigger }: AuthModalProps) {
       });
 
       if (result.error) {
-        toast.error(getAuthErrorMessage(result.error, t("auth.errors.default")));
+        toast.error(getAuthErrorMessage(result.error, t("auth.errors.default"), t));
         return;
       }
 
@@ -103,6 +128,10 @@ export function AuthModal({ trigger }: AuthModalProps) {
     }
 
     startTransition(async () => {
+      trackAnalyticsEvent("auth_email_submit", {
+        mode: "register",
+      });
+
       const result = await authClient.signUp.email({
         name: parsed.data.name,
         email: parsed.data.email,
@@ -111,11 +140,11 @@ export function AuthModal({ trigger }: AuthModalProps) {
       });
 
       if (result.error) {
-        toast.error(getAuthErrorMessage(result.error, t("auth.errors.default")));
+        toast.error(getAuthErrorMessage(result.error, t("auth.errors.default"), t));
         return;
       }
 
-      toast.success(t("auth.toasts.registerSuccess"), t("auth.toasts.registerSuccessDescription"));
+      setFeedback({ email: parsed.data.email, type: "register" });
     });
   }
 
@@ -130,17 +159,19 @@ export function AuthModal({ trigger }: AuthModalProps) {
     }
 
     startTransition(async () => {
+      trackAnalyticsEvent("auth_password_reset_request");
+
       const result = await authClient.requestPasswordReset({
         email: parsed.data.email,
         redirectTo: "/reset-password",
       });
 
       if (result.error) {
-        toast.error(getAuthErrorMessage(result.error, t("auth.errors.default")));
+        toast.error(getAuthErrorMessage(result.error, t("auth.errors.default"), t));
         return;
       }
 
-      toast.success(t("auth.toasts.forgotPasswordTitle"), t("auth.toasts.forgotPassword"));
+      setFeedback({ email: parsed.data.email, type: "forgot-password" });
     });
   }
 
@@ -163,6 +194,10 @@ export function AuthModal({ trigger }: AuthModalProps) {
 
   function handleSocialLogin(provider: "google") {
     startTransition(async () => {
+      trackAnalyticsEvent("auth_social_click", {
+        provider,
+      });
+
       const result = await authClient.signIn.social({
         provider,
         callbackURL: "/profile",
@@ -170,10 +205,19 @@ export function AuthModal({ trigger }: AuthModalProps) {
       });
 
       if (result.error) {
-        toast.error(getAuthErrorMessage(result.error, t("auth.errors.default")));
+        toast.error(getAuthErrorMessage(result.error, t("auth.errors.default"), t));
       }
     });
   }
+
+  const feedbackTitle =
+    feedback?.type === "register"
+      ? t("auth.toasts.registerSuccess")
+      : t("auth.toasts.forgotPasswordTitle");
+  const feedbackDescription =
+    feedback?.type === "register"
+      ? t("auth.toasts.registerSuccessDescription")
+      : t("auth.toasts.forgotPassword");
 
   return (
     <Modal
@@ -189,7 +233,7 @@ export function AuthModal({ trigger }: AuthModalProps) {
       <div className={styles.shell} data-auth-modal-shell data-scroll="off">
         <div className={styles.visual} aria-hidden>
           <Image
-            src="/assets/auth/auth-visual-v3.png"
+            src="/assets/auth/auth-visual-v3.webp"
             alt=""
             fill
             priority
@@ -203,109 +247,136 @@ export function AuthModal({ trigger }: AuthModalProps) {
             <p className={styles.subtitle}>{copy.subtitle}</p>
           </div>
 
-          <form className={styles.form} onSubmit={handleSubmit} noValidate>
-            {mode === "register" ? (
-              <Input
-                autoComplete="given-name"
-                label={t("common.form.firstName")}
-                name="name"
-                placeholder={t("auth.fields.namePlaceholder")}
-                size="lg"
-              />
-            ) : null}
+          {feedback ? (
+            <div className={styles.feedbackPanel} role="status">
+              <div className={styles.feedbackIcon} aria-hidden>
+                <Check aria-hidden size={30} strokeWidth={3} />
+              </div>
+              <div>
+                <h3>{feedbackTitle}</h3>
+                <p>{feedbackDescription}</p>
+                <p className={styles.feedbackEmail}>{feedback.email}</p>
+              </div>
+              <Button className={styles.submit} onClick={() => switchMode("login")}>
+                {t("auth.submit.login")}
+              </Button>
+              <button
+                className={styles.linkButton}
+                onClick={() => switchMode(feedback.type)}
+                type="button"
+              >
+                {t("auth.feedback.useAnotherEmail")}
+              </button>
+            </div>
+          ) : (
+            <>
+              <form className={styles.form} onSubmit={handleSubmit} noValidate>
+                {mode === "register" ? (
+                  <Input
+                    autoComplete="given-name"
+                    label={t("common.form.firstName")}
+                    name="name"
+                    placeholder={t("auth.fields.namePlaceholder")}
+                    size="lg"
+                  />
+                ) : null}
 
-            <Input
-              autoComplete="email"
-              label={t("common.form.email")}
-              name="email"
-              placeholder={t("auth.fields.emailPlaceholder")}
-              size="lg"
-              type="email"
-            />
+                <Input
+                  autoComplete="email"
+                  label={t("common.form.email")}
+                  name="email"
+                  placeholder={t("auth.fields.emailPlaceholder")}
+                  size="lg"
+                  type="email"
+                />
 
-            {mode !== "forgot-password" ? (
-              <Input
-                autoComplete={mode === "login" ? "current-password" : "new-password"}
-                label={t("common.form.password")}
-                labelAction={
-                  mode === "login" ? (
+                {mode !== "forgot-password" ? (
+                  <Input
+                    autoComplete={mode === "login" ? "current-password" : "new-password"}
+                    label={t("common.form.password")}
+                    labelAction={
+                      mode === "login" ? (
+                        <button
+                          className={styles.linkButton}
+                          onClick={() => switchMode("forgot-password")}
+                          type="button"
+                        >
+                          {t("auth.forgotPasswordLink")}
+                        </button>
+                      ) : null
+                    }
+                    name="password"
+                    placeholder={t("auth.fields.passwordPlaceholder")}
+                    rightIcon={
+                      <button
+                        aria-label={
+                          showPassword
+                            ? t("auth.togglePassword.hide")
+                            : t("auth.togglePassword.show")
+                        }
+                        className={styles.passwordToggle}
+                        onClick={() => setShowPassword((value) => !value)}
+                        type="button"
+                      >
+                        {showPassword ? (
+                          <EyeOff aria-hidden size={23} />
+                        ) : (
+                          <Eye aria-hidden size={23} />
+                        )}
+                      </button>
+                    }
+                    size="lg"
+                    type={showPassword ? "text" : "password"}
+                  />
+                ) : null}
+
+                <Button
+                  className={styles.submit}
+                  disabled={isPending}
+                  isLoading={isPending}
+                  type="submit"
+                >
+                  {mode === "login"
+                    ? t("auth.submit.login")
+                    : mode === "register"
+                      ? t("auth.submit.register")
+                      : t("auth.submit.forgotPassword")}
+                </Button>
+              </form>
+
+              {mode !== "forgot-password" ? (
+                <>
+                  <div className={styles.divider}>{t("auth.socialDivider")}</div>
+                  <div className={styles.socialGrid} data-layout="single">
                     <button
-                      className={styles.linkButton}
-                      onClick={() => switchMode("forgot-password")}
+                      className={styles.socialButton}
+                      disabled={isPending}
+                      onClick={() => handleSocialLogin("google")}
                       type="button"
                     >
-                      {t("auth.forgotPasswordLink")}
+                      <GoogleLogo className={styles.socialIcon} />
+                      Google
                     </button>
-                  ) : null
-                }
-                name="password"
-                placeholder={t("auth.fields.passwordPlaceholder")}
-                rightIcon={
-                  <button
-                    aria-label={
-                      showPassword ? t("auth.togglePassword.hide") : t("auth.togglePassword.show")
-                    }
-                    className={styles.passwordToggle}
-                    onClick={() => setShowPassword((value) => !value)}
-                    type="button"
-                  >
-                    {showPassword ? (
-                      <EyeOff aria-hidden size={23} />
-                    ) : (
-                      <Eye aria-hidden size={23} />
-                    )}
-                  </button>
-                }
-                size="lg"
-                type={showPassword ? "text" : "password"}
-              />
-            ) : null}
+                  </div>
+                </>
+              ) : null}
 
-            <Button
-              className={styles.submit}
-              disabled={isPending}
-              isLoading={isPending}
-              type="submit"
-            >
-              {mode === "login"
-                ? t("auth.submit.login")
-                : mode === "register"
-                  ? t("auth.submit.register")
-                  : t("auth.submit.forgotPassword")}
-            </Button>
-          </form>
-
-          {mode !== "forgot-password" ? (
-            <>
-              <div className={styles.divider}>{t("auth.socialDivider")}</div>
-              <div className={styles.socialGrid} data-layout="single">
+              <p className={styles.switchText}>
+                {mode === "login"
+                  ? t("auth.switch.login")
+                  : mode === "register"
+                    ? t("auth.switch.register")
+                    : t("auth.switch.forgotPassword")}
                 <button
-                  className={styles.socialButton}
-                  disabled={isPending}
-                  onClick={() => handleSocialLogin("google")}
+                  className={styles.linkButton}
+                  onClick={() => switchMode(mode === "login" ? "register" : "login")}
                   type="button"
                 >
-                  <GoogleLogo className={styles.socialIcon} />
-                  Google
+                  {mode === "login" ? t("auth.submit.register") : t("auth.submit.login")}
                 </button>
-              </div>
+              </p>
             </>
-          ) : null}
-
-          <p className={styles.switchText}>
-            {mode === "login"
-              ? t("auth.switch.login")
-              : mode === "register"
-                ? t("auth.switch.register")
-                : t("auth.switch.forgotPassword")}
-            <button
-              className={styles.linkButton}
-              onClick={() => switchMode(mode === "login" ? "register" : "login")}
-              type="button"
-            >
-              {mode === "login" ? t("auth.submit.register") : t("auth.submit.login")}
-            </button>
-          </p>
+          )}
         </section>
       </div>
     </Modal>

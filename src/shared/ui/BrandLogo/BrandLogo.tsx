@@ -24,11 +24,11 @@ export function BrandLogo({
       <span className={styles.mark} aria-hidden="true">
         <Image
           alt=""
-          height={1254}
+          height={160}
           priority={priority}
           sizes="52px"
-          src="/assets/brand/rounddate-logo.png"
-          width={1254}
+          src="/assets/brand/rounddate-logo-email.png"
+          width={160}
         />
       </span>
       {showText ? (

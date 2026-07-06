@@ -2260,7 +2260,7 @@
   display: block;
   width: 30px;
   height: 30px;
-  background: url("/assets/waitlist-footer/heart-white.png") center / contain no-repeat;
+  background: url("/assets/waitlist-footer/heart-white.webp") center / contain no-repeat;
   filter: drop-shadow(0 6px 10px rgba(112, 24, 18, 0.16));
 }
 

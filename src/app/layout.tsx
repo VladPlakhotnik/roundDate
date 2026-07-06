@@ -1,6 +1,14 @@
 import type { Metadata } from "next";
 import { Geist_Mono, Manrope } from "next/font/google";
 
+import {
+  getPublicSiteUrl,
+  siteDescription,
+  siteName,
+  siteOgImage,
+  siteTitle,
+} from "@/shared/config/site";
+import { GoogleAnalytics } from "@/shared/analytics/GoogleAnalytics";
 import { getRequestLocale } from "@/shared/i18n/server";
 
 import { AppProviders } from "./providers";
@@ -18,12 +26,45 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+const googleAnalyticsMeasurementId = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID;
+
 export const metadata: Metadata = {
+  applicationName: siteName,
+  description: siteDescription,
+  icons: {
+    apple: "/icon.png",
+    icon: "/favicon.ico",
+  },
+  metadataBase: new URL(getPublicSiteUrl()),
+  openGraph: {
+    description: siteDescription,
+    images: [
+      {
+        alt: "RoundDate speed dating w Gdańsku",
+        height: 630,
+        url: siteOgImage,
+        width: 1200,
+      },
+    ],
+    locale: "pl_PL",
+    siteName,
+    title: siteTitle,
+    type: "website",
+    url: "/",
+  },
+  title: {
+    default: siteTitle,
+    template: `%s | ${siteName}`,
+  },
+  twitter: {
+    card: "summary_large_image",
+    description: siteDescription,
+    images: [siteOgImage],
+    title: siteTitle,
+  },
   verification: {
     google: "fEUHZkjHhQrQpTTF0NDGV8prWKHJ9ed4zZX5gBdrDsU",
   },
-  title: "RoundDate Gdańsk",
-  description: "Spotkania offline RoundDate w Gdańsku.",
 };
 
 export default async function RootLayout({
@@ -36,6 +77,7 @@ export default async function RootLayout({
   return (
     <html lang={locale} className={`${manrope.variable} ${geistMono.variable} h-full antialiased`}>
       <body className="flex min-h-full flex-col">
+        <GoogleAnalytics measurementId={googleAnalyticsMeasurementId} />
         <AppProviders locale={locale}>{children}</AppProviders>
       </body>
     </html>

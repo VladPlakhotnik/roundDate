@@ -110,8 +110,13 @@ export const plMessages = {
   auth: {
     errors: {
       default: "Coś poszło nie tak. Spróbuj ponownie.",
+      emailNotVerified: "Potwierdź email przed logowaniem.",
       emailRequired: "Wpisz email.",
       form: "Sprawdź pola formularza.",
+      invalidCredentials: "Nieprawidłowy email lub hasło.",
+    },
+    feedback: {
+      useAnotherEmail: "Użyj innego emaila",
     },
     forgotPassword: {
       subtitle: "Wyślemy link do zresetowania hasła na email",
@@ -156,6 +161,7 @@ export const plMessages = {
     resetPassword: {
       expired: "Link wygasł albo jest nieprawidłowy.",
       formError: "Sprawdź pola formularza.",
+      invalidToken: "Link resetowania jest nieprawidłowy albo wygasł. Poproś o nowy link.",
       missingToken: "Nie znaleziono tokenu resetowania.",
       missingTokenDescription: "Poproś o nowy link.",
       passwordPlaceholder: "Minimum 8 znaków",
@@ -256,6 +262,7 @@ export const plMessages = {
     events: {
       availability: "Wolne miejsca",
       cta: "Zapisz się",
+      detailsLink: "Szczegóły wydarzenia",
       paramsAria: "Parametry wydarzenia",
       subtitle: "Trzy najbliższe wieczory w Gdańsku - wybierz swój format.",
       title: "Najbliższe wydarzenia",
@@ -950,8 +957,13 @@ export const enMessages = {
   auth: {
     errors: {
       default: "Something went wrong. Try again.",
+      emailNotVerified: "Confirm your email before logging in.",
       emailRequired: "Enter your email.",
       form: "Check the form fields.",
+      invalidCredentials: "Invalid email or password.",
+    },
+    feedback: {
+      useAnotherEmail: "Use another email",
     },
     forgotPassword: {
       subtitle: "We will send a password reset link to your email",
@@ -996,6 +1008,7 @@ export const enMessages = {
     resetPassword: {
       expired: "The link has expired or is invalid.",
       formError: "Check the form fields.",
+      invalidToken: "The reset link is invalid or expired. Request a new link.",
       missingToken: "Password reset token was not found.",
       missingTokenDescription: "Request a new link.",
       passwordPlaceholder: "Minimum 8 characters",
@@ -1095,6 +1108,7 @@ export const enMessages = {
     events: {
       availability: "Available seats",
       cta: "Book",
+      detailsLink: "Event details",
       paramsAria: "Event parameters",
       subtitle: "Three upcoming evenings in Gdańsk - choose your format.",
       title: "Upcoming events",

@@ -47,7 +47,7 @@ describe("ProfileBookingsView", () => {
     expect(card).toHaveAttribute("data-layout", "visual-left-notes-right");
     expect(visual).toHaveAttribute("data-art", "calendar");
     expect(visual).toHaveAttribute("data-decoration", "none");
-    expect(image).toHaveAttribute("src", expect.stringContaining("bookings-notes.png"));
+    expect(image).toHaveAttribute("src", expect.stringContaining("bookings-notes.webp"));
     expect(header).toContainElement(screen.getByRole("heading", { name: /Instrukcje/i }));
     expect(list).toHaveAttribute("data-columns", "4");
     expect(within(list).getAllByTestId("booking-instructions-item")).toHaveLength(4);

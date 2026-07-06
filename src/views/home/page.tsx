@@ -13,6 +13,7 @@ import { HomeHowItWorks } from "@/widgets/home-how-it-works";
 import { HomeWaitlistFooter } from "@/widgets/home-waitlist-footer";
 import { HomeWhyBetter } from "@/widgets/home-why-better";
 
+import { HomeSeoStructuredData } from "./HomeSeoStructuredData";
 import styles from "./page.module.css";
 
 function getDisplayName(input: {
@@ -84,6 +85,7 @@ export async function HomeView() {
 
   return (
     <main className={styles.root}>
+      <HomeSeoStructuredData events={events} />
       <div className={styles.topBand}>
         <HomeHero
           {...(featuredEvent ? { featuredEvent } : {})}

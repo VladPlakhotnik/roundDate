@@ -20,7 +20,7 @@ const cards: WhyBetterCard[] = [
   {
     alt: "",
     height: 903,
-    image: "/assets/why-better/phone-swipe-v2.png",
+    image: "/assets/why-better/phone-swipe-v2.webp",
     imageClassName: styles.phoneImage,
     textKey: "home.whyBetter.items.swipes.text",
     titleKey: "home.whyBetter.items.swipes.title",
@@ -29,7 +29,7 @@ const cards: WhyBetterCard[] = [
   {
     alt: "",
     height: 384,
-    image: "/assets/why-better/chairs-group-v2.png",
+    image: "/assets/why-better/chairs-group-v2.webp",
     imageClassName: styles.chairsImage,
     textKey: "home.whyBetter.items.group.text",
     titleKey: "home.whyBetter.items.group.title",
@@ -38,7 +38,7 @@ const cards: WhyBetterCard[] = [
   {
     alt: "",
     height: 384,
-    image: "/assets/why-better/lock-key-v2.png",
+    image: "/assets/why-better/lock-key-v2.webp",
     imageClassName: styles.lockImage,
     textKey: "home.whyBetter.items.privacy.text",
     titleKey: "home.whyBetter.items.privacy.title",
@@ -47,7 +47,7 @@ const cards: WhyBetterCard[] = [
   {
     alt: "",
     height: 891,
-    image: "/assets/why-better/cafe-place-v2.png",
+    image: "/assets/why-better/cafe-place-v2.webp",
     imageClassName: styles.cafeImage,
     textKey: "home.whyBetter.items.place.text",
     titleKey: "home.whyBetter.items.place.title",
@@ -73,7 +73,6 @@ function MiniCard({
           alt={alt}
           width={width}
           height={height}
-          loading="eager"
         />
       </div>
       <h3>{title}</h3>
@@ -101,11 +100,10 @@ export function HomeWhyBetter() {
             <div className={styles.featureImageWrap}>
               <Image
                 className={styles.featureImage}
-                src="/assets/why-better/couple-scene-v2.png"
+                src="/assets/why-better/couple-scene-v2.webp"
                 alt="RoundDate"
                 width={1208}
                 height={952}
-                loading="eager"
               />
             </div>
             <h3>{t("home.whyBetter.cardTitle")}</h3>

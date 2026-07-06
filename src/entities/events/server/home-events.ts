@@ -77,6 +77,7 @@ export type HomeEvent = {
   tag: "all" | "closest" | "today" | "week" | "weekend";
   timeLabel: string;
   title: string;
+  updatedAt?: string;
   venueAddress: string;
   venueName: string;
   weekdayLabel: string;
@@ -143,6 +144,7 @@ type EventRow = {
   startsAt: Date;
   status: EventStatus;
   title: string;
+  updatedAt: Date;
   venueAddress: string | null;
   venueName: string | null;
 };
@@ -440,9 +442,11 @@ function normalizeEvent(input: {
   startsAt: Date | string;
   status: EventStatus;
   title: string;
+  updatedAt?: Date | string;
   venueName: string;
 }): HomeEvent {
   const startsAt = new Date(input.startsAt);
+  const updatedAt = new Date(input.updatedAt ?? startsAt);
   const city = normalizeLegacyCity(input.city);
   const weekday = weekdayFormatter.format(startsAt);
   const fallbackAvailability = splitEventGenderAvailability(input.spotsAvailable);
@@ -503,6 +507,7 @@ function normalizeEvent(input: {
     tag: getEventTag(startsAt),
     timeLabel: timeFormatter.format(startsAt),
     title: input.title,
+    updatedAt: updatedAt.toISOString(),
     venueAddress: input.address,
     venueName: input.venueName,
     weekdayLabel: weekday.charAt(0).toUpperCase() + weekday.slice(1),
@@ -550,6 +555,7 @@ function normalizeRow(row: EventRow): HomeEvent {
     startsAt: row.startsAt,
     status: row.status,
     title: row.title,
+    updatedAt: row.updatedAt,
     venueName: row.venueName ?? "Kameralna sala",
     ...(highlights ? { highlights } : {}),
   });
@@ -724,6 +730,7 @@ function eventSelection() {
     startsAt: events.startsAt,
     status: events.status,
     title: events.title,
+    updatedAt: events.updatedAt,
     venueAddress: venues.address,
     venueName: venues.name,
   };

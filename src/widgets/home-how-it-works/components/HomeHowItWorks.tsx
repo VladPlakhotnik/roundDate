@@ -78,7 +78,7 @@ export function HomeHowItWorks() {
           <div className={styles.visualFrame} aria-hidden>
             <Image
               className={styles.flowImage}
-              src="/assets/how-it-works/flow.png"
+              src="/assets/how-it-works/flow.webp"
               alt=""
               width={1672}
               height={941}

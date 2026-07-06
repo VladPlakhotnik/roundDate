@@ -11,35 +11,35 @@ const photos = [
     alt: "RoundDate",
     className: styles.photoOne,
     height: 300,
-    src: "/assets/atmosphere/conversation-03.png",
+    src: "/assets/atmosphere/conversation-03.webp",
     width: 396,
   },
   {
     alt: "RoundDate",
     className: styles.photoTwo,
     height: 246,
-    src: "/assets/atmosphere/conversation-06.png",
+    src: "/assets/atmosphere/conversation-06.webp",
     width: 364,
   },
   {
     alt: "RoundDate",
     className: styles.photoThree,
     height: 286,
-    src: "/assets/atmosphere/welcome-board.png",
+    src: "/assets/atmosphere/welcome-board.webp",
     width: 438,
   },
   {
     alt: "RoundDate",
     className: styles.photoFour,
     height: 213,
-    src: "/assets/atmosphere/conversation-02.png",
+    src: "/assets/atmosphere/conversation-02.webp",
     width: 456,
   },
   {
     alt: "RoundDate",
     className: styles.photoFive,
     height: 211,
-    src: "/assets/atmosphere/gdansk-evening.png",
+    src: "/assets/atmosphere/gdansk-evening.webp",
     width: 382,
   },
 ];
@@ -51,7 +51,7 @@ export function HomeAtmosphere() {
     <section className={styles.section} id="atmosphere" aria-labelledby="atmosphere-title">
       <Image
         className={`${styles.sparkle} ${styles.sparkleLeft}`}
-        src="/assets/waitlist-footer/sparkle.png"
+        src="/assets/waitlist-footer/sparkle.webp"
         alt=""
         width={160}
         height={160}
@@ -59,7 +59,7 @@ export function HomeAtmosphere() {
       />
       <Image
         className={`${styles.sparkle} ${styles.sparkleRight}`}
-        src="/assets/waitlist-footer/sparkle.png"
+        src="/assets/waitlist-footer/sparkle.webp"
         alt=""
         width={160}
         height={160}
@@ -95,7 +95,7 @@ export function HomeAtmosphere() {
               alt=""
               className={styles.quoteHeart}
               height={160}
-              src="/assets/waitlist-footer/heart.png"
+              src="/assets/waitlist-footer/heart.webp"
               width={160}
             />
           </div>

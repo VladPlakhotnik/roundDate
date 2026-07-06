@@ -52,6 +52,11 @@ export function HomeHero({
             <Button
               as="link"
               className={styles.primaryAction}
+              data-analytics-event="hero_primary_click"
+              data-analytics-params={JSON.stringify({
+                has_event: Boolean(heroEvent),
+                target: primaryHref,
+              })}
               href={primaryHref}
               size="hero"
               rightIcon={<ArrowRight aria-hidden size={24} strokeWidth={2.1} />}
@@ -89,6 +94,11 @@ export function HomeHero({
               <Button
                 as="link"
                 className={styles.detailsButton}
+                data-analytics-event="event_booking_click"
+                data-analytics-params={JSON.stringify({
+                  event_slug: heroEvent.slug,
+                  source: "home_hero_event_card",
+                })}
                 href="/profile/events"
                 variant="secondary"
                 size="lg"
@@ -102,6 +112,11 @@ export function HomeHero({
                 trigger={
                   <Button
                     className={styles.detailsButton}
+                    data-analytics-event="event_booking_click"
+                    data-analytics-params={JSON.stringify({
+                      event_slug: heroEvent.slug,
+                      source: "home_hero_event_card_auth",
+                    })}
                     variant="secondary"
                     size="lg"
                     rightIcon={<ArrowRight aria-hidden size={22} strokeWidth={2.1} />}
@@ -132,6 +147,10 @@ export function HomeHero({
             <Button
               as="link"
               className={styles.detailsButton}
+              data-analytics-event="waitlist_click"
+              data-analytics-params={JSON.stringify({
+                source: "home_hero_no_events_card",
+              })}
               href="#waitlist"
               variant="secondary"
               size="lg"
@@ -193,7 +212,7 @@ export function HomeHero({
         <div className={styles.gallery} aria-hidden="true">
           <Image
             className={`${styles.galleryImage} ${styles.galleryMain}`}
-            src="/assets/hero/gallery-main-generated-v1.png"
+            src="/assets/hero/gallery-main-generated-v1.webp"
             alt=""
             width={780}
             height={520}
@@ -202,7 +221,7 @@ export function HomeHero({
           />
           <Image
             className={`${styles.galleryImage} ${styles.galleryTop}`}
-            src="/assets/hero/gallery-group-v2.png"
+            src="/assets/hero/gallery-group-v2.webp"
             alt=""
             width={320}
             height={230}
@@ -210,7 +229,7 @@ export function HomeHero({
           />
           <Image
             className={`${styles.galleryImage} ${styles.galleryBottom}`}
-            src="/assets/hero/gallery-detail-v2.png"
+            src="/assets/hero/gallery-detail-v2.webp"
             alt=""
             width={320}
             height={250}

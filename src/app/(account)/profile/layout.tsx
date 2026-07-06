@@ -1,11 +1,20 @@
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
+import type { Metadata } from "next";
 import type { ReactNode } from "react";
 
 import { getUserBookings } from "@/entities/events";
 import { getProfileOnboardingState } from "@/entities/profile/server/onboarding";
 import { getRequestTranslator } from "@/shared/i18n/server";
 import { ProfileShell } from "@/views/profile/ProfileShell";
+
+export const metadata: Metadata = {
+  robots: {
+    follow: false,
+    index: false,
+  },
+  title: "Profil",
+};
 
 function getFirstName(input: { email: string; fallback: string; firstName: string; name: string }) {
   const firstName = input.firstName.trim();

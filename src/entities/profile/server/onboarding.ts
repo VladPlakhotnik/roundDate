@@ -90,9 +90,14 @@ export async function getProfileOnboardingState(input: {
     return null;
   }
 
+  const user = session.user;
+
+  if ((user as { emailVerified?: unknown }).emailVerified === false) {
+    return null;
+  }
+
   const db = getDb();
   const now = new Date();
-  const user = session.user;
   const fallback = splitName(user.name ?? "");
 
   const [profileRow] = await db

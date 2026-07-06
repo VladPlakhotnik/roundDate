@@ -13,9 +13,14 @@ import { useToast } from "@/shared/ui/Toast";
 import { resetPasswordSchema } from "../lib/auth-schemas";
 import styles from "./ResetPasswordForm.module.css";
 
-function getAuthErrorMessage(error: unknown, fallback: string) {
+function getAuthErrorMessage(error: unknown, fallback: string, invalidTokenMessage: string) {
   if (error && typeof error === "object" && "message" in error) {
     const message = String(error.message);
+    const normalized = message.toLowerCase();
+
+    if (normalized.includes("invalid token") || normalized.includes("token")) {
+      return invalidTokenMessage;
+    }
 
     if (message) {
       return message;
@@ -33,6 +38,17 @@ export function ResetPasswordForm() {
   const [isPending, startTransition] = useTransition();
   const toast = useToast();
   const { t } = useI18n();
+  const notice = urlError
+    ? {
+        description: t("auth.resetPassword.updateError"),
+        title: t("auth.resetPassword.expired"),
+      }
+    : !token
+      ? {
+          description: t("auth.resetPassword.missingTokenDescription"),
+          title: t("auth.resetPassword.missingToken"),
+        }
+      : null;
 
   useEffect(() => {
     if (urlError) {
@@ -69,7 +85,13 @@ export function ResetPasswordForm() {
       });
 
       if (result.error) {
-        toast.error(getAuthErrorMessage(result.error, t("auth.resetPassword.updateError")));
+        toast.error(
+          getAuthErrorMessage(
+            result.error,
+            t("auth.resetPassword.updateError"),
+            t("auth.resetPassword.invalidToken"),
+          ),
+        );
         return;
       }
 
@@ -85,10 +107,17 @@ export function ResetPasswordForm() {
           {t("auth.resetPassword.title")}
         </h1>
         <p className={styles.subtitle}>{t("auth.resetPassword.subtitle")}</p>
+        {notice ? (
+          <div className={styles.notice} role="alert">
+            <p className={styles.noticeTitle}>{notice.title}</p>
+            <p className={styles.noticeDescription}>{notice.description}</p>
+          </div>
+        ) : null}
 
         <form className={styles.form} onSubmit={handleSubmit} noValidate>
           <Input
             autoComplete="new-password"
+            disabled={!token}
             label={t("profile.settingsPage.account.passwordNew")}
             name="password"
             placeholder={t("auth.resetPassword.passwordPlaceholder")}
@@ -97,6 +126,7 @@ export function ResetPasswordForm() {
 
           <Input
             autoComplete="new-password"
+            disabled={!token}
             label={t("profile.settingsPage.account.passwordRepeat")}
             name="passwordConfirm"
             placeholder={t("auth.resetPassword.repeatPlaceholder")}

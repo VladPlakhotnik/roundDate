@@ -1,0 +1,372 @@
+.page {
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at 14% 8%, rgba(255, 218, 211, 0.42), transparent 30%),
+    linear-gradient(180deg, #fff9f7 0%, #ffffff 58%, #fff7f4 100%);
+  color: var(--sd-ink-900);
+}
+
+.hero {
+  width: var(--sd-container-width);
+  margin: 0 auto;
+  padding: 28px 0 58px;
+}
+
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  margin-bottom: 46px;
+}
+
+.logoLink,
+.backLink,
+.primaryButton,
+.secondaryButton {
+  display: inline-flex;
+  align-items: center;
+  text-decoration: none;
+}
+
+.logoLink {
+  gap: 10px;
+  color: var(--sd-ink-900);
+  font-size: 22px;
+  font-weight: 900;
+}
+
+.logoLink img {
+  width: 44px;
+  height: 44px;
+  object-fit: contain;
+}
+
+.backLink {
+  min-height: 42px;
+  gap: 8px;
+  border: 1px solid rgba(255, 113, 97, 0.16);
+  border-radius: var(--sd-radius-pill);
+  background: rgba(255, 255, 255, 0.78);
+  color: var(--sd-ink-700);
+  font-size: 14px;
+  font-weight: 800;
+  padding: 0 16px;
+  box-shadow: 0 12px 30px rgba(170, 91, 79, 0.06);
+}
+
+.heroGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 0.92fr) minmax(420px, 1fr);
+  align-items: center;
+  gap: 54px;
+}
+
+.heroCopy {
+  min-width: 0;
+}
+
+.kicker {
+  margin: 0 0 18px;
+  color: var(--sd-coral-600);
+  font-size: 15px;
+  font-weight: 900;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+.heroCopy h1 {
+  max-width: 720px;
+  margin: 0;
+  color: var(--sd-ink-900);
+  font-size: clamp(44px, 6vw, 76px);
+  font-weight: 900;
+  letter-spacing: 0;
+  line-height: 1.02;
+}
+
+.lead {
+  max-width: 620px;
+  margin: 24px 0 0;
+  color: var(--sd-ink-600);
+  font-size: 20px;
+  font-weight: 600;
+  line-height: 1.55;
+}
+
+.heroActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  margin-top: 34px;
+}
+
+.primaryButton,
+.secondaryButton {
+  min-height: 56px;
+  justify-content: center;
+  border-radius: var(--sd-radius-pill);
+  font-size: 16px;
+  font-weight: 900;
+  line-height: 1;
+  padding: 0 26px;
+}
+
+.primaryButton {
+  border: 0;
+  background: linear-gradient(135deg, var(--sd-coral-500) 0%, var(--sd-coral-600) 100%);
+  color: var(--sd-white);
+  box-shadow: var(--sd-shadow-cta);
+}
+
+.secondaryButton {
+  border: 1px solid rgba(255, 113, 97, 0.2);
+  background: rgba(255, 255, 255, 0.82);
+  color: var(--sd-ink-800);
+}
+
+.imagePanel {
+  position: relative;
+  overflow: hidden;
+  margin: 0;
+  border: 1px solid rgba(255, 113, 97, 0.12);
+  border-radius: 30px;
+  background: rgba(255, 255, 255, 0.72);
+  box-shadow: 0 28px 90px rgba(170, 91, 79, 0.11);
+}
+
+.imagePanel img {
+  display: block;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+}
+
+.imagePanel figcaption {
+  position: absolute;
+  top: 18px;
+  left: 18px;
+  border: 1px solid rgba(255, 113, 97, 0.18);
+  border-radius: var(--sd-radius-pill);
+  background: rgba(255, 255, 255, 0.9);
+  color: var(--sd-coral-600);
+  font-size: 14px;
+  font-weight: 900;
+  padding: 10px 14px;
+  box-shadow: 0 12px 28px rgba(170, 91, 79, 0.08);
+}
+
+.detailsGrid,
+.contentGrid {
+  width: var(--sd-container-width);
+  margin: 0 auto;
+}
+
+.detailsGrid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+  padding-bottom: 54px;
+}
+
+.detailCard,
+.storyCard,
+.bookingCard {
+  border: 1px solid rgba(255, 113, 97, 0.13);
+  background: rgba(255, 255, 255, 0.78);
+  box-shadow: 0 18px 52px rgba(170, 91, 79, 0.06);
+}
+
+.detailCard {
+  display: grid;
+  gap: 9px;
+  min-height: 156px;
+  border-radius: 22px;
+  padding: 22px;
+}
+
+.detailCard svg {
+  color: var(--sd-coral-600);
+}
+
+.detailCard span,
+.bookingEyebrow {
+  color: var(--sd-ink-500);
+  font-size: 13px;
+  font-weight: 900;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.detailCard strong {
+  color: var(--sd-ink-900);
+  font-size: 18px;
+  font-weight: 900;
+  line-height: 1.32;
+}
+
+.contentGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 390px;
+  gap: 22px;
+  padding-bottom: 82px;
+}
+
+.storyCard,
+.bookingCard {
+  border-radius: 26px;
+  padding: 30px;
+}
+
+.storyCard h2 {
+  margin: 0;
+  color: var(--sd-ink-900);
+  font-size: 32px;
+  font-weight: 900;
+  letter-spacing: 0;
+  line-height: 1.12;
+}
+
+.storyCard p,
+.bookingCard p {
+  margin: 16px 0 0;
+  color: var(--sd-ink-600);
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.65;
+}
+
+.storyCard ul {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin: 28px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.storyCard li {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  min-height: 78px;
+  border: 1px solid rgba(255, 113, 97, 0.12);
+  border-radius: 18px;
+  background: rgba(255, 248, 246, 0.74);
+  color: var(--sd-ink-800);
+  font-size: 14px;
+  font-weight: 800;
+  line-height: 1.35;
+  padding: 16px;
+}
+
+.storyCard li svg {
+  flex: 0 0 auto;
+  color: var(--sd-coral-600);
+}
+
+.bookingCard {
+  align-self: start;
+}
+
+.bookingCard strong {
+  display: block;
+  margin-top: 10px;
+  color: var(--sd-ink-900);
+  font-size: 40px;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.bookingCard a:not(.primaryButton) {
+  color: var(--sd-coral-600);
+  font-weight: 900;
+}
+
+.bookingCard .primaryButton {
+  width: 100%;
+  margin-top: 24px;
+}
+
+.trustLine {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  margin-top: 18px;
+  color: var(--sd-ink-600);
+  font-size: 13px;
+  font-weight: 800;
+  line-height: 1.45;
+}
+
+.trustLine svg {
+  flex: 0 0 auto;
+  color: var(--sd-coral-600);
+}
+
+@media (max-width: 980px) {
+  .hero {
+    padding-top: 20px;
+  }
+
+  .heroGrid,
+  .contentGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .detailsGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .storyCard ul {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .topbar,
+  .heroActions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .topbar {
+    margin-bottom: 28px;
+  }
+
+  .logoLink {
+    justify-content: center;
+  }
+
+  .backLink,
+  .primaryButton,
+  .secondaryButton {
+    width: 100%;
+  }
+
+  .heroGrid {
+    gap: 28px;
+  }
+
+  .heroCopy h1 {
+    font-size: 38px;
+  }
+
+  .lead {
+    font-size: 16px;
+  }
+
+  .detailsGrid {
+    grid-template-columns: 1fr;
+    padding-bottom: 34px;
+  }
+
+  .detailCard {
+    min-height: 0;
+  }
+
+  .storyCard,
+  .bookingCard {
+    padding: 22px;
+  }
+}

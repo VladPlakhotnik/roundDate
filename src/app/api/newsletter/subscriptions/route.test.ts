@@ -73,4 +73,25 @@ describe("POST /api/newsletter/subscriptions", () => {
     expect(response.status).toBe(400);
     expect(mocks.subscribeToNewsletter).not.toHaveBeenCalled();
   });
+
+  it("rejects oversized payloads before parsing subscription data", async () => {
+    const response = await POST(
+      new Request("https://rounddate.example/api/newsletter/subscriptions", {
+        body: JSON.stringify({
+          age: 29,
+          email: "anna@example.com",
+          firstName: "Anna",
+          gender: "female",
+        }),
+        headers: {
+          "Content-Length": String(8 * 1024 + 1),
+          "Content-Type": "application/json",
+        },
+        method: "POST",
+      }),
+    );
+
+    expect(response.status).toBe(413);
+    expect(mocks.subscribeToNewsletter).not.toHaveBeenCalled();
+  });
 });

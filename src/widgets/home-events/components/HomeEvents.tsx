@@ -2,6 +2,7 @@
 
 import { ArrowRight, MapPin, Users } from "lucide-react";
 import Image from "next/image";
+import Link from "next/link";
 
 import { EventGenderAvailability } from "@/entities/event";
 import type { HomeEvent } from "@/entities/events";
@@ -20,17 +21,17 @@ const eventImages = [
   {
     alt: "",
     className: styles.chairsImage,
-    src: "/assets/home-events/chairs-date.png",
+    src: "/assets/home-events/chairs-date.webp",
   },
   {
     alt: "",
     className: styles.chairsSceneImage,
-    src: "/assets/home-events/chairs-flowers.png",
+    src: "/assets/home-events/chairs-flowers.webp",
   },
   {
     alt: "",
     className: styles.loungeImage,
-    src: "/assets/home-events/chairs-coral.png",
+    src: "/assets/home-events/chairs-coral.webp",
   },
 ];
 
@@ -50,7 +51,7 @@ export function HomeEvents({ events, isAuthenticated = false }: HomeEventsProps)
     <section className={styles.section} id="events" aria-labelledby="events-title">
       <Image
         className={`${styles.titleDecor} ${styles.titleHeartDecor}`}
-        src="/assets/home-events/events-title-heart.png"
+        src="/assets/home-events/events-title-heart.webp"
         alt=""
         width={512}
         height={384}
@@ -58,7 +59,7 @@ export function HomeEvents({ events, isAuthenticated = false }: HomeEventsProps)
       />
       <Image
         className={`${styles.titleDecor} ${styles.titleChessDecor}`}
-        src="/assets/home-events/events-title-chess.png"
+        src="/assets/home-events/events-title-chess.webp"
         alt=""
         width={512}
         height={384}
@@ -108,7 +109,19 @@ export function HomeEvents({ events, isAuthenticated = false }: HomeEventsProps)
                   />
                 </div>
 
-                <h3>{event.title}</h3>
+                <h3>
+                  <Link
+                    className={styles.titleLink}
+                    data-analytics-event="event_details_click"
+                    data-analytics-params={JSON.stringify({
+                      event_slug: event.slug,
+                      source: "home_event_title",
+                    })}
+                    href={`/wydarzenia/${event.slug}`}
+                  >
+                    {event.title}
+                  </Link>
+                </h3>
 
                 <p className={styles.dateLine}>
                   {event.dateLabel}, {event.weekdayLabel.slice(0, 2).toLowerCase()} ·{" "}
@@ -141,15 +154,43 @@ export function HomeEvents({ events, isAuthenticated = false }: HomeEventsProps)
                   <span className={styles.price}>{event.priceLabel}</span>
                 </div>
 
+                <Link
+                  className={styles.eventPageLink}
+                  data-analytics-event="event_details_click"
+                  data-analytics-params={JSON.stringify({
+                    event_slug: event.slug,
+                    source: "home_event_card",
+                  })}
+                  href={`/wydarzenia/${event.slug}`}
+                >
+                  {t("home.events.detailsLink")}
+                </Link>
+
                 {isAuthenticated ? (
-                  <a className={styles.detailsButton} href="/profile/events">
+                  <a
+                    className={styles.detailsButton}
+                    data-analytics-event="event_booking_click"
+                    data-analytics-params={JSON.stringify({
+                      event_slug: event.slug,
+                      source: "home_event_card",
+                    })}
+                    href="/profile/events"
+                  >
                     {t("home.events.cta")}
                     <ArrowRight aria-hidden size={24} />
                   </a>
                 ) : (
                   <AuthModal
                     trigger={
-                      <button className={styles.detailsButton} type="button">
+                      <button
+                        className={styles.detailsButton}
+                        data-analytics-event="event_booking_click"
+                        data-analytics-params={JSON.stringify({
+                          event_slug: event.slug,
+                          source: "home_event_card_auth",
+                        })}
+                        type="button"
+                      >
                         {t("home.events.cta")}
                         <ArrowRight aria-hidden size={24} />
                       </button>
