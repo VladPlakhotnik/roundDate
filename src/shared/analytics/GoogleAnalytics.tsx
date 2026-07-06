@@ -1,6 +1,7 @@
 import { Suspense } from "react";
 import Script from "next/script";
 
+import { AnalyticsConsentBanner } from "./AnalyticsConsentBanner";
 import { GoogleAnalyticsPageViews } from "./GoogleAnalyticsPageViews";
 
 type GoogleAnalyticsProps = {
@@ -40,6 +41,16 @@ export function GoogleAnalytics({ measurementId }: GoogleAnalyticsProps) {
               analytics_storage: 'denied',
               wait_for_update: 500
             });
+            try {
+              if (window.localStorage.getItem('rounddate-analytics-consent') === 'granted') {
+                window.gtag('consent', 'update', {
+                  ad_storage: 'denied',
+                  ad_user_data: 'denied',
+                  ad_personalization: 'denied',
+                  analytics_storage: 'granted'
+                });
+              }
+            } catch (error) {}
           `,
         }}
       />
@@ -63,6 +74,7 @@ export function GoogleAnalytics({ measurementId }: GoogleAnalyticsProps) {
       <Suspense fallback={null}>
         <GoogleAnalyticsPageViews measurementId={safeMeasurementId} />
       </Suspense>
+      <AnalyticsConsentBanner measurementId={safeMeasurementId} />
     </>
   );
 }

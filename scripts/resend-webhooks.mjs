@@ -10,6 +10,8 @@ const webhookEvents = [
   "email.delivery_delayed",
   "email.bounced",
   "email.complained",
+  "email.opened",
+  "email.clicked",
   "email.failed",
   "email.suppressed",
 ];

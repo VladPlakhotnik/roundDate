@@ -8,6 +8,14 @@ export const plMessages = {
       copyPhone: "Skopiuj telefon",
       save: "Zapisz",
     },
+    analyticsConsent: {
+      accept: "Włącz analitykę",
+      decline: "Nie teraz",
+      description:
+        "Używamy Google Analytics, aby mierzyć ruch i poprawiać stronę. Reklamowe pliki cookie pozostają wyłączone.",
+      label: "Zgoda na analitykę",
+      title: "Pomóż nam ulepszać RoundDate",
+    },
     form: {
       email: "Email",
       firstName: "Imię",
@@ -854,6 +862,14 @@ export const enMessages = {
       copyEmail: "Copy email",
       copyPhone: "Copy phone",
       save: "Save",
+    },
+    analyticsConsent: {
+      accept: "Enable analytics",
+      decline: "Not now",
+      description:
+        "We use Google Analytics to measure traffic and improve the website. Advertising cookies stay disabled.",
+      label: "Analytics consent",
+      title: "Help us improve RoundDate",
     },
     form: {
       email: "Email",

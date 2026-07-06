@@ -77,8 +77,10 @@ export default async function RootLayout({
   return (
     <html lang={locale} className={`${manrope.variable} ${geistMono.variable} h-full antialiased`}>
       <body className="flex min-h-full flex-col">
-        <GoogleAnalytics measurementId={googleAnalyticsMeasurementId} />
-        <AppProviders locale={locale}>{children}</AppProviders>
+        <AppProviders locale={locale}>
+          <GoogleAnalytics measurementId={googleAnalyticsMeasurementId} />
+          {children}
+        </AppProviders>
       </body>
     </html>
   );
