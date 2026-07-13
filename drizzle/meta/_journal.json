@@ -99,6 +99,41 @@
       "when": 1783180800000,
       "tag": "0013_email_campaigns",
       "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1783936800000,
+      "tag": "0014_finish_rounddate_intro",
+      "breakpoints": true
+    },
+    {
+      "idx": 15,
+      "version": "7",
+      "when": 1783940400000,
+      "tag": "0015_auth_security_hardening",
+      "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "7",
+      "when": 1783944000000,
+      "tag": "0016_polish_client_event_copy",
+      "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1783947600000,
+      "tag": "0017_normalize_polish_event_city",
+      "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1783951200000,
+      "tag": "0018_normalize_polish_venue_copy",
+      "breakpoints": true
     }
   ]
 }

@@ -6,6 +6,7 @@ import type { FormEvent, ReactNode } from "react";
 import { useState, useTransition } from "react";
 
 import { authClient } from "@/shared/lib/auth-client";
+import { isPasswordValid } from "@/shared/lib/validation/password";
 import { useI18n } from "@/shared/i18n/I18nProvider";
 import { Button } from "@/shared/ui/Button";
 import { Input } from "@/shared/ui/Input";
@@ -17,6 +18,7 @@ import { trackAnalyticsEvent } from "@/shared/analytics/track";
 import { forgotPasswordSchema, loginSchema, registerSchema } from "../lib/auth-schemas";
 import type { AuthMode } from "../types/auth-mode";
 import styles from "./AuthModal.module.css";
+import { PasswordRequirements } from "./PasswordRequirements";
 
 type AuthModalProps = {
   trigger?: ReactNode;
@@ -36,16 +38,16 @@ function getAuthErrorMessage(error: unknown, fallback: string, t: (key: string) 
       return t("auth.errors.emailNotVerified");
     }
 
+    if (normalized.includes("too many") || normalized.includes("rate limit")) {
+      return t("auth.errors.tooManyRequests");
+    }
+
     if (
       normalized.includes("invalid email or password") ||
       normalized.includes("invalid password") ||
       normalized.includes("invalid credentials")
     ) {
       return t("auth.errors.invalidCredentials");
-    }
-
-    if (message) {
-      return message;
     }
   }
 
@@ -57,6 +59,7 @@ export function AuthModal({ trigger }: AuthModalProps) {
   const [mode, setMode] = useState<AuthMode>("login");
   const [isOpen, setIsOpen] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [passwordValue, setPasswordValue] = useState("");
   const [feedback, setFeedback] = useState<AuthFeedback | null>(null);
   const [isPending, startTransition] = useTransition();
   const toast = useToast();
@@ -81,6 +84,17 @@ export function AuthModal({ trigger }: AuthModalProps) {
     setMode(nextMode);
     setFeedback(null);
     setShowPassword(false);
+    setPasswordValue("");
+  }
+
+  function handleOpenChange(open: boolean) {
+    setIsOpen(open);
+
+    if (!open) {
+      setPasswordValue("");
+      setShowPassword(false);
+      setFeedback(null);
+    }
   }
 
   function handleEmailLogin(formData: FormData) {
@@ -221,7 +235,7 @@ export function AuthModal({ trigger }: AuthModalProps) {
 
   return (
     <Modal
-      onOpenChange={setIsOpen}
+      onOpenChange={handleOpenChange}
       open={isOpen}
       size="lg"
       title={copy.title}
@@ -327,12 +341,16 @@ export function AuthModal({ trigger }: AuthModalProps) {
                     }
                     size="lg"
                     type={showPassword ? "text" : "password"}
+                    value={passwordValue}
+                    onChange={(event) => setPasswordValue(event.currentTarget.value)}
                   />
                 ) : null}
 
+                {mode === "register" ? <PasswordRequirements password={passwordValue} /> : null}
+
                 <Button
                   className={styles.submit}
-                  disabled={isPending}
+                  disabled={isPending || (mode === "register" && !isPasswordValid(passwordValue))}
                   isLoading={isPending}
                   type="submit"
                 >

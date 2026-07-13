@@ -1,12 +1,15 @@
 import "server-only";
 
 import { betterAuth } from "better-auth";
+import { APIError, createAuthMiddleware } from "better-auth/api";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { admin } from "better-auth/plugins";
+import { after } from "next/server";
 
 import { getDb } from "@/shared/server/db/client";
 import {
   authAccounts,
+  authRateLimits,
   authSessions,
   authUsers,
   authVerifications,
@@ -15,6 +18,7 @@ import {
 import { eq } from "drizzle-orm";
 import { resolveLocale } from "@/shared/i18n/locales";
 import { getRequestLocaleFromRequest } from "@/shared/i18n/server";
+import { passwordSchema } from "@/shared/lib/validation/password";
 import { createEmailIdempotencyKey, sendEmail } from "@/shared/server/email/send-email";
 import { accountVerificationEmail, passwordResetEmail } from "@/shared/server/email/templates";
 
@@ -63,10 +67,14 @@ function createAuth() {
         user: authUsers,
         session: authSessions,
         account: authAccounts,
+        rateLimit: authRateLimits,
         verification: authVerifications,
       },
     }),
     trustedOrigins: getAuthTrustedOrigins(),
+    account: {
+      encryptOAuthTokens: true,
+    },
     user: {
       additionalFields: {
         role: {
@@ -126,6 +134,37 @@ function createAuth() {
       },
     },
     socialProviders: getSocialProviders(),
+    rateLimit: {
+      enabled: true,
+      storage: "database",
+      customRules: {
+        "/change-email": { max: 3, window: 60 },
+        "/delete-user": { max: 3, window: 60 },
+        "/request-password-reset": { max: 5, window: 60 },
+      },
+    },
+    advanced: {
+      backgroundTasks: {
+        handler: (promise) => after(() => promise),
+      },
+    },
+    hooks: {
+      before: createAuthMiddleware(async (context) => {
+        const passwordByPath: Record<string, unknown> = {
+          "/change-password": context.body?.newPassword,
+          "/reset-password": context.body?.newPassword,
+          "/set-password": context.body?.newPassword,
+          "/sign-up/email": context.body?.password,
+        };
+        const password = passwordByPath[context.path];
+
+        if (password !== undefined && !passwordSchema.safeParse(password).success) {
+          throw new APIError("BAD_REQUEST", {
+            message: "Password does not meet the security requirements.",
+          });
+        }
+      }),
+    },
     plugins: [
       admin({
         adminRoles: ["admin"],

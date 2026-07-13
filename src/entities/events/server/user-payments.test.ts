@@ -8,24 +8,24 @@ import {
 } from "../model/user-payments";
 
 describe("user payment helpers", () => {
-  it("allows cancelling at least 12 hours before event starts", () => {
+  it("allows cancelling at least 24 hours before event starts", () => {
     const startsAt = new Date("2031-05-24T17:00:00.000Z");
 
     expect(
       getBookingCancellationState({
-        now: new Date("2031-05-24T04:59:59.000Z"),
+        now: new Date("2031-05-23T16:59:59.000Z"),
         startsAt,
       }),
     ).toMatchObject({ canCancel: true });
     expect(
       getBookingCancellationState({
-        now: new Date("2031-05-24T05:00:00.000Z"),
+        now: new Date("2031-05-23T17:00:00.000Z"),
         startsAt,
       }),
     ).toMatchObject({ canCancel: true });
     expect(
       getBookingCancellationState({
-        now: new Date("2031-05-24T05:00:01.000Z"),
+        now: new Date("2031-05-23T17:00:01.000Z"),
         startsAt,
       }),
     ).toMatchObject({ canCancel: false });

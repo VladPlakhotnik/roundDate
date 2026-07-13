@@ -138,6 +138,51 @@ describe("sendEmail", () => {
     );
   });
 
+  it("records Resend failures before throwing", async () => {
+    process.env.EMAIL_DELIVERY_MODE = "resend";
+    const consoleError = vi.spyOn(console, "error").mockImplementation(() => undefined);
+    mocks.send.mockResolvedValue({
+      data: null,
+      error: {
+        message: "The from address is invalid.",
+        name: "validation_error",
+        statusCode: 422,
+      },
+    });
+
+    await expect(
+      sendEmail({
+        html: "<p>Verify</p>",
+        subject: "Verify",
+        template: "account-verification",
+        text: "Verify",
+        to: "ada@example.com",
+        userId: "user-1",
+      }),
+    ).rejects.toThrow("The from address is invalid.");
+
+    expect(mocks.insertValues).toHaveBeenCalledWith(
+      expect.objectContaining({
+        metadata: expect.objectContaining({
+          delivery: "resend-failed",
+          error: expect.objectContaining({
+            message: "The from address is invalid.",
+            name: "validation_error",
+            statusCode: 422,
+          }),
+          provider: "resend",
+          recipientDomain: "example.com",
+        }),
+        providerMessageId: null,
+        template: "account-verification",
+        userId: "user-1",
+      }),
+    );
+    expect(mocks.createSiteNotification).not.toHaveBeenCalled();
+
+    consoleError.mockRestore();
+  });
+
   it("hashes sensitive auth URLs for idempotency keys", () => {
     const key = createEmailIdempotencyKey(
       "account-verification",

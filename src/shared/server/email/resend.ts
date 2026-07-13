@@ -6,12 +6,27 @@ import { contactEmail } from "@/shared/config/contact";
 
 let resend: Resend | undefined;
 
+function readEnvValue(name: string) {
+  const value = process.env[name]?.trim();
+
+  if (!value) {
+    return undefined;
+  }
+
+  const quote = value[0];
+  if ((quote === `"` || quote === "'") && value[value.length - 1] === quote) {
+    return value.slice(1, -1).trim() || undefined;
+  }
+
+  return value;
+}
+
 export function getResend() {
   if (resend) {
     return resend;
   }
 
-  const apiKey = process.env.RESEND_API_KEY;
+  const apiKey = readEnvValue("RESEND_API_KEY");
 
   if (!apiKey) {
     throw new Error("RESEND_API_KEY is required to initialize Resend.");
@@ -23,5 +38,5 @@ export function getResend() {
 }
 
 export function getDefaultFromEmail() {
-  return process.env.EMAIL_FROM ?? `RoundDate <${contactEmail}>`;
+  return readEnvValue("EMAIL_FROM") ?? `RoundDate <${contactEmail}>`;
 }

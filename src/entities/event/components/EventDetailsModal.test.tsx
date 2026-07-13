@@ -4,6 +4,14 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { EventDetailsModal, type EventDetailsModalEvent } from "./EventDetailsModal";
 
+const toastMocks = vi.hoisted(() => ({
+  error: vi.fn(),
+}));
+
+vi.mock("@/shared/ui/Toast", () => ({
+  useToast: () => toastMocks,
+}));
+
 vi.mock("./EventDetailsMap", () => ({
   EventDetailsMap: () => (
     <div aria-label="Mapa wydarzenia" role="region">
@@ -77,13 +85,14 @@ const invalidBookingDefaults = {
 };
 
 function openBookingDialog() {
-  fireEvent.click(screen.getByRole("button", { name: /Zapisz/i }));
+  fireEvent.click(screen.getByRole("button", { name: "Opłać udział" }));
 
   return screen.getByRole("dialog", { name: /Zapis na wydarzenie/i });
 }
 
 describe("EventDetailsModal booking flow", () => {
   afterEach(() => {
+    vi.clearAllMocks();
     vi.unstubAllGlobals();
   });
 
@@ -99,6 +108,11 @@ describe("EventDetailsModal booking flow", () => {
 
     const bookingDialog = openBookingDialog();
 
+    expect(within(bookingDialog).getByTestId("event-booking-footer")).toHaveAttribute(
+      "data-layout",
+      "single",
+    );
+
     expect(within(bookingDialog).getByRole("progressbar")).toHaveAttribute("aria-valuenow", "50");
     expect(within(bookingDialog).getByLabelText(/Im/i)).toHaveValue("Alisa");
     expect(within(bookingDialog).getByLabelText("Nazwisko")).toHaveValue("Petrova");
@@ -111,6 +125,9 @@ describe("EventDetailsModal booking flow", () => {
     expect(within(bookingDialog).getByRole("progressbar")).toHaveAttribute("aria-valuenow", "100");
     expect(within(bookingDialog).getByText("129 PLN")).toBeInTheDocument();
     expect(within(bookingDialog).getByLabelText("Kod promocyjny")).toBeInTheDocument();
+    expect(
+      within(bookingDialog).queryByText(/Dane płatnicze wpisujesz wyłącznie/i),
+    ).not.toBeInTheDocument();
   }, 15000);
 
   it("dims and blurs event details behind the nested booking modal", () => {
@@ -171,6 +188,78 @@ describe("EventDetailsModal booking flow", () => {
     expect(screen.getByText(/20 miejsc/i)).toBeInTheDocument();
     expect(screen.queryByText(/dla kobiet i m/i)).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Zamknij" })).not.toBeInTheDocument();
+  });
+
+  it.each([
+    "attended",
+    "cancelled",
+    "confirmed",
+    "event-ended",
+    "no-show",
+    "refunded",
+    "waitlist",
+  ] as const)("hides the payment action for booking status %s", (status) => {
+    render(<EventDetailsModal context="booking" event={event} open status={status} />);
+
+    expect(screen.queryByRole("button", { name: "Opłać udział" })).not.toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Skontaktuj się z organizatorem" }),
+    ).toBeInTheDocument();
+  });
+
+  it("treats a past booking as ended even when its stored payment status is pending", () => {
+    render(
+      <EventDetailsModal
+        context="booking"
+        event={{
+          ...event,
+          startsAt: "2026-06-14T18:00:00.000Z",
+          statusLabel: "Wydarzenie zakończone",
+        }}
+        open
+        status="payment-pending"
+      />,
+    );
+
+    expect(screen.queryByRole("button", { name: "Opłać udział" })).not.toBeInTheDocument();
+    expect(screen.getByTestId("event-details-summary-status")).toHaveTextContent(
+      "Wydarzenie zakończone",
+    );
+    expect(screen.getByTestId("event-details-summary-status")).toHaveAttribute(
+      "data-tone",
+      "neutral",
+    );
+    expect(screen.getByRole("heading", { name: "Informacje o wydarzeniu" })).toBeInTheDocument();
+    expect(screen.queryByText("Kobiety")).not.toBeInTheDocument();
+    expect(screen.queryByText("Mężczyźni")).not.toBeInTheDocument();
+  });
+
+  it.each([
+    { startsAt: "2020-01-01T17:00:00.000Z", spotsAvailable: 5 },
+    { startsAt: "2031-06-14T17:00:00.000Z", spotsAvailable: 0 },
+  ])("hides payment for an unavailable event", (overrides) => {
+    render(<EventDetailsModal context="available" event={{ ...event, ...overrides }} open />);
+
+    expect(screen.queryByRole("button", { name: "Opłać udział" })).not.toBeInTheDocument();
+  });
+
+  it("offers a direct retry after a failed payment", () => {
+    render(<EventDetailsModal context="booking" event={event} open status="payment-failed" />);
+
+    expect(screen.getByTestId("event-details-summary-status")).not.toHaveTextContent(
+      "Płatność nieudana",
+    );
+    expect(screen.getByTestId("event-details-booking-status")).toHaveTextContent("Status zapisu");
+    expect(screen.getByText("Płatność nieudana")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Spróbuj zapłacić ponownie" }));
+
+    const bookingDialog = screen.getByRole("dialog", { name: /Zapis na wydarzenie/i });
+
+    expect(within(bookingDialog).getByRole("progressbar")).toHaveAttribute("aria-valuenow", "100");
+    expect(
+      within(bookingDialog).getByRole("button", { name: "Spróbuj zapłacić ponownie" }),
+    ).toBeInTheDocument();
+    expect(within(bookingDialog).queryByRole("button", { name: "Wstecz" })).not.toBeInTheDocument();
   });
 
   it("keeps event title, date, time and address in the main column", () => {
@@ -321,5 +410,92 @@ describe("EventDetailsModal booking flow", () => {
     await waitFor(() => {
       expect(assignMock).toHaveBeenCalledWith("https://checkout.stripe.com/c/pay/booking-1");
     });
+  });
+
+  it("sends only one checkout request when the payment form is submitted twice", async () => {
+    let resolveFetch: ((response: Response) => void) | undefined;
+    const fetchMock = vi.fn(
+      () =>
+        new Promise<Response>((resolve) => {
+          resolveFetch = resolve;
+        }),
+    );
+    const assignMock = vi.fn();
+    vi.stubGlobal("fetch", fetchMock);
+    vi.stubGlobal("location", { ...window.location, assign: assignMock });
+
+    render(
+      <EventDetailsModal
+        bookingDefaults={bookingDefaults}
+        context="available"
+        event={event}
+        open
+      />,
+    );
+
+    const bookingDialog = openBookingDialog();
+
+    fireEvent.click(within(bookingDialog).getByRole("button", { name: /Przejd/i }));
+    const bookingForm = within(bookingDialog).getByTestId("event-booking-flow");
+    fireEvent.submit(bookingForm);
+    fireEvent.submit(bookingForm);
+
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+
+    resolveFetch?.(
+      new Response(
+        JSON.stringify({
+          booking: { bookingStatus: "pending_payment", id: "booking-1" },
+          checkout: { url: "https://checkout.stripe.com/c/pay/booking-1" },
+        }),
+        {
+          headers: { "Content-Type": "application/json" },
+          status: 201,
+        },
+      ),
+    );
+
+    await waitFor(() => {
+      expect(assignMock).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  it("shows an inline error and a toast when the API returns no Stripe URL", async () => {
+    const fetchMock = vi.fn(
+      async () =>
+        new Response(
+          JSON.stringify({
+            booking: { bookingStatus: "refunded", id: "booking-1" },
+          }),
+          {
+            headers: { "Content-Type": "application/json" },
+            status: 200,
+          },
+        ),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+
+    render(
+      <EventDetailsModal
+        bookingDefaults={bookingDefaults}
+        context="available"
+        event={event}
+        open
+      />,
+    );
+
+    const bookingDialog = openBookingDialog();
+    fireEvent.click(within(bookingDialog).getByRole("button", { name: /Przejd/i }));
+    fireEvent.click(within(bookingDialog).getByRole("button", { name: /Utw/i }));
+
+    expect(
+      await within(bookingDialog).findByText(
+        "Nie otrzymaliśmy linku do płatności Stripe. Spróbuj ponownie.",
+      ),
+    ).toBeInTheDocument();
+    expect(toastMocks.error).toHaveBeenCalledWith(
+      "Nie udało się przejść do płatności",
+      "Nie otrzymaliśmy linku do płatności Stripe. Spróbuj ponownie.",
+    );
   });
 });

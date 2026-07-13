@@ -26,9 +26,12 @@ import type {
   OnboardingDay,
   OnboardingTime,
 } from "@/entities/profile/model/onboarding";
+import { PasswordRequirements } from "@/features/auth/components/PasswordRequirements";
 import type { UserPaymentHistoryItem } from "@/entities/events/server/user-payments";
 import { useI18n } from "@/shared/i18n/I18nProvider";
 import { localeLabels, locales, resolveLocale, type Locale } from "@/shared/i18n/locales";
+import { authClient } from "@/shared/lib/auth-client";
+import { isPasswordValid } from "@/shared/lib/validation/password";
 import { Button } from "@/shared/ui/Button";
 import { Input } from "@/shared/ui/Input";
 import { Modal } from "@/shared/ui/Modal";
@@ -256,6 +259,7 @@ function AccountSettings({ account }: ProfileSettingsAccountProps) {
   }));
   const [dialog, setDialog] = useState<AccountDialog>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [newPasswordValue, setNewPasswordValue] = useState("");
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
   const avatarInputRef = useRef<HTMLInputElement>(null);
   const toast = useToast();
@@ -379,18 +383,29 @@ function AccountSettings({ account }: ProfileSettingsAccountProps) {
   async function submitEmail(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const formData = new FormData(event.currentTarget);
-    const email = String(formData.get("email") ?? "");
+    const email = String(formData.get("email") ?? "")
+      .trim()
+      .toLowerCase();
+
+    if (email === accountState.email.trim().toLowerCase()) {
+      toast.error(t("profile.settingsPage.account.emailUnchanged"));
+      return;
+    }
+
     setIsSaving(true);
 
     try {
-      const response = await fetch("/api/profile/settings/email", {
-        body: JSON.stringify({ email }),
-        headers: { "Content-Type": "application/json" },
-        method: "POST",
+      const result = await authClient.changeEmail({
+        callbackURL: "/profile/settings",
+        newEmail: email,
       });
-      const data = await readApiResponse(response, t("profile.settingsPage.apiError"));
+
+      if (result.error) {
+        throw new Error(t("profile.settingsPage.account.emailSendError"));
+      }
+
       setDialog(null);
-      toast.success(data?.message || t("profile.settingsPage.account.emailConfirmationSent"));
+      toast.success(t("profile.settingsPage.account.emailConfirmationSent"));
     } catch (error) {
       toast.error(
         error instanceof Error ? error.message : t("profile.settingsPage.account.emailSendError"),
@@ -442,22 +457,18 @@ function AccountSettings({ account }: ProfileSettingsAccountProps) {
     setIsSaving(true);
 
     try {
-      const response = await fetch("/api/profile/settings/password", {
-        body: JSON.stringify({
-          currentPassword: accountState.hasPassword ? currentPassword : undefined,
-          newPassword,
-        }),
-        headers: { "Content-Type": "application/json" },
-        method: "POST",
+      const result = await authClient.changePassword({
+        currentPassword,
+        newPassword,
+        revokeOtherSessions: true,
       });
-      await readApiResponse(response, t("profile.settingsPage.apiError"));
-      setAccountState((current) => ({ ...current, hasPassword: true }));
+
+      if (result.error) {
+        throw new Error(t("profile.settingsPage.account.passwordSaveError"));
+      }
+
       setDialog(null);
-      toast.success(
-        accountState.hasPassword
-          ? t("profile.settingsPage.account.passwordSaved")
-          : t("profile.settingsPage.account.passwordAdded"),
-      );
+      toast.success(t("profile.settingsPage.account.passwordSaved"));
     } catch (error) {
       toast.error(
         error instanceof Error
@@ -469,20 +480,51 @@ function AccountSettings({ account }: ProfileSettingsAccountProps) {
     }
   }
 
+  async function requestPasswordSetup() {
+    setIsSaving(true);
+
+    try {
+      const result = await authClient.requestPasswordReset({
+        email: accountState.email,
+        redirectTo: "/reset-password",
+      });
+
+      if (result.error) {
+        throw new Error(t("profile.settingsPage.account.passwordSetupEmailError"));
+      }
+
+      setDialog(null);
+      toast.success(t("profile.settingsPage.account.passwordSetupEmailSent"));
+    } catch (error) {
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : t("profile.settingsPage.account.passwordSetupEmailError"),
+      );
+    } finally {
+      setIsSaving(false);
+    }
+  }
+
   async function deleteAccount() {
     setIsSaving(true);
 
     try {
-      const response = await fetch("/api/profile/settings/account", {
-        method: "DELETE",
+      const result = await authClient.deleteUser({
+        callbackURL: "/",
       });
-      await readApiResponse(response, t("profile.settingsPage.apiError"));
+
+      if (result.error) {
+        throw new Error(t("profile.settingsPage.account.deleteError"));
+      }
+
       toast.success(t("profile.settingsPage.account.deleteSuccess"));
       window.location.assign("/");
     } catch (error) {
       toast.error(
         error instanceof Error ? error.message : t("profile.settingsPage.account.deleteError"),
       );
+    } finally {
       setIsSaving(false);
     }
   }
@@ -561,7 +603,10 @@ function AccountSettings({ account }: ProfileSettingsAccountProps) {
             }
             icon={LockKeyhole}
             title={t("profile.settingsPage.account.password")}
-            onAction={() => setDialog("password")}
+            onAction={() => {
+              setNewPasswordValue("");
+              setDialog("password");
+            }}
           >
             {accountState.hasPassword
               ? t("profile.settingsPage.account.passwordUpdateDescription")
@@ -728,15 +773,19 @@ function AccountSettings({ account }: ProfileSettingsAccountProps) {
             ? t("profile.settingsPage.account.passwordTitleChange")
             : t("profile.settingsPage.account.passwordTitleAdd")
         }
-        onOpenChange={(open) => setDialog(open ? "password" : null)}
+        onOpenChange={(open) => {
+          setDialog(open ? "password" : null);
+
+          if (!open) {
+            setNewPasswordValue("");
+          }
+        }}
       >
-        <form className={styles.settingsModalForm} onSubmit={submitPassword} noValidate>
-          <p className={styles.settingsModalText}>
-            {accountState.hasPassword
-              ? t("profile.settingsPage.account.passwordChangeDescription")
-              : t("profile.settingsPage.account.passwordCreateDescription")}
-          </p>
-          {accountState.hasPassword ? (
+        {accountState.hasPassword ? (
+          <form className={styles.settingsModalForm} onSubmit={submitPassword} noValidate>
+            <p className={styles.settingsModalText}>
+              {t("profile.settingsPage.account.passwordChangeDescription")}
+            </p>
             <Input
               autoComplete="current-password"
               label={t("profile.settingsPage.account.passwordCurrent")}
@@ -744,30 +793,51 @@ function AccountSettings({ account }: ProfileSettingsAccountProps) {
               required
               type="password"
             />
-          ) : null}
-          <Input
-            autoComplete="new-password"
-            label={t("profile.settingsPage.account.passwordNew")}
-            name="newPassword"
-            required
-            type="password"
-          />
-          <Input
-            autoComplete="new-password"
-            label={t("profile.settingsPage.account.passwordRepeat")}
-            name="passwordConfirm"
-            required
-            type="password"
-          />
-          <div className={styles.settingsModalActions}>
-            <Button variant="outline" onClick={() => setDialog(null)}>
-              {t("common.actions.cancel")}
-            </Button>
-            <Button disabled={isSaving} isLoading={isSaving} type="submit">
-              {t("profile.settingsPage.actions.savePassword")}
-            </Button>
+            <Input
+              autoComplete="new-password"
+              label={t("profile.settingsPage.account.passwordNew")}
+              name="newPassword"
+              required
+              type="password"
+              value={newPasswordValue}
+              onChange={(event) => setNewPasswordValue(event.currentTarget.value)}
+            />
+            <PasswordRequirements password={newPasswordValue} />
+            <Input
+              autoComplete="new-password"
+              label={t("profile.settingsPage.account.passwordRepeat")}
+              name="passwordConfirm"
+              required
+              type="password"
+            />
+            <div className={styles.settingsModalActions}>
+              <Button variant="outline" onClick={() => setDialog(null)}>
+                {t("common.actions.cancel")}
+              </Button>
+              <Button
+                disabled={isSaving || !isPasswordValid(newPasswordValue)}
+                isLoading={isSaving}
+                type="submit"
+              >
+                {t("profile.settingsPage.actions.savePassword")}
+              </Button>
+            </div>
+          </form>
+        ) : (
+          <div className={styles.settingsModalForm}>
+            <p className={styles.settingsModalText}>
+              {t("profile.settingsPage.account.passwordCreateDescription")}
+            </p>
+            <div className={styles.settingsModalActions}>
+              <Button variant="outline" onClick={() => setDialog(null)}>
+                {t("common.actions.cancel")}
+              </Button>
+              <Button disabled={isSaving} isLoading={isSaving} onClick={requestPasswordSetup}>
+                {t("profile.settingsPage.actions.sendPasswordLink")}
+              </Button>
+            </div>
           </div>
-        </form>
+        )}
       </Modal>
 
       <Modal

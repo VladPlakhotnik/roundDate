@@ -151,4 +151,32 @@ describe("profile bookings API", () => {
     await expect(response.json()).resolves.toEqual({ booking });
     expect(mocks.createBookingCheckoutSession).not.toHaveBeenCalled();
   });
+
+  it("returns a clear conflict for an already confirmed booking", async () => {
+    const booking = {
+      bookingId: "booking-1",
+      bookingStatus: "confirmed",
+      currency: "PLN",
+      id: "event-1",
+      paymentStatus: "paid",
+      price: 129,
+      status: "confirmed",
+      title: "RoundDate 25-35",
+    };
+    mocks.createUserBooking.mockResolvedValue({ booking, status: 200 });
+
+    const response = await POST(
+      new Request("https://rounddate.example/api/profile/bookings", {
+        body: JSON.stringify({ eventId: "event-1" }),
+        headers: { "Content-Type": "application/json" },
+        method: "POST",
+      }),
+    );
+
+    await expect(response.json()).resolves.toEqual({
+      error: "Masz już potwierdzony udział w tym wydarzeniu.",
+    });
+    expect(response.status).toBe(409);
+    expect(mocks.createBookingCheckoutSession).not.toHaveBeenCalled();
+  });
 });

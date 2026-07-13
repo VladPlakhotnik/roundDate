@@ -320,7 +320,7 @@ const paymentDateFormatter = new Intl.DateTimeFormat("pl-PL", {
   year: "numeric",
 });
 
-const eventDateFormatter = new Intl.DateTimeFormat("ru-RU", {
+const eventDateFormatter = new Intl.DateTimeFormat("pl-PL", {
   day: "numeric",
   month: "long",
   timeZone: "Europe/Warsaw",
@@ -347,6 +347,33 @@ export type UserPaymentHistoryItem = {
   venueName: string;
 };
 
+type PaymentHistoryRow = {
+  bookingId: string;
+  bookingStatus: BookingStatus;
+  status: PaymentStatus;
+};
+
+export function filterVisiblePaymentHistoryRows<T extends PaymentHistoryRow>(rows: T[]) {
+  const pendingBookingIds = new Set<string>();
+
+  return rows.filter((row) => {
+    if (row.status !== "pending") {
+      return true;
+    }
+
+    if (row.bookingStatus !== "pending" && row.bookingStatus !== "pending_payment") {
+      return false;
+    }
+
+    if (pendingBookingIds.has(row.bookingId)) {
+      return false;
+    }
+
+    pendingBookingIds.add(row.bookingId);
+    return true;
+  });
+}
+
 export async function getUserPaymentHistory(input: {
   headers: Headers;
 }): Promise<UserPaymentHistoryItem[]> {
@@ -359,6 +386,8 @@ export async function getUserPaymentHistory(input: {
   const rows = await getDb()
     .select({
       amountGroszy: payments.amountGroszy,
+      bookingId: bookings.id,
+      bookingStatus: bookings.status,
       currency: payments.currency,
       eventStartsAt: events.startsAt,
       eventTitle: events.title,
@@ -377,7 +406,7 @@ export async function getUserPaymentHistory(input: {
     .where(eq(bookings.userId, session.user.id))
     .orderBy(desc(payments.createdAt));
 
-  return rows.map((row) => {
+  return filterVisiblePaymentHistoryRows(rows).map((row) => {
     const paidAt = row.paidAt ?? (row.status === "paid" ? row.updatedAt : null);
 
     return {

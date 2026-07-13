@@ -44,7 +44,7 @@ describe("CancelBookingButton", () => {
     await userEvent.click(screen.getByRole("button", { name: /Anuluj/i }));
 
     expect(screen.getByRole("heading", { name: /Anuluj/i })).toBeInTheDocument();
-    expect(screen.getByText(/12 godzin/i)).toBeInTheDocument();
+    expect(screen.getByText(/24 godziny/i)).toBeInTheDocument();
 
     await userEvent.click(screen.getByRole("button", { name: /Potwierd/i }));
 
@@ -57,5 +57,26 @@ describe("CancelBookingButton", () => {
       expect(refreshMock).toHaveBeenCalled();
     });
     expect(screen.getByRole("status")).toHaveTextContent("Zwrot zosta");
+  });
+
+  it("explains and blocks cancellation inside the 24 hour window", async () => {
+    const startsAt = new Date(Date.now() + 23 * 60 * 60 * 1000).toISOString();
+
+    render(
+      <ToastProvider>
+        <CancelBookingButton
+          bookingId="booking-1"
+          eventTitle="RoundDate 25-35"
+          startsAt={startsAt}
+        />
+      </ToastProvider>,
+    );
+
+    await userEvent.click(screen.getByRole("button", { name: /Anuluj/i }));
+
+    expect(screen.getByText("Anulowanie niedostępne")).toBeInTheDocument();
+    expect(screen.getByText(/24 godziny/i)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Potwierdź anulowanie" })).toBeDisabled();
+    expect(fetch).not.toHaveBeenCalled();
   });
 });

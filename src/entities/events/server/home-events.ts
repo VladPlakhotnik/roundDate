@@ -19,7 +19,9 @@ export type BookingBadgeStatus =
   | "attended"
   | "cancelled"
   | "confirmed"
+  | "event-ended"
   | "no-show"
+  | "payment-failed"
   | "payment-pending"
   | "refunded"
   | "waitlist";
@@ -102,6 +104,56 @@ export type EventListFilters = {
   tag?: EventListTag;
   useFallback?: boolean;
 };
+
+export type EventBookingBlockReason = "past" | "sold-out" | "unavailable";
+
+export function isRestartableBookingStatus(status: BookingStatus) {
+  return status === "cancelled" || status === "refunded";
+}
+
+export function getEventBookingBlockReason(input: {
+  hasExistingBooking: boolean;
+  now?: Date;
+  spotsAvailable: number;
+  startsAt: Date;
+  status: EventStatus;
+}): EventBookingBlockReason | null {
+  const now = input.now ?? new Date();
+
+  if (input.startsAt.getTime() <= now.getTime()) {
+    return "past";
+  }
+
+  if (["cancelled", "draft", "finished"].includes(input.status)) {
+    return "unavailable";
+  }
+
+  if (!input.hasExistingBooking && (input.status === "sold_out" || input.spotsAvailable <= 0)) {
+    return "sold-out";
+  }
+
+  if (!input.hasExistingBooking && input.status !== "published") {
+    return "unavailable";
+  }
+
+  return null;
+}
+
+export function getEffectiveEventStatus(
+  status: EventStatus,
+  startsAt: Date,
+  now = new Date(),
+): EventStatus {
+  if (
+    (status === "published" || status === "sold_out") &&
+    !Number.isNaN(startsAt.getTime()) &&
+    startsAt.getTime() <= now.getTime()
+  ) {
+    return "finished";
+  }
+
+  return status;
+}
 
 export type UserBookingEvent = Omit<HomeEvent, "status"> & {
   attendeeNumber: number | null;
@@ -293,6 +345,7 @@ const dateFormatter = new Intl.DateTimeFormat("pl-PL", {
   day: "numeric",
   month: "long",
   timeZone: "Europe/Warsaw",
+  year: "numeric",
 });
 
 const timeFormatter = new Intl.DateTimeFormat("pl-PL", {
@@ -373,16 +426,16 @@ function getStatusLabel(status: EventStatus, spotsAvailable: number) {
 }
 
 function getBadge(status: EventStatus, spotsAvailable: number, badge?: string | null) {
-  if (badge) {
-    return normalizeLegacyBadge(badge);
-  }
-
   if (status === "finished") {
     return "Zakończone";
   }
 
   if (status === "cancelled") {
     return "Odwołane";
+  }
+
+  if (badge) {
+    return normalizeLegacyBadge(badge);
   }
 
   if (status === "sold_out" || spotsAvailable <= 0) {
@@ -447,12 +500,13 @@ function normalizeEvent(input: {
 }): HomeEvent {
   const startsAt = new Date(input.startsAt);
   const updatedAt = new Date(input.updatedAt ?? startsAt);
+  const status = getEffectiveEventStatus(input.status, startsAt);
   const city = normalizeLegacyCity(input.city);
   const weekday = weekdayFormatter.format(startsAt);
   const fallbackAvailability = splitEventGenderAvailability(input.spotsAvailable);
   const femaleSpotsAvailable = input.femaleSpotsAvailable ?? fallbackAvailability.female;
   const maleSpotsAvailable = input.maleSpotsAvailable ?? fallbackAvailability.male;
-  const badge = getBadge(input.status, input.spotsAvailable, input.badge);
+  const badge = getBadge(status, input.spotsAvailable, input.badge);
   const dateLabel = dateFormatter.format(startsAt);
 
   return {
@@ -502,8 +556,8 @@ function normalizeEvent(input: {
     slug: input.slug,
     spotsAvailable: input.spotsAvailable,
     startsAt: startsAt.toISOString(),
-    status: input.status,
-    statusLabel: getStatusLabel(input.status, input.spotsAvailable),
+    status,
+    statusLabel: getStatusLabel(status, input.spotsAvailable),
     tag: getEventTag(startsAt),
     timeLabel: timeFormatter.format(startsAt),
     title: input.title,
@@ -853,17 +907,20 @@ export async function getEventBySlug(slug: string): Promise<HomeEvent | null> {
   }
 }
 
-function getBookingBadgeStatus(status: BookingStatus): BookingBadgeStatus {
+export function getBookingBadgeStatus(input: {
+  eventStatus: EventStatus;
+  now?: Date;
+  startsAt: string;
+  status: BookingStatus;
+}): BookingBadgeStatus {
+  const { status } = input;
+
   if (status === "attended") {
     return "attended";
   }
 
   if (status === "cancelled") {
     return "cancelled";
-  }
-
-  if (status === "confirmed") {
-    return "confirmed";
   }
 
   if (status === "no_show") {
@@ -874,6 +931,23 @@ function getBookingBadgeStatus(status: BookingStatus): BookingBadgeStatus {
     return "refunded";
   }
 
+  const startsAt = new Date(input.startsAt);
+
+  if (
+    input.eventStatus === "finished" ||
+    (!Number.isNaN(startsAt.getTime()) && startsAt.getTime() <= (input.now ?? new Date()).getTime())
+  ) {
+    return "event-ended";
+  }
+
+  if (status === "confirmed") {
+    return "confirmed";
+  }
+
+  if (status === "payment_failed") {
+    return "payment-failed";
+  }
+
   if (status === "waitlisted") {
     return "waitlist";
   }
@@ -881,8 +955,22 @@ function getBookingBadgeStatus(status: BookingStatus): BookingBadgeStatus {
   return "payment-pending";
 }
 
+export function selectLatestBookingPaymentRows<T extends { bookingId: string }>(rows: T[]) {
+  const seenBookingIds = new Set<string>();
+
+  return rows.filter((row) => {
+    if (seenBookingIds.has(row.bookingId)) {
+      return false;
+    }
+
+    seenBookingIds.add(row.bookingId);
+    return true;
+  });
+}
+
 function getBookingPaymentLabel(input: {
   bookingStatus: BookingStatus;
+  eventEnded: boolean;
   paymentStatus: "failed" | "paid" | "pending" | "refunded" | null;
   priceLabel: string;
 }) {
@@ -910,6 +998,10 @@ function getBookingPaymentLabel(input: {
     return `Opłacono: ${input.priceLabel}`;
   }
 
+  if (input.eventEnded) {
+    return "Wydarzenie zakończone";
+  }
+
   if (input.paymentStatus === "failed" || input.bookingStatus === "payment_failed") {
     return `Płatność nieudana: ${input.priceLabel}`;
   }
@@ -924,7 +1016,15 @@ function toUserBookingEvent(input: {
   event: HomeEvent;
   paymentStatus: "failed" | "paid" | "pending" | "refunded" | null;
 }): UserBookingEvent {
-  const status = getBookingBadgeStatus(input.bookingStatus);
+  const startsAt = new Date(input.event.startsAt);
+  const eventEnded =
+    input.event.status === "finished" ||
+    (!Number.isNaN(startsAt.getTime()) && startsAt.getTime() <= Date.now());
+  const status = getBookingBadgeStatus({
+    eventStatus: input.event.status,
+    startsAt: input.event.startsAt,
+    status: input.bookingStatus,
+  });
 
   return {
     ...input.event,
@@ -934,6 +1034,7 @@ function toUserBookingEvent(input: {
     eventStatus: input.event.status,
     paymentLabel: getBookingPaymentLabel({
       bookingStatus: input.bookingStatus,
+      eventEnded,
       paymentStatus: input.paymentStatus,
       priceLabel: input.event.priceLabel,
     }),
@@ -968,9 +1069,9 @@ export async function getUserBookings(input: {
       .leftJoin(venues, eq(events.venueId, venues.id))
       .leftJoin(payments, eq(payments.bookingId, bookings.id))
       .where(eq(bookings.userId, session.user.id))
-      .orderBy(asc(events.startsAt), desc(bookings.createdAt));
+      .orderBy(asc(events.startsAt), desc(bookings.createdAt), desc(payments.createdAt));
 
-    const normalized = rows.map((row) =>
+    const normalized = selectLatestBookingPaymentRows(rows).map((row) =>
       toUserBookingEvent({
         attendeeNumber: row.attendeeNumber,
         bookingId: row.bookingId,
@@ -1033,6 +1134,58 @@ export async function createUserBooking(input: {
       .from(bookings)
       .where(and(eq(bookings.userId, session.user.id), eq(bookings.eventId, input.eventId)))
       .limit(1);
+    const restartExistingBooking = existingBooking
+      ? isRestartableBookingStatus(existingBooking.status)
+      : false;
+    const bookingBlockReason = getEventBookingBlockReason({
+      hasExistingBooking: Boolean(existingBooking) && !restartExistingBooking,
+      spotsAvailable: event.spotsAvailable,
+      startsAt: new Date(event.startsAt),
+      status: event.status,
+    });
+
+    if (bookingBlockReason === "past") {
+      return { booking: null, error: t("api.bookings.eventPast"), status: 409 };
+    }
+
+    if (bookingBlockReason === "sold-out") {
+      return { booking: null, error: t("api.bookings.eventSoldOut"), status: 409 };
+    }
+
+    if (bookingBlockReason === "unavailable") {
+      return { booking: null, error: t("api.bookings.eventUnavailable"), status: 409 };
+    }
+
+    if (existingBooking && restartExistingBooking) {
+      const [restartedBooking] = await db
+        .update(bookings)
+        .set({
+          status: "pending_payment",
+          stripeCheckoutSessionId: null,
+          updatedAt: new Date(),
+        })
+        .where(eq(bookings.id, existingBooking.id))
+        .returning({
+          attendeeNumber: bookings.attendeeNumber,
+          id: bookings.id,
+          status: bookings.status,
+        });
+
+      if (!restartedBooking) {
+        return { booking: null, error: t("api.bookings.createError"), status: 500 };
+      }
+
+      return {
+        booking: toUserBookingEvent({
+          attendeeNumber: restartedBooking.attendeeNumber,
+          bookingId: restartedBooking.id,
+          bookingStatus: restartedBooking.status,
+          event,
+          paymentStatus: "pending",
+        }),
+        status: 200,
+      };
+    }
 
     if (existingBooking) {
       return {
@@ -1047,19 +1200,15 @@ export async function createUserBooking(input: {
       };
     }
 
-    const bookingStatus: BookingStatus =
-      event.status === "sold_out" || event.spotsAvailable <= 0 ? "waitlisted" : "pending_payment";
-    const attendeeNumber =
-      bookingStatus === "waitlisted"
-        ? null
-        : getNextAttendeeNumber(
-            (
-              await db
-                .select({ attendeeNumber: bookings.attendeeNumber })
-                .from(bookings)
-                .where(eq(bookings.eventId, input.eventId))
-            ).map((booking) => booking.attendeeNumber),
-          );
+    const bookingStatus: BookingStatus = "pending_payment";
+    const attendeeNumber = getNextAttendeeNumber(
+      (
+        await db
+          .select({ attendeeNumber: bookings.attendeeNumber })
+          .from(bookings)
+          .where(eq(bookings.eventId, input.eventId))
+      ).map((booking) => booking.attendeeNumber),
+    );
     const [createdBooking] = await db
       .insert(bookings)
       .values({

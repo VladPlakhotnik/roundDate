@@ -48,13 +48,38 @@ export function CancelBookingButton({
   const toast = useToast();
   const [open, setOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [cancellationCheckedAt, setCancellationCheckedAt] = useState(() => new Date());
   const cancellationState = useMemo(
-    () => getBookingCancellationState({ startsAt: new Date(startsAt) }),
-    [startsAt],
+    () =>
+      getBookingCancellationState({
+        now: cancellationCheckedAt,
+        startsAt: new Date(startsAt),
+      }),
+    [cancellationCheckedAt, startsAt],
   );
   const deadlineLabel = deadlineFormatter.format(cancellationState.deadlineAt);
 
+  function handleOpenChange(nextOpen: boolean) {
+    if (nextOpen) {
+      setCancellationCheckedAt(new Date());
+    }
+
+    setOpen(nextOpen);
+  }
+
   async function cancelBooking() {
+    const checkedAt = new Date();
+    const latestCancellationState = getBookingCancellationState({
+      now: checkedAt,
+      startsAt: new Date(startsAt),
+    });
+
+    setCancellationCheckedAt(checkedAt);
+
+    if (!latestCancellationState.canCancel) {
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
@@ -100,7 +125,7 @@ export function CancelBookingButton({
           {t("profile.bookings.cancel.title")}
         </Button>
       }
-      onOpenChange={setOpen}
+      onOpenChange={handleOpenChange}
     >
       <div className={styles.bookingCancelContent}>
         <div

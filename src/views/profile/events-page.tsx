@@ -115,6 +115,18 @@ function getEventStartsAt(event: ProfileEvent) {
   return `${event.dateValue}T${event.timeLabel}:00.000+02:00`;
 }
 
+export function filterBookableProfileEvents(events: ProfileEvent[], now = new Date()) {
+  return events.filter((event) => {
+    const startsAt = new Date(getEventStartsAt(event));
+
+    return (
+      !Number.isNaN(startsAt.getTime()) &&
+      startsAt.getTime() > now.getTime() &&
+      event.spotsAvailable > 0
+    );
+  });
+}
+
 function eventToDetailsEvent(
   event: ProfileEvent,
   t: (key: string, values?: Record<string, number | string>) => string,
@@ -627,7 +639,9 @@ export function ProfileEventsView({
   const [query, setQuery] = useState("");
   const [activeTag, setActiveTag] = useState<EventTag>("all");
   const [viewMode, setViewMode] = useState<ViewMode>("list");
-  const [serverEvents, setServerEvents] = useState<ProfileEvent[]>(events);
+  const [serverEvents, setServerEvents] = useState<ProfileEvent[]>(() =>
+    filterBookableProfileEvents(events),
+  );
   const [selectedMapEvent, setSelectedMapEvent] = useState<ProfileEvent | null>(null);
   const [ageRange, setAgeRange] = useState<RangeSliderValue>(DEFAULT_AGE_RANGE);
   const [dateRange, setDateRange] = useState<DateRangeValue>({});
@@ -717,7 +731,9 @@ export function ProfileEventsView({
           throw new Error("Failed to load events");
         }
 
-        setServerEvents(Array.isArray(payload.events) ? payload.events : []);
+        setServerEvents(
+          filterBookableProfileEvents(Array.isArray(payload.events) ? payload.events : []),
+        );
       } catch (error) {
         if (!controller.signal.aborted) {
           console.error("Failed to load filtered events", error);
@@ -770,7 +786,7 @@ export function ProfileEventsView({
     setViewMode("list");
     setOpenFilter(null);
     setIsMobileFiltersOpen(false);
-    setServerEvents(events);
+    setServerEvents(filterBookableProfileEvents(events));
   }
 
   return (

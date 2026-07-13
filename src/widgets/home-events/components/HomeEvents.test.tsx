@@ -1,4 +1,4 @@
-import { render } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import { createElement } from "react";
 import { describe, expect, it, vi } from "vitest";
 
@@ -25,7 +25,7 @@ const baseEvent: HomeEvent = {
   city: "Gdańsk",
   conversationMinutes: 10,
   currency: "PLN",
-  dateLabel: "24 maja",
+  dateLabel: "24 maja 2031",
   dateValue: "2031-05-24",
   description: "Test event",
   district: "Stare Miasto",
@@ -76,6 +76,13 @@ function eventWithId(id: string): HomeEvent {
 }
 
 describe("HomeEvents", () => {
+  it("hides the year in the compact date badge", () => {
+    render(<HomeEvents events={[baseEvent]} isAuthenticated />);
+
+    expect(screen.getByLabelText("24 maja")).not.toHaveTextContent("2031");
+    expect(screen.getByText(/24 maja 2031,/)).toBeInTheDocument();
+  });
+
   it("marks the visible card count so incomplete rows can be centered", () => {
     const { container } = render(
       <I18nProvider locale="pl">

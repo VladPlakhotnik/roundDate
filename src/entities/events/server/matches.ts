@@ -123,13 +123,14 @@ export type ProfileMatchEvent =
       unlocksAt: string;
     };
 
-const eventDateFormatter = new Intl.DateTimeFormat("ru-RU", {
+const eventDateFormatter = new Intl.DateTimeFormat("pl-PL", {
   day: "numeric",
   month: "long",
   timeZone: "Europe/Warsaw",
+  year: "numeric",
 });
 
-const eventTimeFormatter = new Intl.DateTimeFormat("ru-RU", {
+const eventTimeFormatter = new Intl.DateTimeFormat("pl-PL", {
   hour: "2-digit",
   minute: "2-digit",
   timeZone: "Europe/Warsaw",
@@ -232,21 +233,34 @@ export function getProfileMatchResultState(input: {
   now?: Date;
   startsAt: Date;
 }) {
+  if (input.startsAt > (input.now ?? new Date())) {
+    return {
+      state: "pending" as const,
+      unlocksAt: "po zakończeniu wydarzenia",
+    };
+  }
+
   if (readMatchResultsPublishedAt(input.metadata)) {
     return { state: "results" as const };
   }
 
-  if (input.startsAt > (input.now ?? new Date()) && input.eventStatus !== "finished") {
-    return {
-      state: "pending" as const,
-      unlocksAt: "po zakonczeniu wydarzenia",
-    };
-  }
-
   return {
     state: "pending" as const,
-    unlocksAt: "po publikacji wynikow",
+    unlocksAt: "po publikacji wyników",
   };
+}
+
+const profileMatchBookingStatuses = new Set<BookingStatus>(["attended", "confirmed"]);
+
+export function isProfileMatchBookingEligible(input: {
+  bookingStatus: BookingStatus;
+  now?: Date;
+  startsAt: Date;
+}) {
+  return (
+    profileMatchBookingStatuses.has(input.bookingStatus) &&
+    input.startsAt <= (input.now ?? new Date())
+  );
 }
 
 export function getMatchResultCounts(input: { bookingIds: string[]; likes: EventLikePair[] }) {
@@ -785,6 +799,7 @@ export async function getUserMatchEvents(input: {
     const userBookingRows = await db
       .select({
         bookingId: bookings.id,
+        bookingStatus: bookings.status,
         eventId: bookings.eventId,
         eventImageSrc: events.imageSrc,
         eventMetadata: events.metadata,
@@ -800,7 +815,13 @@ export async function getUserMatchEvents(input: {
       .leftJoin(venues, eq(events.venueId, venues.id))
       .where(eq(bookings.userId, session.user.id))
       .orderBy(desc(events.startsAt));
-    const eventIds = [...new Set(userBookingRows.map((booking) => booking.eventId))];
+    const eligibleBookingRows = userBookingRows.filter((booking) =>
+      isProfileMatchBookingEligible({
+        bookingStatus: booking.bookingStatus,
+        startsAt: new Date(booking.startsAt),
+      }),
+    );
+    const eventIds = [...new Set(eligibleBookingRows.map((booking) => booking.eventId))];
 
     if (eventIds.length === 0) {
       return [];
@@ -837,7 +858,7 @@ export async function getUserMatchEvents(input: {
       participantRows.map((participant) => [participant.bookingId, participant]),
     );
 
-    return userBookingRows.map((booking) => {
+    return eligibleBookingRows.map((booking) => {
       const startsAt = new Date(booking.startsAt);
       const resultState = getProfileMatchResultState({
         eventStatus: booking.eventStatus,

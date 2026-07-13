@@ -110,12 +110,11 @@ const emailCopy = {
     accountVerification: {
       action: "Confirm email",
       alt: "RoundDate envelope",
-      body: "Click the button below to confirm your email address and finish setting up your account.",
+      body: "Click the button below to confirm this email address for your RoundDate account.",
       fallbackGreeting: "Hi!",
       headline: "Confirm your email",
-      note:
-        "If you did not create an account in RoundDate, you can safely ignore this message.",
-      preheader: "Confirm your email and activate your RoundDate account.",
+      note: "If you did not create an account in RoundDate, you can safely ignore this message.",
+      preheader: "Confirm the email address for your RoundDate account.",
       subject: "RoundDate: confirm email",
       title: "RoundDate - Email confirmation",
     },
@@ -197,12 +196,11 @@ const emailCopy = {
     accountVerification: {
       action: "Potwierdź email",
       alt: "Koperta RoundDate",
-      body: "Kliknij przycisk poniżej, aby potwierdzić adres email i dokończyć konfigurację konta.",
+      body: "Kliknij przycisk poniżej, aby potwierdzić ten adres email dla konta RoundDate.",
       fallbackGreeting: "Cześć!",
       headline: "Potwierdź swój email",
-      note:
-        "Jeśli to nie Ty zakładałeś konto w RoundDate, możesz bezpiecznie zignorować tę wiadomość.",
-      preheader: "Potwierdź email i aktywuj konto RoundDate.",
+      note: "Jeśli to nie Ty zakładałeś konto w RoundDate, możesz bezpiecznie zignorować tę wiadomość.",
+      preheader: "Potwierdź adres email dla konta RoundDate.",
       subject: "RoundDate: potwierdz email",
       title: "RoundDate - Potwierdzenie email",
     },
@@ -270,7 +268,8 @@ const emailCopy = {
       action: "Ustaw nowe hasło",
       alt: "Bezpieczne konto RoundDate",
       body: "Otrzymaliśmy prośbę o ustawienie nowego hasła do Twojego konta.",
-      bodySecond: "Jeśli to była Twoja prośba, użyj przycisku poniżej. Link jest ograniczony czasowo.",
+      bodySecond:
+        "Jeśli to była Twoja prośba, użyj przycisku poniżej. Link jest ograniczony czasowo.",
       fallbackGreeting: "Cześć!",
       headline: "Odzyskiwanie hasła",
       note: "Dla bezpieczeństwa nie przekazuj tego linku innym osobom.",
@@ -682,10 +681,7 @@ export function accountVerificationEmail(input: {
       ? `Hi, ${input.name}!`
       : `Cześć, ${input.name}!`
     : copy.fallbackGreeting;
-  const body = [
-    greeting,
-    copy.body,
-  ];
+  const body = [greeting, copy.body];
 
   return renderEmail({
     action: {
@@ -724,11 +720,7 @@ export function passwordResetEmail(input: {
       ? `Hi, ${input.name}!`
       : `Cześć, ${input.name}!`
     : copy.fallbackGreeting;
-  const body = [
-    greeting,
-    copy.body,
-    copy.bodySecond,
-  ];
+  const body = [greeting, copy.body, copy.bodySecond];
 
   return renderEmail({
     action: {
@@ -914,10 +906,7 @@ export function newEventsEmail(input: {
     },
     afterHeroHtml: eventsHtml,
     bodyHtml: paragraph(copy.description),
-    bodyText: [
-      copy.description,
-      ...eventCardsText(eventCards),
-    ],
+    bodyText: [copy.description, ...eventCardsText(eventCards)],
     assets: eventCards
       .map((event) => (event.imageSrc ? localPublicAsset(event.imageSrc) : null))
       .filter(isEmailAsset),

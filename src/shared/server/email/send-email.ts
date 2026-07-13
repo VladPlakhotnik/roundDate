@@ -17,6 +17,8 @@ type EmailTag = {
   value: string;
 };
 
+type EmailDelivery = "local-disabled" | "resend" | "resend-failed";
+
 export type SendEmailInput = {
   html: string;
   idempotencyKey?: string;
@@ -88,16 +90,43 @@ function getDefaultIdempotencyKey(input: SendEmailInput) {
   return undefined;
 }
 
-function buildEmailEventMetadata(input: SendEmailInput, delivery: "local-disabled" | "resend") {
+function serializeEmailError(error: unknown) {
+  if (!error || typeof error !== "object") {
+    return { message: String(error) };
+  }
+
+  const value = error as {
+    code?: unknown;
+    message?: unknown;
+    name?: unknown;
+    status?: unknown;
+    statusCode?: unknown;
+  };
+
+  return {
+    code: typeof value.code === "string" ? value.code : undefined,
+    message: typeof value.message === "string" ? value.message : "Unknown email provider error.",
+    name: typeof value.name === "string" ? value.name : undefined,
+    status: typeof value.status === "number" ? value.status : undefined,
+    statusCode: typeof value.statusCode === "number" ? value.statusCode : undefined,
+  };
+}
+
+function buildEmailEventMetadata(
+  input: SendEmailInput,
+  delivery: EmailDelivery,
+  extra?: Record<string, unknown>,
+) {
   const tags = buildEmailTags(input);
   const idempotencyKey = getDefaultIdempotencyKey(input);
 
   return {
     ...input.metadata,
+    ...extra,
     delivery,
     from: getDefaultFromEmail(),
     idempotencyKey,
-    provider: delivery === "resend" ? "resend" : "local",
+    provider: delivery === "local-disabled" ? "local" : "resend",
     recipientDomain: getRecipientDomain(input.to),
     subject: input.subject,
     tags: Object.fromEntries(tags.map((tag) => [tag.name, tag.value])),
@@ -106,7 +135,7 @@ function buildEmailEventMetadata(input: SendEmailInput, delivery: "local-disable
 
 async function createNotificationForEmail(
   input: SendEmailInput,
-  delivery: "local-disabled" | "resend",
+  delivery: EmailDelivery,
   providerMessageId: null | string,
 ) {
   if (!input.userId || input.siteNotification === false) {
@@ -175,6 +204,26 @@ export async function sendEmail(input: SendEmailInput) {
   );
 
   if (result.error) {
+    const error = serializeEmailError(result.error);
+
+    console.error("[email/resend-failed]", {
+      error,
+      recipientDomain: getRecipientDomain(input.to),
+      template: input.template,
+      userId: input.userId ?? null,
+    });
+
+    try {
+      await db.insert(emailEvents).values({
+        metadata: buildEmailEventMetadata(input, "resend-failed", { error }),
+        providerMessageId: null,
+        template: input.template,
+        userId: input.userId ?? null,
+      });
+    } catch (eventError) {
+      console.error("[email/resend-failed-event-log]", serializeEmailError(eventError));
+    }
+
     throw new Error(result.error.message);
   }
 

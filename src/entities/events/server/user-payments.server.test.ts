@@ -42,7 +42,7 @@ describe("cancelUserBooking", () => {
     expect(deps.getBookingForCancellation).not.toHaveBeenCalled();
   });
 
-  it("blocks cancellations after the 12 hour deadline", async () => {
+  it("blocks cancellations after the 24 hour deadline", async () => {
     const deps = createDeps({
       getBookingForCancellation: vi.fn().mockResolvedValue({
         bookingId: "booking-1",
@@ -60,13 +60,13 @@ describe("cancelUserBooking", () => {
       {
         bookingId: "booking-1",
         headers: new Headers(),
-        now: new Date("2031-05-24T05:00:01.000Z"),
+        now: new Date("2031-05-23T17:00:01.000Z"),
       },
       deps,
     );
 
     expect(result).toMatchObject({
-      error: "Udział można anulować najpóźniej 12 godzin przed rozpoczęciem wydarzenia.",
+      error: "Udział można anulować najpóźniej 24 godziny przed rozpoczęciem wydarzenia.",
       status: 409,
     });
     expect(deps.createRefund).not.toHaveBeenCalled();
@@ -92,7 +92,7 @@ describe("cancelUserBooking", () => {
       {
         bookingId: "booking-1",
         headers: new Headers(),
-        now: new Date("2031-05-24T05:00:00.000Z"),
+        now: new Date("2031-05-23T17:00:00.000Z"),
       },
       deps,
     );
@@ -110,7 +110,7 @@ describe("cancelUserBooking", () => {
     expect(deps.saveRefundedBooking).toHaveBeenCalledWith({
       bookingId: "booking-1",
       paymentId: "payment-1",
-      refundedAt: new Date("2031-05-24T05:00:00.000Z"),
+      refundedAt: new Date("2031-05-23T17:00:00.000Z"),
       stripeRefundId: "re_test_1",
     });
   });
@@ -133,7 +133,7 @@ describe("cancelUserBooking", () => {
       {
         bookingId: "booking-1",
         headers: new Headers(),
-        now: new Date("2031-05-24T05:00:00.000Z"),
+        now: new Date("2031-05-23T17:00:00.000Z"),
       },
       deps,
     );
@@ -148,7 +148,7 @@ describe("cancelUserBooking", () => {
     expect(deps.saveCancelledBooking).toHaveBeenCalledWith({
       bookingId: "booking-1",
       failedPaymentId: "payment-1",
-      updatedAt: new Date("2031-05-24T05:00:00.000Z"),
+      updatedAt: new Date("2031-05-23T17:00:00.000Z"),
     });
   });
 
@@ -172,7 +172,7 @@ describe("cancelUserBooking", () => {
         {
           bookingId: "booking-1",
           headers: new Headers(),
-          now: new Date("2031-05-24T05:00:00.000Z"),
+          now: new Date("2031-05-23T17:00:00.000Z"),
         },
         deps,
       ),

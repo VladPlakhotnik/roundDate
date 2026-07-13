@@ -8,6 +8,9 @@ type GoogleAnalyticsProps = {
   measurementId: string | undefined;
 };
 
+const shouldShowAnalyticsConsentBanner =
+  process.env.NEXT_PUBLIC_SHOW_ANALYTICS_CONSENT_BANNER === "true";
+
 function normalizeMeasurementId(measurementId: string | undefined) {
   const trimmed = measurementId?.trim();
 
@@ -74,7 +77,9 @@ export function GoogleAnalytics({ measurementId }: GoogleAnalyticsProps) {
       <Suspense fallback={null}>
         <GoogleAnalyticsPageViews measurementId={safeMeasurementId} />
       </Suspense>
-      <AnalyticsConsentBanner measurementId={safeMeasurementId} />
+      {shouldShowAnalyticsConsentBanner ? (
+        <AnalyticsConsentBanner measurementId={safeMeasurementId} />
+      ) : null}
     </>
   );
 }

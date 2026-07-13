@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 import { emailSchema } from "@/shared/lib/validation/contact";
+import { passwordSchema } from "@/shared/lib/validation/password";
 
 export const loginSchema = z.object({
   email: emailSchema,
@@ -10,7 +11,7 @@ export const loginSchema = z.object({
 export const registerSchema = z.object({
   name: z.string().min(2, "Wpisz imię."),
   email: emailSchema,
-  password: z.string().min(8, "Minimum 8 znaków."),
+  password: passwordSchema,
 });
 
 export const forgotPasswordSchema = z.object({
@@ -19,7 +20,7 @@ export const forgotPasswordSchema = z.object({
 
 export const resetPasswordSchema = z
   .object({
-    password: z.string().min(8, "Minimum 8 znaków."),
+    password: passwordSchema,
     passwordConfirm: z.string().min(1, "Powtórz hasło."),
   })
   .refine((data) => data.password === data.passwordConfirm, {

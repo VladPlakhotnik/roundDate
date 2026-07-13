@@ -45,7 +45,7 @@ describe("profile booking cancel API", () => {
 
   it("returns a service error with its original status", async () => {
     cancelUserBookingMock.mockResolvedValue({
-      error: "Udział można anulować najpóźniej 12 godzin przed rozpoczęciem wydarzenia.",
+      error: "Udział można anulować najpóźniej 24 godziny przed rozpoczęciem wydarzenia.",
       status: 409,
     });
 
@@ -59,7 +59,7 @@ describe("profile booking cancel API", () => {
     );
 
     await expect(response.json()).resolves.toEqual({
-      error: "Udział można anulować najpóźniej 12 godzin przed rozpoczęciem wydarzenia.",
+      error: "Udział można anulować najpóźniej 24 godziny przed rozpoczęciem wydarzenia.",
     });
     expect(response.status).toBe(409);
   });
@@ -84,7 +84,7 @@ describe("profile booking cancel API", () => {
     const input = cancelUserBookingMock.mock.calls[0]?.[0];
 
     expect(input.t("api.bookings.tooLate")).toBe(
-      "You can cancel participation no later than 12 hours before the event starts.",
+      "You can cancel participation no later than 24 hours before the event starts.",
     );
   });
 });

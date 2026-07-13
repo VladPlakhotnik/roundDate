@@ -677,6 +677,7 @@
   flex-wrap: wrap;
   gap: 10px;
   margin-top: 28px;
+  pointer-events: none;
 }
 
 .featuredActions > * {
@@ -684,6 +685,7 @@
   padding-right: 14px;
   padding-left: 14px;
   font-size: 13px;
+  pointer-events: auto;
 }
 
 .featuredActions > * > span {

@@ -75,7 +75,11 @@ export default async function RootLayout({
   const locale = await getRequestLocale();
 
   return (
-    <html lang={locale} className={`${manrope.variable} ${geistMono.variable} h-full antialiased`}>
+    <html
+      lang={locale}
+      className={`${manrope.variable} ${geistMono.variable} h-full antialiased`}
+      data-scroll-behavior="smooth"
+    >
       <body className="flex min-h-full flex-col">
         <AppProviders locale={locale}>
           <GoogleAnalytics measurementId={googleAnalyticsMeasurementId} />

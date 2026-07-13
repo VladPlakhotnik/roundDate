@@ -2,24 +2,20 @@
 
 import {
   CalendarDays,
-  CheckCircle2,
   Clock3,
   Coffee,
   CreditCard,
   Heart,
-  Hourglass,
   Lock,
   MapPin,
   MessageCircle,
   Phone,
-  ShieldCheck,
   Sparkles,
   UsersRound,
 } from "lucide-react";
-import { useState, type FormEvent, type ReactNode } from "react";
+import { useRef, useState, type FormEvent, type ReactNode } from "react";
 
 import { useI18n } from "@/shared/i18n/I18nProvider";
-import { cn } from "@/shared/lib/cn";
 import {
   EMAIL_VALIDATION_MESSAGE,
   POLISH_PHONE_VALIDATION_MESSAGE,
@@ -31,6 +27,7 @@ import { Button } from "@/shared/ui/Button";
 import { Input } from "@/shared/ui/Input";
 import { Modal } from "@/shared/ui/Modal";
 import { Select } from "@/shared/ui/Select";
+import { useToast } from "@/shared/ui/Toast";
 
 import { EventDetailsMap } from "./EventDetailsMap";
 import type { EventMapLocation } from "./EventDetailsMap";
@@ -140,57 +137,68 @@ function getSchedule(event: EventDetailsModalEvent, locale: string, t: (key: str
   ];
 }
 
+function isEventEnded(event: EventDetailsModalEvent) {
+  const startsAt = new Date(event.startsAt);
+  const normalizedStatus = event.statusLabel.toLowerCase();
+
+  return (
+    (!Number.isNaN(startsAt.getTime()) && startsAt.getTime() <= Date.now()) ||
+    normalizedStatus.includes("zakończ") ||
+    normalizedStatus.includes("finished")
+  );
+}
+
 function getPrimaryAction(
   context: EventDetailsModalContext,
+  event: EventDetailsModalEvent,
   status: BadgeStatus | undefined,
   t: (key: string) => string,
 ) {
-  if (context === "past") {
-    return {
-      disabled: true,
-      icon: CheckCircle2,
-      label: t("event.status.ended"),
-      variant: "secondary" as const,
-    };
+  if (
+    context === "past" ||
+    Number.isNaN(new Date(event.startsAt).getTime()) ||
+    isEventEnded(event)
+  ) {
+    return null;
   }
 
   if (context === "available") {
-    return {
-      disabled: false,
-      icon: Heart,
-      label: t("event.status.join"),
-      variant: "primary" as const,
-    };
-  }
+    if (event.spotsAvailable <= 0) {
+      return null;
+    }
 
-  if (status === "payment-pending") {
     return {
-      disabled: false,
       icon: CreditCard,
       label: t("event.status.pay"),
       variant: "primary" as const,
     };
   }
 
-  if (status === "waitlist") {
+  if (status === "payment-failed") {
     return {
-      disabled: true,
-      icon: Hourglass,
-      label: t("event.status.waitlist"),
-      variant: "secondary" as const,
+      icon: CreditCard,
+      label: t("event.status.retryPayment"),
+      variant: "primary" as const,
     };
   }
 
-  return {
-    disabled: true,
-    icon: CheckCircle2,
-    label: t("event.status.booked"),
-    variant: "secondary" as const,
-  };
+  if (status === "payment-pending") {
+    return {
+      icon: CreditCard,
+      label: t("event.status.pay"),
+      variant: "primary" as const,
+    };
+  }
+
+  return null;
 }
 
 function getSummaryBadge(event: EventDetailsModalEvent, t: (key: string) => string) {
   const normalizedStatus = event.statusLabel.toLowerCase();
+
+  if (isEventEnded(event)) {
+    return { label: event.statusLabel, tone: "neutral" as const };
+  }
 
   if (
     event.spotsAvailable <= 0 ||
@@ -259,6 +267,7 @@ export function EventDetailsModal({
   trigger,
 }: EventDetailsModalProps) {
   const { locale, t } = useI18n();
+  const toast = useToast();
   const dateLocale = locale === "en" ? "en-US" : "pl-PL";
   const genderOptions = [
     { label: t("common.gender.female"), value: "female" },
@@ -266,8 +275,9 @@ export function EventDetailsModal({
     { label: t("common.gender.other"), value: "other" },
   ];
   const schedule = getSchedule(event, dateLocale, t);
-  const primaryAction = getPrimaryAction(context, status, t);
-  const PrimaryIcon = primaryAction.icon;
+  const eventEnded = isEventEnded(event);
+  const primaryAction = getPrimaryAction(context, event, status, t);
+  const PrimaryIcon = primaryAction?.icon;
   const summaryBadge = getSummaryBadge(event, t);
   const organizer = event.organizer ?? DEFAULT_EVENT_ORGANIZER;
   const organizerName = getOrganizerName(organizer);
@@ -281,8 +291,17 @@ export function EventDetailsModal({
     createBookingParticipant(bookingDefaults),
   );
   const [promoCode, setPromoCode] = useState("");
+  const bookingRequestInFlight = useRef(false);
   const bookingProgress = bookingStep === 1 ? 50 : 100;
   const participantComplete = isBookingParticipantComplete(participant);
+  const bookingSubmitLabel =
+    bookingStep === 1
+      ? t("event.booking.toPayment")
+      : context === "booking" && status === "payment-failed"
+        ? t("event.booking.retrySubmit")
+        : context === "booking"
+          ? t("event.status.pay")
+          : t("event.booking.submit");
 
   function updateParticipant(field: keyof BookingParticipant, value: string) {
     setParticipant((currentParticipant) => ({ ...currentParticipant, [field]: value }));
@@ -347,7 +366,7 @@ export function EventDetailsModal({
   }
 
   function handlePrimaryActionClick() {
-    if (primaryAction.disabled) {
+    if (!primaryAction) {
       return;
     }
 
@@ -356,12 +375,17 @@ export function EventDetailsModal({
       return;
     }
 
-    if (context === "booking" && status === "payment-pending") {
+    if (context === "booking" && (status === "payment-failed" || status === "payment-pending")) {
       openBookingFlow(2);
     }
   }
 
   async function createBooking() {
+    if (bookingRequestInFlight.current) {
+      return;
+    }
+
+    bookingRequestInFlight.current = true;
     setBookingStatus("loading");
     setBookingMessage("");
 
@@ -385,7 +409,11 @@ export function EventDetailsModal({
       const waitlisted =
         payload.booking?.bookingStatus === "waitlisted" || payload.booking?.status === "waitlist";
 
-      setBookingStatus("success");
+      if (waitlisted) {
+        setBookingStatus("success");
+        setBookingMessage(t("event.booking.waitlist"));
+        return;
+      }
 
       if (payload.checkout?.url) {
         setBookingMessage(t("event.booking.redirecting"));
@@ -393,10 +421,15 @@ export function EventDetailsModal({
         return;
       }
 
-      setBookingMessage(waitlisted ? t("event.booking.waitlist") : t("event.booking.created"));
+      throw new Error(t("event.booking.checkoutMissing"));
     } catch (error) {
+      const message = error instanceof Error ? error.message : t("event.booking.createError");
+
       setBookingStatus("error");
-      setBookingMessage(error instanceof Error ? error.message : t("event.booking.createError"));
+      setBookingMessage(message);
+      toast.error(t("event.booking.paymentErrorTitle"), message);
+    } finally {
+      bookingRequestInFlight.current = false;
     }
   }
 
@@ -550,7 +583,7 @@ export function EventDetailsModal({
             data-testid="event-details-summary"
           >
             <div className={styles.summaryHeader}>
-              <h2>{t("event.booking.paymentStep")}</h2>
+              <h2>{eventEnded ? t("event.summaryTitle") : t("event.booking.paymentStep")}</h2>
               <Sparkles aria-hidden size={28} />
             </div>
 
@@ -559,17 +592,25 @@ export function EventDetailsModal({
               data-testid="event-details-summary-status"
               data-tone={summaryBadge.tone}
             >
-              <span aria-hidden />
+              <span aria-hidden className={styles.summaryStatusDot} />
               <strong>{summaryBadge.label}</strong>
-              {context === "booking" && status ? <Badge status={status} /> : null}
             </div>
 
-            <EventGenderAvailability
-              className={styles.summaryAvailability}
-              femaleSpotsAvailable={event.femaleSpotsAvailable}
-              maleSpotsAvailable={event.maleSpotsAvailable}
-              spotsAvailable={event.spotsAvailable}
-            />
+            {context === "booking" && status ? (
+              <div className={styles.bookingStateCard} data-testid="event-details-booking-status">
+                <span>{t("event.labels.bookingStatus")}</span>
+                <Badge status={status} />
+              </div>
+            ) : null}
+
+            {!eventEnded ? (
+              <EventGenderAvailability
+                className={styles.summaryAvailability}
+                femaleSpotsAvailable={event.femaleSpotsAvailable}
+                maleSpotsAvailable={event.maleSpotsAvailable}
+                spotsAvailable={event.spotsAvailable}
+              />
+            ) : null}
 
             <div className={styles.priceBlock}>
               <CreditCard aria-hidden size={22} />
@@ -615,16 +656,16 @@ export function EventDetailsModal({
                 </Button>
               }
             />
-            <Button
-              className={cn(primaryAction.disabled && styles.disabledAction)}
-              disabled={primaryAction.disabled}
-              leftIcon={<PrimaryIcon aria-hidden size={22} />}
-              size="lg"
-              variant={primaryAction.variant}
-              onClick={handlePrimaryActionClick}
-            >
-              {primaryAction.label}
-            </Button>
+            {primaryAction && PrimaryIcon ? (
+              <Button
+                leftIcon={<PrimaryIcon aria-hidden size={22} />}
+                size="lg"
+                variant={primaryAction.variant}
+                onClick={handlePrimaryActionClick}
+              >
+                {primaryAction.label}
+              </Button>
+            ) : null}
           </footer>
 
           <p className={styles.securityNote}>
@@ -773,11 +814,6 @@ export function EventDetailsModal({
                 onChange={(inputEvent) => setPromoCode(inputEvent.currentTarget.value)}
               />
 
-              <div className={styles.bookingPaymentNote}>
-                <ShieldCheck aria-hidden size={19} />
-                <span>{t("event.booking.paymentNote")}</span>
-              </div>
-
               {bookingMessage ? (
                 <p className={styles.bookingStatus} data-status={bookingStatus} role="status">
                   {bookingMessage}
@@ -788,10 +824,11 @@ export function EventDetailsModal({
 
           <footer
             className={styles.bookingFooter}
+            data-layout={bookingStep === 1 ? "single" : "split"}
             data-mobile-sticky="actions"
             data-testid="event-booking-footer"
           >
-            {bookingStep === 2 ? (
+            {bookingStep === 2 && context === "available" ? (
               <Button
                 disabled={bookingStatus === "loading"}
                 size="md"
@@ -820,7 +857,7 @@ export function EventDetailsModal({
               size="md"
               type="submit"
             >
-              {bookingStep === 1 ? t("event.booking.toPayment") : t("event.booking.submit")}
+              {bookingSubmitLabel}
             </Button>
           </footer>
         </form>

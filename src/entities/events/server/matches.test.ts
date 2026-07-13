@@ -46,7 +46,7 @@ describe("event matches helpers", () => {
       }),
     ).toEqual({
       state: "pending",
-      unlocksAt: "po publikacji wynikow",
+      unlocksAt: "po publikacji wyników",
     });
 
     expect(
@@ -57,6 +57,20 @@ describe("event matches helpers", () => {
         startsAt: new Date("2026-07-01T18:00:00.000Z"),
       }),
     ).toEqual({ state: "results" });
+  });
+
+  it("never exposes match results before the event starts", () => {
+    expect(
+      getProfileMatchResultState({
+        eventStatus: "published",
+        metadata: { matchResultsPublishedAt: "2026-07-02T10:00:00.000Z" },
+        now: new Date("2026-07-01T12:00:00.000Z"),
+        startsAt: new Date("2026-07-01T18:00:00.000Z"),
+      }),
+    ).toEqual({
+      state: "pending",
+      unlocksAt: "po zakończeniu wydarzenia",
+    });
   });
 
   it("counts mutual matches for every result recipient including zero-match users", () => {

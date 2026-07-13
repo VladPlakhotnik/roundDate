@@ -20,7 +20,9 @@ export type BadgeStatus =
   | "attended"
   | "cancelled"
   | "confirmed"
+  | "event-ended"
   | "no-show"
+  | "payment-failed"
   | "payment-pending"
   | "refunded"
   | "waitlist";
@@ -58,10 +60,20 @@ const statusConfig = {
     labelKey: "common.badge.confirmed",
     tone: "success",
   },
+  "event-ended": {
+    icon: CheckCircle2,
+    labelKey: "common.badge.eventEnded",
+    tone: "neutral",
+  },
   "no-show": {
     icon: Ban,
     labelKey: "common.badge.noShow",
     tone: "warning",
+  },
+  "payment-failed": {
+    icon: XCircle,
+    labelKey: "common.badge.paymentFailed",
+    tone: "danger",
   },
   "payment-pending": {
     icon: Clock3,

@@ -1,4 +1,4 @@
-export const BOOKING_CANCELLATION_DEADLINE_HOURS = 12;
+export const BOOKING_CANCELLATION_DEADLINE_HOURS = 24;
 
 type BookingCancellationInput = {
   now?: Date;

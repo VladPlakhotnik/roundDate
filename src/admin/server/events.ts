@@ -530,9 +530,9 @@ export async function createAdminEventAction(formData: FormData) {
       addressMode: readString(formData, "addressMode", "manual"),
       createdFrom: "admin",
       highlights: [
-        `${readNumber(formData, "conversationMinutes", 10)}-минутные раунды`,
-        "Баланс участников",
-        "Контакты после взаимной симпатии",
+        `${readNumber(formData, "conversationMinutes", 10)}-minutowe rundy`,
+        "Równowaga uczestników",
+        "Kontakty po wzajemnym polubieniu",
       ],
       latitude,
       longitude,

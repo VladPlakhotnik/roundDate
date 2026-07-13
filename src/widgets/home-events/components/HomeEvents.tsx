@@ -78,12 +78,13 @@ export function HomeEvents({ events, isAuthenticated = false }: HomeEventsProps)
           {visibleEvents.map((event, index) => {
             const dateParts = event.dateLabel.split(" ");
             const day = dateParts[0] ?? "";
-            const month = dateParts.slice(1).join(" ");
+            const month = dateParts[1] ?? "";
+            const compactDateLabel = [day, month].filter(Boolean).join(" ");
             const image = eventImages[index] ?? eventImages[0]!;
 
             return (
               <article className={styles.card} key={event.id}>
-                <div className={styles.dateBadge} aria-label={event.dateLabel}>
+                <div className={styles.dateBadge} aria-label={compactDateLabel}>
                   <span>{day}</span>
                   <small>{month}</small>
                 </div>

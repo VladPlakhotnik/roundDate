@@ -2,7 +2,9 @@ import { act, fireEvent, render, screen, waitFor, within } from "@testing-librar
 import type { ComponentProps } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { ProfileEventsView } from "./events-page";
+import { ToastProvider } from "@/shared/ui/Toast";
+
+import { filterBookableProfileEvents, ProfileEventsView } from "./events-page";
 
 vi.setConfig({ testTimeout: 15000 });
 
@@ -193,7 +195,11 @@ function mockEventsFetch() {
 }
 
 function renderEventsView() {
-  return render(<ProfileEventsView events={testEvents} />);
+  return render(
+    <ToastProvider>
+      <ProfileEventsView events={testEvents} />
+    </ToastProvider>,
+  );
 }
 
 function wait(ms: number) {
@@ -210,6 +216,19 @@ describe("ProfileEventsView", () => {
   afterEach(() => {
     vi.useRealTimers();
     vi.unstubAllGlobals();
+  });
+
+  it("filters past and sold-out events before rendering", () => {
+    expect(
+      filterBookableProfileEvents(
+        [
+          { ...testEvents[0]!, spotsAvailable: 0 },
+          { ...testEvents[1]!, startsAt: "2031-05-24T16:59:59.000Z" },
+          { ...testEvents[2]!, startsAt: "2031-05-24T18:00:00.000Z" },
+        ],
+        new Date("2031-05-24T17:00:00.000Z"),
+      ),
+    ).toEqual([{ ...testEvents[2]!, startsAt: "2031-05-24T18:00:00.000Z" }]);
   });
 
   it("renders search on the left with wide filters aligned to the right", () => {

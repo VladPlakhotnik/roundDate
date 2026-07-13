@@ -80,8 +80,16 @@ export async function POST(request: Request) {
     result.booking.bookingStatus === "payment_failed" ||
     result.booking.status === "payment-pending";
 
+  if (result.booking.bookingStatus === "confirmed") {
+    return jsonError(t("api.bookings.alreadyConfirmed"), 409);
+  }
+
   if (!needsPayment) {
-    return NextResponse.json({ booking: result.booking }, { status: result.status });
+    if (result.booking.bookingStatus === "waitlisted" || result.booking.status === "waitlist") {
+      return NextResponse.json({ booking: result.booking }, { status: result.status });
+    }
+
+    return jsonError(t("api.bookings.paymentUnavailable"), 409);
   }
 
   try {
@@ -98,7 +106,11 @@ export async function POST(request: Request) {
     });
 
     return NextResponse.json({ booking: result.booking, checkout }, { status: result.status });
-  } catch {
+  } catch (error) {
+    console.error("Failed to create Stripe Checkout Session.", {
+      bookingId: result.booking.bookingId,
+      error: error instanceof Error ? error.message : "Unknown Stripe error",
+    });
     return jsonError(t("api.bookings.stripeCreateError"), 502);
   }
 }

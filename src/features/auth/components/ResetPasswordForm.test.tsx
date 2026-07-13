@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -64,5 +64,23 @@ describe("ResetPasswordForm", () => {
     expect(
       await screen.findByText("The reset link is invalid or expired. Request a new link."),
     ).toBeInTheDocument();
+  });
+
+  it("keeps a successful reset confirmation on screen until the user continues", async () => {
+    const user = userEvent.setup();
+
+    mocks.searchParams = "token=valid-token";
+    renderResetPasswordForm();
+
+    await user.type(screen.getByPlaceholderText("Minimum 8 characters"), "Password123!");
+    await user.type(screen.getByPlaceholderText("Enter the password again"), "Password123!");
+    await user.click(screen.getByRole("button", { name: "Update password" }));
+
+    expect(await within(screen.getByRole("main")).findByRole("status")).toHaveTextContent(
+      "You can now log in with your new password.",
+    );
+    expect(mocks.push).not.toHaveBeenCalled();
+    await user.click(screen.getByRole("button", { name: "Back to the home page" }));
+    expect(mocks.push).toHaveBeenCalledWith("/");
   });
 });

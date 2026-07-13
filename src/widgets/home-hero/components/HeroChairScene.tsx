@@ -313,6 +313,10 @@ function disposeObject3D(object: Object3D) {
   });
 }
 
+export function disposeHeroRenderer(renderer: Pick<WebGLRenderer, "dispose">) {
+  renderer.dispose();
+}
+
 function applyModelConfig(object: Object3D, config: SceneModelConfig) {
   const sourceLongestSide = Number(object.userData.sourceLongestSide || 1);
 
@@ -869,8 +873,9 @@ export function HeroChairScene({ className }: HeroChairSceneProps) {
       }
 
       loadedModelsRef.current = {};
-      renderer?.dispose();
-      renderer?.forceContextLoss();
+      if (renderer) {
+        disposeHeroRenderer(renderer);
+      }
       renderer = undefined;
     }
 

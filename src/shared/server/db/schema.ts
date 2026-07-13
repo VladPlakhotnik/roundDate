@@ -1,4 +1,5 @@
 import {
+  bigint,
   boolean,
   date,
   doublePrecision,
@@ -114,6 +115,17 @@ export const authVerifications = pgTable(
     updatedAt: timestamp("updatedAt", { withTimezone: true }).defaultNow().notNull(),
   },
   (table) => [index("verification_identifier_idx").on(table.identifier)],
+);
+
+export const authRateLimits = pgTable(
+  "rateLimit",
+  {
+    id: text("id").primaryKey(),
+    key: text("key").notNull().unique(),
+    count: integer("count").notNull(),
+    lastRequest: bigint("lastRequest", { mode: "number" }).notNull(),
+  },
+  (table) => [index("rateLimit_key_idx").on(table.key)],
 );
 
 export const profiles = pgTable(
